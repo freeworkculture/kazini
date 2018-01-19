@@ -12,11 +12,13 @@ contract InputFactor is Controlled {
 
     Creators public doers;
 
-    Service Services;
+    // Service Services;
 
-    Promise Promises;
+    // Plan Plans;
 
-    Fulfillment Fulfillments;
+    // Promise Promises;
+
+    // Fulfillment Fulfillments;
 
     uint public promiseCount;
     uint public fulfillmentCount;
@@ -40,48 +42,85 @@ contract InputFactor is Controlled {
         Controlled.registerContract("InpuFactors", this);
     }
 
-    function desire(bytes32 _wish, bytes32 _goal, bytes32 _preConditions) public onlyCreators {
-        Controlled.plans[_wish].conditionQ = _goal;
-        Controlled.plans[_wish].conditionP = _preConditions;
+    // Data -> Plan
+    // Produce a Plan
+        // struct Plan {
+		// bytes32 conditionP;
+		// mapping(bytes32 => Service) service;
+        // mapping(bytes32 => Service[]) services;
+        // mapping(bytes32 => string) project;
+		// bytes32 conditionQ;
+		// }
+        // mapping(bytes32 => Plan) plans;
+    // function concept(bytes32 _wish, bytes32 _goal, bytes32 _preConditions) returns (Plan); // STUB
+    // Examples
+    // desire(aWish, aGoal, aPreconditions, aProjectUrl);
+    // url = keccak256(aUrl)
+        // struct Service {
+		// bytes32 conditionP;
+		// Promise taskT;
+		// bytes32 conditionQ;
+		// } 
+
+    function plan(bytes32 _intention, bytes32 _desire, bytes32 _preConditions, string _projectUrl, Doers sdo) public onlyCreators {
+        Controlled.plans[_intention].conditionQ = Controlled.bdi[tx.origin].desires[_desire].goal; // Creator and project share a goal 
+        Controlled.plans[_intention].conditionP = _preConditions; // pCondition of the curate that will define the concept.
+        bytes32 url = keccak256(_projectUrl);
+        Controlled.plans[_intention].project[url] = _projectUrl; // main url of the project repo.
     }
 
-    function plan(bytes32 _uuid, bytes32 _wish, bytes32 _preConditions) public onlyDoers {
-        require(Controlled.bdi[tx.origin].beliefs[_uuid].chck == Controlled.plans[_wish].conditionP);
-        Controlled.plans[_wish].conditionP = _preConditions;
-    }    
+    function plan(bytes32 _intention, bytes32 _serviceId, bytes32 _pConditions, bytes32 _qConditions) public onlyDoers {
+        require(Controlled.bdi[tx.origin].beliefs.hash == Controlled.plans[_intention].conditionP); // curate meets the pCondition
+        Controlled.plans[_intention].service[_serviceId].conditionP = _pConditions;
+        Controlled.plans[_intention].service[_serviceId].conditionQ = _qConditions;
+    }
+    
+    // pCondition must be present before project is started
+    // qCondition must be present before project is closed
+    function plan(bytes32 _intention, bytes32 _prerequisites, string _projectUrl, bytes32 _verity) public onlyDoers {
+        require(Controlled.bdi[tx.origin].beliefs.hash == Controlled.plans[_intention].conditionP); // curate meets the pCondition
+        Controlled.plans[_intention].conditionP = keccak256(_prerequisites, Controlled.plans[_intention].conditionP);
+        bytes32 url = keccak256(_projectUrl);
+        Controlled.plans[_intention].project[url] = _projectUrl; // additional urls of project repo.
+        Controlled.plans[_intention].conditionQ = keccak256(_verity, Controlled.plans[_intention].conditionQ);
+        Controlled.allPlans.push(_intention);
+    }      
 
-    function promise(bytes32 _wish, bytes32 _desire, bool _check, string thing, uint expire) public payable onlyDoers {
-        require(Controlled.bdi[tx.origin].desires[_desire].goal == Controlled.plans[_wish].conditionQ);
-        require(Controlled.bdi[tx.origin].intentions[_check].status != Controlled.Status.ACTIVE);
-        require(expire > block.timestamp);
+    function promise(bytes32 _intention, bytes32 _desire, bytes32 _serviceId, bool _check, string _thing, uint _expire) public payable onlyDoers {
+        require(Controlled.bdi[tx.origin].beliefs.hash == Controlled.plans[_intention].service[_serviceId].conditionP);
+        require(Controlled.bdi[tx.origin].desires[_desire].goal == Controlled.plans[_intention].service[_serviceId].conditionQ);
+        require(Controlled.bdi[tx.origin].intentions[_check].status != Controlled.Agent.ACTIVE);
+        require(_expire > block.timestamp);
         require(msg.value > 0);
-        bytes32 eoi = keccak256(msg.sender, thing);
-        Controlled.plans[_wish].services[eoi].taskT = Promise({doer: msg.sender, thing: thing, expire: expire, value: msg.value, hash: eoi});
+        bytes32 eoi = keccak256(msg.sender, _thing);
+        Controlled.plans[_intention].service[eoi].taskT = Promise({doer: msg.sender, thing: _thing, expire: _expire, value: msg.value, hash: eoi});
+        Controlled.Promises[msg.sender].push(eoi);
         promiseCount++;
+        Controlled.promiseCount++; //!!! COULD REMOVE ONE COUNTER, LEFT HERE FOR DEBUGGING
     }
 
-    function fulfill(bytes32 _wish, string thing, string proof) onlyDoers {
+    function fulfill(bytes32 _intention, string thing, string proof) public onlyDoers {
         // Validate existing promise.
         bytes32 lso = keccak256(msg.sender, thing);
-        require(block.timestamp < Controlled.plans[_wish].services[lso].taskT.expire);
+        require(block.timestamp < Controlled.plans[_intention].service[lso].taskT.expire);
         bytes32 verity = keccak256(msg.sender, proof);
-        fulfillments[verity] = Fulfillment({doer: msg.sender, promise: Controlled.plans[_wish].services[lso].taskT.hash, proof: proof, timestamp: block.timestamp, hash: verity});
+        fulfillments[verity] = Fulfillment({doer: msg.sender, promise: Controlled.plans[_intention].service[lso].taskT.hash, proof: proof, timestamp: block.timestamp, hash: verity});
         fulfillmentCount++;
     }
 
-    function getDeployer() constant returns (address) {
+    function getDeployer() internal constant returns (address) {
         return deployer;
     }
 
-    function getDoers() constant returns (Creators) {
+    function getDoers() internal constant returns (Creators) {
         return doers;
     }
 
-    function getPromiseCount() constant returns (uint) {
+    function getPromiseCount() internal constant returns (uint) {
         return promiseCount;
     }
 
-    function getFulfillmentCount() constant returns (uint) {
+    function getFulfillmentCount() internal constant returns (uint) {
         return fulfillmentCount;
     }
 }
@@ -93,9 +132,11 @@ uint public timeOfLastProof;                             // Variable to keep tra
 uint public difficulty = 10**32;                         // Difficulty starts reasonably low
 uint256 amount;
 
-function FactorPayout() {registerContract("InputFactor", this);}
+function FactorPayout() internal {
+    Controlled.registerContract("InputFactor", this);
+    }
 
-function factorPayout(uint nonce) {
+function factorPayout(uint nonce) internal {
     bytes8 n = bytes8(keccak256(nonce, currentChallenge));    // Generate a random hash based on input
     require(n >= bytes8(difficulty));                   // Check if it's under the difficulty
     uint timeSinceLastProof = (now - timeOfLastProof);  // Calculate time since last reward was given

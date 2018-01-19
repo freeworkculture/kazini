@@ -141,8 +141,7 @@ contract DoitToken is Controlled {
         string _tokenVersion,
         uint _tokenMaturity,
         bool _transfersEnabled
-    ) public
-    {
+    ) public {
         tokenFactory = DoitTokenFactory(_tokenFactory);
         name = _tokenName;                                 // Set the name
         symbol = _tokenSymbol;
@@ -171,8 +170,7 @@ contract DoitToken is Controlled {
     /// @param _to The address of the recipient
     /// @param _amount The amount of tokens to be transferred
     /// @return True if the transfer was successful
-    function doTransfer(address _from, address _to, uint _amount) internal
-    {
+    function doTransfer(address _from, address _to, uint _amount) internal {
         if (_amount == 0) {
             Transfer(_from, _to, _amount);    // Follow the spec to louch the event when transfer 0
             return;
@@ -504,9 +502,7 @@ contract DoitToken is Controlled {
     ///  `totalSupplyHistory`
     /// @param checkpoints The history of data being updated
     /// @param _value The new number of tokens
-    function updateValueAtNow(Checkpoint[] storage checkpoints, uint _value
-    ) internal
-    {
+    function updateValueAtNow(Checkpoint[] storage checkpoints, uint _value) internal {
         if ((checkpoints.length == 0) ||
         (checkpoints[checkpoints.length - 1].fromBlock < block.number)) {
                Checkpoint storage newCheckPoint = checkpoints[checkpoints.length++];
@@ -584,7 +580,9 @@ contract DoitToken is Controlled {
 ///  same class
 contract DoitTokenFactory is Controlled {
 
-    function DoitTokenFactory() {registerContract("DoitTokenFactory", this);}
+    function DoitTokenFactory() internal {
+        Controlled.registerContract("DoitTokenFactory", this);
+        }
 
     /// @notice Update the DApp by creating a new token with new functionalities
     ///  the msg.sender becomes the controller of this clone token

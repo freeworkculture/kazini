@@ -1,8 +1,7 @@
 pragma solidity ^0.4.19;
-pragma experimental ABIEncoderV2;
+//pragma experimental ABIEncoderV2;
 
 import "./Able.sol";
-//import "./InputFactor.sol";
 
 // Doers is a class library of natural or artificial entities within A multi-agent system (MAS).
 // The agents are collectively capable of reaching goals that are difficult to achieve by an 
@@ -67,9 +66,30 @@ contract Doers is Controlled {
 ///////////////////
 /// @dev `B-D-I` is the structure that prescribes a strategy model to an actual agent
 ///////////////////
-BDI myBDI;
-
-address[] public myPromises;
+///////////////////
+/// @dev `B-D-I` is the structure that prescribes a strategy model to an actual agent
+///////////////////
+	
+	/// Belief myBelief {hex, int, int8, hex}
+	/// @dev Interp. myBelief {Qualification, Experience, Reputation, Talent} is an agent with
+					// Qualification is (<ISO 3166-1 numeric-3>,<Conferring Authority>,<Score>)
+					// experience is age in seconds
+					// reputaion is PGP trust level flag !!! CITE RFC PART
+					// talent is user declared string of talents
+	//Belief myBelief; // = Belief(myQualification, 1, 0x004, 0x00);
+	// function funcForBelief(Belief _aBelief) {
+	// 	(...	(_aBelief.myQualification),
+	// 			(_aBelief.experience),
+	// 			(_aBelief.reputation),
+	// 			(_aBelief.talent),
+	// 			}
+/// Template rules used:
+/// - Compound: 4 fields
+///				
+	//BDI myBDI;
+	
+	bytes32[] myPromises;
+	uint256 promiseCount;
 
 	modifier onlyCreator {
 		if (msg.sender != myCreator) 
@@ -77,7 +97,7 @@ address[] public myPromises;
 		_;
 	}
 
-	modifier onlyDoers {
+	modifier onlyDoer {
 		if (!thisDoer.active) 
 		revert();
 		_;
@@ -109,21 +129,21 @@ address[] public myPromises;
 		return myCreator;
 	}
 	
-	function getDoer() view public returns (SomeDoer) {
-		return (thisDoer);
-    }
+	// function getDoer() view public returns (SomeDoer) {
+	// 	return (thisDoer);
+    // }
 	
-	function getBelief(bytes32 _uuid) view public returns (Belief) {
-		return (Controlled.bdi[this].beliefs[_uuid]);
-    }
+	// function getBelief() view public returns (Belief) {
+	// 	return (Controlled.bdi[this].beliefs);
+    // }
 
-	function getDesire(bytes32 _desire) view public returns (Desire) {
-		return (Controlled.bdi[this].desires[_desire]);
-    }
+	// function getDesire(bytes32 _desire) view public returns (Desire) {
+	// 	return (Controlled.bdi[this].desires[_desire]);
+    // }
 
-	function getIntention(bool _check) view public returns (Intention) {
-		return (Controlled.bdi[this].intentions[_check]);
-    }
+	// function getIntention(bool _check) view public returns (Intention) {
+	// 	return (Controlled.bdi[this].intentions[_check]);
+    // }
 
 	function isDoer() constant public returns (bool) {
 		if (thisDoer.active) {
@@ -131,16 +151,29 @@ address[] public myPromises;
 			return false;
 	}
 	
-	function registerToPromise(address _promiseAddress, bool _check, Status _status, bytes32 _task, uint256 _amount) internal onlyCreator {
-		myPromises.push(_promiseAddress);
-		Controlled.bdi[this].intentions[_check].status = _status;
-		Controlled.bdi[this].intentions[_check].task = _task;
-		Controlled.bdi[this].intentions[_check].factorPayout = _amount;
+	function getPromise() internal view onlyDoer returns (bytes32[]) {
+		return Controlled.Promises[this];
 	}
-	
+
+	function getPromise(bytes32 _intention, bytes32 _serviceId) internal view onlyDoer returns (Promise) {
+		return Controlled.plans[_intention].service[_serviceId].taskT;
+	}
+
 	function setDoer(SomeDoer _aDoer) internal onlyController {
 		thisDoer = _aDoer;
-		}
+	}
+
+	function setBDI(Belief _belief) internal onlyController {
+		Controlled.bdi[this].beliefs = _belief;
+	}
+
+	function setBDI(bytes32 _desire, Desire _goal) internal onlyController {
+		Controlled.bdi[this].desires[_desire] = _goal;
+	}
+
+	function setBDI(bool _intention, Intention _service) internal onlyController {
+		Controlled.bdi[this].intentions[_intention] = _service;
+	}
 }
 
 // interface SomeDoers {

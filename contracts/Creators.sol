@@ -25,31 +25,15 @@ contract Creators is Controlled {
 
 	string public userName;
 	address ownAddress;
-	
-	struct Creator {
-		bool active;
-		uint256 myDoers;
-	}
-	mapping(address => Creator) creators;
-	
-	struct Doer {
-		address doer;
-		bool active;
-	}
-	mapping(bytes32 => Doer) doersUuid;
-	mapping(address => Doer) doersAddress;
-	address[] doersAccts;
-	
-	uint public doerCount;	// !!! Can I call length of areDoers instead??!!!
 
 	modifier onlyCreator {
-		if (!creators[msg.sender].active) 
+		if (!Controlled.creators[msg.sender].active) 
 		revert();
 		_;
 	}
 
 	modifier onlyDoers {
-		if (!doersAddress[msg.sender].active) 
+		if (!Controlled.doersAddress[msg.sender].active) 
 		revert();
 		_;
 	}

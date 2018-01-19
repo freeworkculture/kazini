@@ -28,23 +28,32 @@ contract Controlled {
     
     // This is where we keep all the contracts.
     mapping (bytes32 => address) public contracts;
+    
+    enum Project {STARTED, SUSPENDED, CLOSED}
 
+    struct Creator {
+		bool active;
+		uint256 myDoers;
+	}
+	mapping(address => Creator) creators;
+	
+	struct Doer {
+		address doer;
+		bool active;
+	}
+	mapping(bytes32 => Doer) doersUuid;
+	mapping(address => Doer) doersAddress;
+	address[] doersAccts;
+	
+	uint public doerCount;	// !!! Can I call length of areDoers instead??!!!
+
+    ///////////////////
+/// @dev `B-D-I` is the structure that prescribes a strategy model to an actual agent
+///////////////////
 ///////////////////
 /// @dev `B-D-I` is the structure that prescribes a strategy model to an actual agent
 ///////////////////
-	struct Belief {		
-		Qualification myQualification;
-		uint experience;
-		bytes32 reputation;
-		bytes32 talent;
-        bytes32 chck;
-		}
-        struct Qualification {
-            bytes32 country; //ISO3166-2:KE-XX;
-		    bytes32 cAuthority;
-		    bytes32 score;
-            }
-            mapping(uint8 => Qualification) public qualification;
+	
 	/// Belief myBelief {hex, int, int8, hex}
 	/// @dev Interp. myBelief {Qualification, Experience, Reputation, Talent} is an agent with
 					// Qualification is (<ISO 3166-1 numeric-3>,<Conferring Authority>,<Score>)
@@ -60,40 +69,54 @@ contract Controlled {
 	// 			}
 /// Template rules used:
 /// - Compound: 4 fields
-///			
-	struct Desire {
-		bytes32 goal;
-		bool status;
-		}
-	
-	struct Intention {
-		Status status;
-		bytes32 task;
-		uint256 factorPayout;
-		}
-        enum Status {INACTIVE, ACTIVE, RESERVED}
+///
+    struct Belief {
+        Qualification myQualification;
+        uint experience;
+        bytes32 reputation;
+        bytes32 talent;
+        bytes32 hash;
+        }
+        struct Qualification {
+            bytes32 country; //ISO3166-2:KE-XX;
+            bytes32 cAuthority;
+            bytes32 score;
+            }
+            mapping(uint8 => Qualification) public qualification;
+    struct Desire {
+        bytes32 goal;
+        bool status;
+        }
+    struct Intention {
+        Agent status;
+        bytes32 task;
+        uint256 factorPayout;
+        }
+    enum Agent {ACTIVE, INACTIVE, RESERVED}
 
     struct BDI {
-    mapping(bytes32 => Belief) beliefs;
-    mapping(bytes32 => Desire) desires;
-	mapping(bool => Intention) intentions;
-	}
-	mapping(address => BDI) bdi;
-
-    address[] public myPromises;
+        Belief beliefs;
+        mapping(bytes32 => Desire) desires;
+	    mapping(bool => Intention) intentions;
+	    }
+        mapping(address => BDI) bdi;
 
     struct Service {
 		bytes32 conditionP;
 		Promise taskT;
 		bytes32 conditionQ;
-		}
+		} 
         
     struct Plan {
 		bytes32 conditionP;
-		mapping(bytes32 => Service) services;
+		mapping(bytes32 => Service) service;
+        mapping(bytes32 => Service[]) services;
+        mapping(bytes32 => string) project;
 		bytes32 conditionQ;
+        Project status;
 		}
         mapping(bytes32 => Plan) public plans;
+        bytes32[] allPlans;
 
     struct Promise {
         address doer;
@@ -102,6 +125,8 @@ contract Controlled {
         uint value;
         bytes32 hash;
     }
+    mapping(address => bytes32[]) public Promises;
+    uint public promiseCount;
 
     struct Fulfillment {
         address doer;
