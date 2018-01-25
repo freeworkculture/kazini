@@ -5,7 +5,7 @@ pragma solidity ^0.4.19;
     
     FreeWork Culture version 1.0.0
 
-    Copyright (c) 2017, Chris Daniels <iamnot@kazini.work>
+    Copyright (c) 2017, iamnot@kazini.work
     !!! <TODO>
 
     This program is free software: you can redistribute it and/or modify
@@ -27,7 +27,7 @@ pragma solidity ^0.4.19;
     Some of the components included in DOIT Token Dapp are licensed under 
     free or open source licenses. We wish to thank the contributors to those projects.
          
-    Credits to: Jordi Baylina "jordi@baylina.cat"
+    Credits to: Jordi
                 Shlomi
                 Bucky
                 Nurrik, Phoenix & Devin
