@@ -28,24 +28,59 @@ contract Controlled {
     
     // This is where we keep all the contracts.
     mapping (bytes32 => address) public contracts;
-    
-    enum Project {STARTED, SUSPENDED, CLOSED}
 
     struct Creator {
 		bool active;
 		uint256 myDoers;
 	}
 	mapping(address => Creator) creators;
-	
-	struct Doer {
-		address doer;
+///////////////////
+/// @dev `SomeDoer` defines the Sovereignty of an agent
+///////////////////
+
+	struct SomeDoer {
+        bytes32 fPrint;
+        bytes32 idNumber;
+		bytes32 email;
+		bytes32 fName;
+		bytes32 lName;
+        bytes32 hash;
+		bytes32 tag;
+        bytes32 data;
+        int256 birth;
 		bool active;
-	}
-	mapping(bytes32 => Doer) doersUuid;
-	mapping(address => Doer) doersAddress;
-	address[] doersAccts;
-	
-	uint public doerCount;	// !!! Can I call length of areDoers instead??!!!
+		}
+        struct Doer {
+		    address doer;
+		    bool active;
+            }
+            mapping(bytes32 => Doer) doersUuid;
+            mapping(address => Doer) doersAddress;
+            address[] doersAccts;
+            uint public doerCount;	// !!! Can I call length of areDoers instead??!!!
+/// SomeDoer aDoer {hex, string, uint, string, string, true, now}
+/// @dev Interp. aDoer {fPrint, email, birth, fName, lName, active, lastUpdate} is an agent with
+					// fPrint is PGP Key fingerprint
+					// email is PGP key email
+					// birth is date of birth in seconds from 1970
+					// fName is first name in identity document MRZ
+					// lName is last name in identity document MRZ
+					// status is dead or alive state of agent
+					// lastUpdate is timestamp of last record entry
+	SomeDoer public thisDoer;// = SomeDoer(0x4fc6c65443d1b988, "whoiamnottelling", 346896000, "Iam", "Not", false);	
+
+	// function funcForSomeDoer(SomeDoer _aDoer) {
+	// 	(...	(_aDoer.fPrint),
+	// 			(_aDoer.email),
+	// 			(_aDoer.birth),
+	// 			(_aDoer.fName),
+	// 			(_aDoer.lName),
+	// 			(_aDoer.status)
+	// 			}
+/// Template rules used:
+/// - Compound: 6 fields
+///			
+
 
     ///////////////////
 /// @dev `B-D-I` is the structure that prescribes a strategy model to an actual agent
@@ -71,28 +106,48 @@ contract Controlled {
 /// - Compound: 4 fields
 ///
     struct Belief {
-        Qualification myQualification;
-        uint experience;
+        Qualification qualification;
+        int256 experience;
         bytes32 reputation;
         bytes32 talent;
+        bytes32 index;
         bytes32 hash;
         }
         struct Qualification {
             bytes32 country; //ISO3166-2:KE-XX;
             bytes32 cAuthority;
             bytes32 score;
+            bytes32 hash;
             }
-            mapping(uint8 => Qualification) public qualification;
+            mapping(bytes32 => Qualification[]) qualification;
+            enum Level {PRIMARY,SECONDARY,TERTIARY,CERTIFICATE,DIPLOMA,BACHELOR,MASTER,DOCTORATE,LICENSE,CERTIFICATION}
     struct Desire {
         bytes32 goal;
         bool status;
         }
     struct Intention {
         Agent status;
-        bytes32 task;
-        uint256 factorPayout;
+        bytes32 service;
+        uint256 payout;
         }
     enum Agent {ACTIVE, INACTIVE, RESERVED}
+
+    enum Flag { 
+		experience,e,
+		reputation,r,
+		talent,t,
+		index,i,
+		hashB,HB,
+		country,c,
+		cAuthority,CA,
+		score,s,
+		hashQ,HQ,
+		goal,g,
+		statusD,SD,
+		statusI,SI,
+		service,S,
+		payout,p
+		}
 
     struct BDI {
         Belief beliefs;
@@ -100,42 +155,54 @@ contract Controlled {
 	    mapping(bool => Intention) intentions;
 	    }
         mapping(address => BDI) bdi;
-
+        
     struct Service {
-		bytes32 conditionP;
+		Belief conditionP;
 		Promise taskT;
-		bytes32 conditionQ;
+        bytes32 conditionQ;
+        uint timeOpt;  // preferred timeline
+        uint expire;
 		} 
         
     struct Plan {
 		bytes32 conditionP;
 		mapping(bytes32 => Service) service;
-        mapping(bytes32 => Service[]) services;
-        mapping(bytes32 => string) project;
+        // mapping(bytes32 => Service[]) services;
 		bytes32 conditionQ;
+        mapping(bytes32 => string) ipfs;
         Project status;
 		}
+        enum Project {STARTED, SUSPENDED, CLOSED}
         mapping(bytes32 => Plan) public plans;
         bytes32[] allPlans;
 
     struct Promise {
         address doer;
         string thing;
-        uint expire;
-        uint value;
+        uint timeAlt;   // proposed timeline
+        uint256 value;
         bytes32 hash;
     }
     mapping(address => bytes32[]) public Promises;
     uint public promiseCount;
 
-    struct Fulfillment {
+    struct Order {
         address doer;
         bytes32 promise;
         string proof;
         uint timestamp;
+        Fulfillment check;
         bytes32 hash;
-    }
-    mapping(bytes32 => Fulfillment) public fulfillments;
+        }
+        struct Fulfillment {
+            address prover;
+            uint timestamp;
+            bytes32 hash;
+            bool complete;
+            }
+    mapping(bytes32 => Order) public orders;
+    uint public orderCount;
+    uint public fulfillmentCount;
 
     /// @notice The address of the controller is the only address that can call
     ///  a function with this modifier

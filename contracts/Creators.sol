@@ -1,4 +1,5 @@
 pragma solidity ^0.4.19;
+pragma experimental ABIEncoderV2;
 
 import "./Able.sol";
 import "./Doers.sol";
@@ -32,7 +33,7 @@ contract Creators is Controlled {
 		_;
 	}
 
-	modifier onlyDoers {
+	modifier onlyDoer {
 		if (!Controlled.doersAddress[msg.sender].active) 
 		revert();
 		_;
@@ -43,31 +44,31 @@ contract Creators is Controlled {
 		ownAddress = msg.sender;
 		doerCount = 0;
 		creators[msg.sender] = Creator(true, 1);
-		
 		//addDoer(creator);
 		Controlled.registerContract("Creators", this);
 	}
 
 	function makeDoer(
-		string _name,
-		bytes32 _fingerPrint,
-		string _email,
-		int _age,
-		string _fName,
-		string _lName,
-		bytes32 _idNumber,
-        bool _active) onlyCreator public returns (Doers)
-        {
+		bytes32 _name, 
+		bytes32 _fPrint,
+        bytes32 _idNumber,
+		bytes32 _email,
+		bytes32 _fName,
+		bytes32 _lName,
+        bytes32 _hash,
+		bytes32 _tag,
+		bytes32 _data,
+        int256 _birth,
+		bool _active) onlyCreator public returns (Doers) {
 			require(creators[msg.sender].myDoers > 0);
-			bytes32 uuidCheck = keccak256(_age, _fName, _lName, _idNumber);
+			bytes32 uuidCheck = keccak256(_birth, _fName, _lName, _idNumber);
 			require(!doersUuid[uuidCheck].active);
-			address newDoer = new Doers(this, _name, _fingerPrint, _email, _age, _fName, _lName, _idNumber, _active);
+			address newDoer = new Doers(this, _name, setDoer(_fPrint,_idNumber,_email,_fName,_lName,_hash,_tag,_data,_birth,_active));
 			doersUuid[uuidCheck] = Doer(newDoer, true);
 			doersAddress[newDoer].active = true;
 			doersAccts.push(newDoer);
 			creators[msg.sender].myDoers--;
-			doerCount++;
-			
+			doerCount++;		
             }
 
 	function getOwner() constant public returns (address) {
@@ -86,7 +87,7 @@ contract Creators is Controlled {
 		return doersAccts;
 	}
 
-	function getPlans() view internal onlyDoers returns (address[]) {
+	function getPlans() view internal onlyDoer returns (address[]) {
 		return doersAccts;
 	}
 
@@ -109,6 +110,66 @@ contract Creators is Controlled {
 	function setMyDoers(address _address, uint _allowed) internal onlyController {
 		creators[_address].myDoers += _allowed;
 	}
+	function setDoer(
+		bytes32 _fPrint,
+		bytes32 _idNumber,
+		bytes32 _email,
+		bytes32 _fName,
+		bytes32 _lName,
+		bytes32 _hash,
+		bytes32 _tag,
+		bytes32 _data,
+		int256 _birth,
+		bool _active
+		) internal returns (SomeDoer) {
+			return SomeDoer({
+				fPrint:_fPrint, 
+				idNumber:_idNumber, 
+				email:_email, 
+				fName:_fName, 
+				lName:_lName, 
+				hash:_hash, 
+				tag:_tag, 
+				data:_data, 
+				birth:_birth, 
+				active:_active});
+		}
+
+	function setBDI(Flag _flag, bytes32 _var, bytes32 _avar, bool _bvar, int256 _cvar, Agent _dvar, uint256 _evar) internal onlyDoer returns (bool) {
+		if ((_flag == Flag.experience) || (_flag == Flag.e)) {
+			bdi[msg.sender].beliefs.experience = _cvar;
+			return true;
+			} else if ((_flag == Flag.reputation) || (_flag == Flag.r)) {
+				bdi[msg.sender].beliefs.reputation = _var;
+				return true;
+			} else if ((_flag == Flag.index) || (_flag == Flag.i)) {
+				bdi[msg.sender].beliefs.index = _var;
+				return true;
+			} else if ((_flag == Flag.hashB) || (_flag == Flag.HB)) {
+				bdi[msg.sender].beliefs.hash = _var;
+				return true;
+			} else if ((_flag == Flag.hashQ) || (_flag == Flag.HQ)) {
+				bdi[msg.sender].beliefs.qualification.hash = _var;
+				return true;
+			} else if ((_flag == Flag.payout) || (_flag == Flag.p)) {
+				bdi[msg.sender].intentions[_bvar].payout = _evar;
+				return true;
+				} else {
+					return false;
+					}
+		}
+
+	function setQualification(Controlled.Qualification _qualification) internal onlyDoer {
+		bdi[msg.sender].beliefs.qualification = _qualification;
+		}
+	
+	function setDesire(Controlled.Desire _goal, bytes32 _desire) internal onlyDoer {
+		bdi[msg.sender].desires[_desire] = _goal;
+		}
+
+	function setIntention(Controlled.Intention _service, bool _intention) internal onlyDoer {
+		bdi[msg.sender].intentions[_intention] = _service;
+		}	
 
 	//function Creators() {registerContract("Creators", this);}
 
