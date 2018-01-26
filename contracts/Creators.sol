@@ -95,13 +95,17 @@ contract Creators is Controlled {
 		return (creators[_address].active);
 	}
 
-	function isDoer(address _address) constant public returns (bool) {
-		return (doersAddress[_address].active);
+	function isDoer(address _address) constant public returns (bool) { // Point this to oraclise service checking MSD on 
+		return (doersAddress[_address].active);	// https://pgp.cs.uu.nl/paths/4b6b34649d496584/to/4f723b7662e1f7b5.json
 	}
 
 	function isDoer(bytes32 _uuid) constant public returns (bool) {
 		return (doersUuid[_uuid].active);
 	}
+
+	function isPlanActive(bytes32 _intention) constant public returns (uint256) { 
+        return uint256(plans[_intention].status);
+    }
 
 	function setCreator(address _address, bool _active) internal onlyController {
 		creators[_address] = Creator(_active, 0);

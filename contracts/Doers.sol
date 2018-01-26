@@ -105,7 +105,7 @@ contract Doers {
 			myBDI.intentions[_check].payout);
 			}
 	
-	function getPromise() internal view onlyDoer returns (address,string,uint,uint,bytes32) {
+	function getPromise() internal view onlyDoer returns (address,bytes32,uint,uint,bytes32) {
 		return (myPromises.doer, myPromises.thing, myPromises.timeAlt, myPromises.value, myPromises.hash);
 	}
 

@@ -50,14 +50,14 @@ contract Controlled {
         int256 birth;
 		bool active;
 		}
-        struct Doer {
-		    address doer;
-		    bool active;
-            }
-            mapping(bytes32 => Doer) doersUuid;
-            mapping(address => Doer) doersAddress;
-            address[] doersAccts;
-            uint public doerCount;	// !!! Can I call length of areDoers instead??!!!
+    struct Doer {
+        address doer;
+        bool active;
+        }
+        mapping(bytes32 => Doer) doersUuid;
+        mapping(address => Doer) doersAddress;
+        address[] doersAccts;
+        uint public doerCount;	// !!! Can I call length of areDoers instead??!!!
 /// SomeDoer aDoer {hex, string, uint, string, string, true, now}
 /// @dev Interp. aDoer {fPrint, email, birth, fName, lName, active, lastUpdate} is an agent with
 					// fPrint is PGP Key fingerprint
@@ -67,7 +67,7 @@ contract Controlled {
 					// lName is last name in identity document MRZ
 					// status is dead or alive state of agent
 					// lastUpdate is timestamp of last record entry
-	SomeDoer public thisDoer;// = SomeDoer(0x4fc6c65443d1b988, "whoiamnottelling", 346896000, "Iam", "Not", false);	
+	//SomeDoer public thisDoer;// = SomeDoer(0x4fc6c65443d1b988, "whoiamnottelling", 346896000, "Iam", "Not", false);	
 
 	// function funcForSomeDoer(SomeDoer _aDoer) {
 	// 	(...	(_aDoer.fPrint),
@@ -162,6 +162,7 @@ contract Controlled {
         bytes32 conditionQ;
         uint timeOpt;  // preferred timeline
         uint expire;
+        bytes32 hash;
 		} 
         
     struct Plan {
@@ -171,14 +172,16 @@ contract Controlled {
 		bytes32 conditionQ;
         mapping(bytes32 => string) ipfs;
         Project status;
+        address creator;
+        address curator;
 		}
-        enum Project {STARTED, SUSPENDED, CLOSED}
+        enum Project { PENDING, STARTED, CLOSED }
         mapping(bytes32 => Plan) public plans;
         bytes32[] allPlans;
 
     struct Promise {
         address doer;
-        string thing;
+        bytes32 thing;
         uint timeAlt;   // proposed timeline
         uint256 value;
         bytes32 hash;

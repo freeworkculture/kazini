@@ -25,13 +25,13 @@ contract InputFactor is Controlled {
     uint public orderCount;
     uint public fulfillmentCount;
 
-    modifier onlyCreators {
+    modifier onlyCreators { // MSD from Able
         if (!doers.isCreator(msg.sender)) 
         revert();
         _;
     }    
 
-    modifier onlyDoers {
+    modifier onlyDoers {    // MSD from Creator
         if (!doers.isDoer(msg.sender)) 
         revert();
         _;
@@ -63,43 +63,80 @@ contract InputFactor is Controlled {
 		// Promise taskT;
 		// bytes32 conditionQ;
 		// } 
+        //} 
+        //     struct Service {
+		// Belief conditionP;
+		// Promise taskT;
+        // bytes32 conditionQ;
+        // uint timeOpt;  // preferred timeline
+        // uint expire;
+		// } 
 
-    function plan(bytes32 _intention, bytes32 _desire, bytes32 _preConditions, string _projectUrl) public payable onlyCreators {
-        Controlled.plans[_intention].conditionQ = Doers(msg.sender).getDesire(_desire).goal; // Creator and project share a goal  
-        Controlled.plans[_intention].conditionP = _preConditions; // pCondition of the curate that will define the concept.
+    function plan(bytes32 _intention, bytes32 _desire, Belief _preConditions, string _projectUrl) public payable onlyCreators {
+        require((Controlled.plans[_intention].status != Project.STARTED) || // This is 
+        (Controlled.plans[_intention].status != Project.CLOSED)); // a new plan?
+        Controlled.plans[_intention].conditionQ = Doers(msg.sender).getDesire(_desire).goal; // Creator and project share a goal
+        bytes32 serviceId = Controlled.plans[_intention].conditionQ ^ bytes32(msg.sender);  // bitwise XOR builds a map of serviceIds
+        Controlled.plans[_intention].service[serviceId].conditionP = _preConditions; // pCondition of the curate that will define the concept.
         bytes32 url = keccak256(_projectUrl);
-        Controlled.plans[_intention].ipfs[url] = _projectUrl; // main url of the project repo.
+        Controlled.plans[_intention].ipfs[url] = _projectUrl; // Store the prefeasibility at the main project repo.
+        Controlled.plans[_intention].status == Project.PENDING;
+        Controlled.plans[_intention].creator = tx.origin;
+        // push event for new plan
     }
 
-    function plan(bytes32 _intention, bytes32 _serviceId, bytes32 _pConditions, bytes32 _qConditions) public payable onlyDoers {
-        require(Controlled.plans[_intention].conditionP == Controlled.bdi[tx.origin].beliefs.hash); // curate meets the pCondition
-        Controlled.plans[_intention].service[_serviceId].conditionP.hash = _pConditions;
-        Controlled.plans[_intention].service[_serviceId].conditionQ = _qConditions;
+    function plan(bytes32 _intention, bytes32 _serviceId, bytes32 _myQCondition, Belief _nextPCondition) public payable onlyDoers {
+        require(Controlled.plans[_intention].status == Project.PENDING); // Project is not pending or closed
+        require(Controlled.bdi[tx.origin].beliefs.index >= Controlled.plans[_intention].service[_serviceId].conditionP.index); // Curate 
+        Controlled.plans[_intention].service[_serviceId].conditionP = Controlled.bdi[tx.origin].beliefs; // meets or exceeds the pCondition
+        bytes32 nServiceId = _serviceId ^ bytes32(msg.sender);
+        Controlled.plans[_intention].service[_serviceId].conditionQ = _myQCondition;
+        Controlled.plans[_intention].service[nServiceId].conditionP = _nextPCondition;
+        Controlled.plans[_intention].service[_serviceId].hash = keccak256(_myQCondition, _nextPCondition);
+        Controlled.plans[_intention].curator = tx.origin;
     }
     
     // pCondition must be present before project is started
     // qCondition must be present before project is closed
     function plan(bytes32 _intention, bytes32 _prerequisites, string _projectUrl, bytes32 _verity) public payable onlyDoers {
-        require(Controlled.bdi[tx.origin].beliefs.hash == Controlled.plans[_intention].conditionP); // curate meets the pCondition
-        Controlled.plans[_intention].conditionP = keccak256(_prerequisites, Controlled.plans[_intention].conditionP);
-        bytes32 url = keccak256(_projectUrl);
+        require(Controlled.plans[_intention].curator == tx.origin); // curate meets the pCondition
+        Controlled.plans[_intention].conditionP = keccak256(_prerequisites, Controlled.plans[_intention].conditionP); // Use a merkle tree
+        bytes32 url = keccak256(_projectUrl); // function and base the design pCondition to the merkle tree
         Controlled.plans[_intention].ipfs[url] = _projectUrl; // additional urls of project repo.
-        Controlled.plans[_intention].conditionQ = keccak256(_verity, Controlled.plans[_intention].conditionQ);
+        //Controlled.plans[_intention].conditionQ = keccak256(_verity, Controlled.plans[_intention].conditionQ);
         Controlled.allPlans.push(_intention);
+        Controlled.plans[_intention].status == Project.STARTED;
     }      
 
-    function promise(bytes32 _intention, bytes32 _desire, bytes32 _serviceId, uint _time, string _thing) public payable onlyDoers {
-        require(Controlled.bdi[tx.origin].beliefs.hash == Controlled.plans[_intention].service[_serviceId].conditionP.hash);
+    function promise(bytes32 _intention, bytes32 _desire, bytes32 _serviceId, uint _time, bool _thing) public payable onlyDoers {
+        require(Controlled.bdi[tx.origin].beliefs.index >= Controlled.plans[_intention].service[_serviceId].conditionP.index);
         require(Controlled.bdi[tx.origin].desires[_desire].goal == Controlled.plans[_intention].service[_serviceId].conditionQ);
         require((_time > block.timestamp) || (_time < Controlled.plans[_intention].service[_serviceId].expire));
         require(msg.value > 0);
         require(Controlled.bdi[tx.origin].beliefs.index > Controlled.bdi[Controlled.plans[_intention].service[_serviceId].taskT.doer].beliefs.index);
-        bytes32 eoi = keccak256(msg.sender, _thing);
-        Controlled.plans[_intention].service[_serviceId].taskT = Promise({doer: tx.origin, thing: _thing, timeAlt: _time, value: msg.value, hash: eoi});
+        bytes32 eoi = keccak256(msg.sender, _intention, _serviceId);
+        Controlled.plans[_intention].service[_serviceId].taskT = Promise({
+            doer: tx.origin, 
+            thing: Controlled.bdi[tx.origin].intentions[_thing].service, 
+            timeAlt: _time, 
+            value: msg.value, 
+            hash: eoi});
         Controlled.Promises[tx.origin].push(_serviceId);
         promiseCount++;
         Controlled.promiseCount++; //!!! COULD REMOVE ONE COUNTER, LEFT HERE FOR DEBUGGING
         }
+
+    // }
+    //     struct Desire {
+    //     bytes32 goal;
+    //     bool status;
+    //     }
+    // struct Intention {
+    //     Agent status;
+    //     bytes32 service;
+    //     uint256 payout;
+    //     }
+    
 
     function order(bytes32 _intention, bytes32 _serviceId, bool _check, string thing, string proof) public payable onlyDoers {
         // Validate existing promise.
@@ -108,7 +145,7 @@ contract InputFactor is Controlled {
             Controlled.Promise storage reset;
             Controlled.plans[_intention].service[_serviceId].taskT = reset;
             }
-        bytes32 lso = keccak256(msg.sender, _serviceId);
+        bytes32 lso = keccak256(msg.sender, _serviceId); // Use merkle tree function to build order tree, rebase design plan 
         require(block.timestamp < Controlled.plans[_intention].service[lso].expire);
         bytes32 verity = keccak256(msg.sender, proof);
         Controlled.Fulfillment storage checker;
@@ -119,7 +156,7 @@ contract InputFactor is Controlled {
     function fulfill(bytes32 _intention, bytes32 _verity, bytes32 _thing) public payable onlyDoers {
         // Validate existing promise.
         Controlled.orders[_verity].hash = _thing;
-        _verity = keccak256(msg.sender, _verity);
+        _verity = keccak256(msg.sender, _verity); // Use merkle tree function to build as-built tree, change/configuration management
         orders[_verity].check = Fulfillment({prover: tx.origin, timestamp: block.timestamp, hash: _verity, complete: true});
         Controlled.fulfillmentCount++;
         // function setReputation(Controlled.Intention _service, bool _intention) internal onlyDoer {
