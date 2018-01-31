@@ -22,196 +22,26 @@ contract Able {
     }
 }
 
-contract Controlled {
-    
+
+contract Controller {
+    /// @notice The address of the controller is the only address that can call
+    ///  a function with this modifier
+    modifier onlyController { 
+        require(msg.sender == controller); 
+        _; 
+        }
+
     address public controller;
-    
+
     // This is where we keep all the contracts.
     mapping (bytes32 => address) public contracts;
 
-    struct Creator {
-		bool active;
-		uint256 myDoers;
-	}
-	mapping(address => Creator) creators;
-///////////////////
-/// @dev `SomeDoer` defines the Sovereignty of an agent
-///////////////////
+    mapping (bytes32 => Database) public databases;
 
-	struct SomeDoer {
-        bytes32 fPrint;
-        bytes32 idNumber;
-		bytes32 email;
-		bytes32 fName;
-		bytes32 lName;
-        bytes32 hash;
-		bytes32 tag;
-        bytes32 data;
-        int256 birth;
-		bool active;
-		}
-    struct Doer {
-        address doer;
-        bool active;
+    function Controller() public { 
+        controller = msg.sender;
+        registerContract("Controller", this);
         }
-        mapping(bytes32 => Doer) doersUuid;
-        mapping(address => Doer) doersAddress;
-        address[] doersAccts;
-        uint public doerCount;	// !!! Can I call length of areDoers instead??!!!
-/// SomeDoer aDoer {hex, string, uint, string, string, true, now}
-/// @dev Interp. aDoer {fPrint, email, birth, fName, lName, active, lastUpdate} is an agent with
-					// fPrint is PGP Key fingerprint
-					// email is PGP key email
-					// birth is date of birth in seconds from 1970
-					// fName is first name in identity document MRZ
-					// lName is last name in identity document MRZ
-					// status is dead or alive state of agent
-					// lastUpdate is timestamp of last record entry
-	//SomeDoer public thisDoer;// = SomeDoer(0x4fc6c65443d1b988, "whoiamnottelling", 346896000, "Iam", "Not", false);	
-
-	// function funcForSomeDoer(SomeDoer _aDoer) {
-	// 	(...	(_aDoer.fPrint),
-	// 			(_aDoer.email),
-	// 			(_aDoer.birth),
-	// 			(_aDoer.fName),
-	// 			(_aDoer.lName),
-	// 			(_aDoer.status)
-	// 			}
-/// Template rules used:
-/// - Compound: 6 fields
-///			
-
-
-    ///////////////////
-/// @dev `B-D-I` is the structure that prescribes a strategy model to an actual agent
-///////////////////
-///////////////////
-/// @dev `B-D-I` is the structure that prescribes a strategy model to an actual agent
-///////////////////
-	
-	/// Belief myBelief {hex, int, int8, hex}
-	/// @dev Interp. myBelief {Qualification, Experience, Reputation, Talent} is an agent with
-					// Qualification is (<ISO 3166-1 numeric-3>,<Conferring Authority>,<Score>)
-					// experience is age in seconds
-					// reputaion is PGP trust level flag !!! CITE RFC PART
-					// talent is user declared string of talents
-	//Belief myBelief; // = Belief(myQualification, 1, 0x004, 0x00);
-	// function funcForBelief(Belief _aBelief) {
-	// 	(...	(_aBelief.myQualification),
-	// 			(_aBelief.experience),
-	// 			(_aBelief.reputation),
-	// 			(_aBelief.talent),
-	// 			}
-/// Template rules used:
-/// - Compound: 4 fields
-///
-    struct Belief {
-        Qualification qualification;
-        int256 experience;
-        bytes32 reputation;
-        bytes32 talent;
-        bytes32 index;
-        bytes32 hash;
-        }
-        struct Qualification {
-            bytes32 country; //ISO3166-2:KE-XX;
-            bytes32 cAuthority;
-            bytes32 score;
-            bytes32 hash;
-            }
-            mapping(bytes32 => Qualification[]) qualification;
-            enum Level {PRIMARY,SECONDARY,TERTIARY,CERTIFICATE,DIPLOMA,BACHELOR,MASTER,DOCTORATE,LICENSE,CERTIFICATION}
-    struct Desire {
-        bytes32 goal;
-        bool status;
-        }
-    struct Intention {
-        Agent status;
-        bytes32 service;
-        uint256 payout;
-        }
-    enum Agent {ACTIVE, INACTIVE, RESERVED}
-
-    enum Flag { 
-		experience,e,
-		reputation,r,
-		talent,t,
-		index,i,
-		hashB,HB,
-		country,c,
-		cAuthority,CA,
-		score,s,
-		hashQ,HQ,
-		goal,g,
-		statusD,SD,
-		statusI,SI,
-		service,S,
-		payout,p
-		}
-
-    struct BDI {
-        Belief beliefs;
-        mapping(bytes32 => Desire) desires;
-	    mapping(bool => Intention) intentions;
-	    }
-        mapping(address => BDI) bdi;
-        
-    struct Service {
-		Belief conditionP;
-		Promise taskT;
-        bytes32 conditionQ;
-        uint timeOpt;  // preferred timeline
-        uint expire;
-        bytes32 hash;
-		} 
-        
-    struct Plan {
-		bytes32 conditionP;
-		mapping(bytes32 => Service) service;
-        // mapping(bytes32 => Service[]) services;
-		bytes32 conditionQ;
-        mapping(bytes32 => string) ipfs;
-        Project status;
-        address creator;
-        address curator;
-		}
-        enum Project { PENDING, STARTED, CLOSED }
-        mapping(bytes32 => Plan) public plans;
-        bytes32[] allPlans;
-
-    struct Promise {
-        address doer;
-        bytes32 thing;
-        uint timeAlt;   // proposed timeline
-        uint256 value;
-        bytes32 hash;
-    }
-    mapping(address => bytes32[]) public Promises;
-    uint public promiseCount;
-
-    struct Order {
-        address doer;
-        bytes32 promise;
-        string proof;
-        uint timestamp;
-        Fulfillment check;
-        bytes32 hash;
-        }
-        struct Fulfillment {
-            address prover;
-            uint timestamp;
-            bytes32 hash;
-            bool complete;
-            }
-    mapping(bytes32 => Order) public orders;
-    uint public orderCount;
-    uint public fulfillmentCount;
-
-    /// @notice The address of the controller is the only address that can call
-    ///  a function with this modifier
-    modifier onlyController {require(msg.sender == controller); _;}
-
-    function Controlled() public {controller = msg.sender;}
 
     /// @notice Changes the controller of the contract
     /// @param _newController The new controller of the contract
@@ -225,7 +55,7 @@ contract Controlled {
     }
 
     // Add a new contract to the controller. This will overwrite an existing contract.
-    function registerContract(bytes32 name, address addr) internal returns (bool result) {
+    function registerContract(bytes32 name, address addr) onlyController public returns (bool) {
     // Only do validation if there is an actions contract.
         address cName = contracts[name];
         if (cName != 0x0) {
@@ -249,69 +79,269 @@ contract Controlled {
            }
        
     }
+
+    // Make a new database contract.
+    function makeDatabase(bytes32 _name) onlyController internal returns (bool,address) {
+        address cName = contracts[_name];
+        if (cName != 0x0) {
+            return (false,cName);
+            } else {
+                Database newDB = new Database(this);
+                contracts[_name] = newDB;
+                return (true,newDB);
+                }
+                }
+    
+    // function getPlan(bytes32 _name, bytes32 _plan) view internal returns (Database.Plan) {
+    //     return databases[_name].plans[_plan];
+    //         }
+    
+    // function getBDI(bytes32 _name) view internal returns (Database.BDI) {
+    //     return databases[_name].bdi[tx.origin];
+    // }
+
+    // function setPlan(bytes32 _name, bytes32 _planId, Database.Plan _data) onlyController internal returns (bool) {
+    //     databases[_name].plans[_planId] = _data;
+    //     return true;
+    // }
+
+    // function setBDI(bytes32 _name, Database.BDI _data) onlyController internal returns (bool) {
+    //     databases[_name].bdi[tx.origin] = _data;
+    //     return true;
+    // }
 }
 
 /////////////////
-// TokenController interface
+// Database Controller Contract
 /////////////////
+contract Database is Able {
 
-/// @dev This is designed to control the issuance and reserve of the Doit Token.
-/// This contract effectively dictates the monetary operations policy.
+    /// @notice The address of the controller is the only address that can call
+    ///  a function with this modifier
+    modifier onlyController {
+        require(msg.sender == controller);
+        _;
+        }
+
+    address public controller;
+
+    Controller contrl;
+
+///////////////////
+/// @dev `SomeDoer` defines the basic universal structure of an agent
+///////////////////
+	struct SomeDoer {
+        bytes32 fPrint;
+        bytes32 idNumber;
+		bytes32 email;
+		bytes32 fName;
+		bytes32 lName;
+        bytes32 hash;
+		bytes32 tag;
+        bytes32 data;
+        int birth;
+		bool active;
+		}
+/// SomeDoer aDoer {hex, string, uint, string, string, true, now}
+/// @dev Interp. aDoer {fPrint, email, birth, fName, lName, active, lastUpdate} is an agent with
+					// fPrint is PGP Key fingerprint
+					// email is PGP key email
+					// birth is date of birth in seconds from 1970
+					// fName is first name in identity document MRZ
+					// lName is last name in identity document MRZ
+					// status is dead or alive state of agent
+					// lastUpdate is timestamp of last record entry
+	//SomeDoer public thisDoer;// = SomeDoer(0x4fc6c65443d1b988, "whoiamnottelling", 346896000, "Iam", "Not", false);	
+
+	// function funcForSomeDoer(SomeDoer _aDoer) {
+	// 	(...	(_aDoer.fPrint),
+	// 			(_aDoer.email),
+	// 			(_aDoer.birth),
+	// 			(_aDoer.fName),
+	// 			(_aDoer.lName),
+	// 			(_aDoer.status)
+	// 			}
+/// Template rules used:
+/// - Compound: 6 fields
 ///
 
-/// @dev The token controller contract must implement these functions
-contract TokenController {
-    /// @notice Called when `_owner` sends ether to the Doit Token contract
-    /// @param _owner The address that sent the ether to create tokens
-    /// @return True if the ether is accepted, false if it throws
-    function proxyPayment(address _owner) public payable returns(bool);
+///////////////////
+/// @dev `B-D-I` is the structure that prescribes a strategy model to an actual agent
+///////////////////
+    struct Belief {
+        mapping(bytes32 => Qualification) qualification; // Key is the keccak256 hash of the struct contents
+        uint experience;
+        bytes32 reputation;
+        bytes32 talent;
+        bytes32 index;
+        bytes32 hash;
+        }
+        struct Qualification {
+            bytes32 country; //ISO3166-2:KE-XX;
+            bytes32 cAuthority;
+            bytes32 score;
+            }
+            // enum Level {PRIMARY,SECONDARY,TERTIARY,CERTIFICATE,DIPLOMA,BACHELOR,MASTER,DOCTORATE,LICENSE,CERTIFICATION}
+    struct Desire {
+        bytes32 goal;
+        bool status;
+        }
+    struct Intention {
+        State state;
+        bytes32 service;
+        uint256 payout;
+        }
+        enum State {ACTIVE, INACTIVE, RESERVED}
+	/// Belief myBelief {hex, int, int8, hex}
+	/// @dev Interp. myBelief {Qualification, Experience, Reputation, Talent} is an agent with
+					// Qualification is (<ISO 3166-1 numeric-3>,<Conferring Authority>,<Score>)
+					// experience is age in seconds
+					// reputaion is PGP trust level flag !!! CITE RFC PART
+					// talent is user declared string of talents
+	//Belief myBelief; // = Belief(myQualification, 1, 0x004, 0x00);
+	// function funcForBelief(Belief _aBelief) {
+	// 	(...	(_aBelief.myQualification),
+	// 			(_aBelief.experience),
+	// 			(_aBelief.reputation),
+	// 			(_aBelief.talent),
+	// 			}
+/// Template rules used:
+/// - Compound: 4 fields
+///
 
-    /// @notice Notifies the controller about a token transfer allowing the
-    ///  controller to react if desired
-    /// @param _from The origin of the transfer
-    /// @param _to The destination of the transfer
-    /// @param _amount The amount of the transfer
-    /// @return False if the controller does not authorize the transfer
-    function onTransfer(address _from, address _to, uint _amount) public returns(bool);
+    struct BDI {
+        Belief beliefs;
+        mapping(bytes32 => Desire) desires;
+	    mapping(bool => Intention) intentions;
+	    }
+        
+    struct Service {
+		Belief conditionP;
+		Promise taskT;
+        Desire conditionQ;
+        uint timeSoft;  // preferred timeline
+        uint expire;
+        bytes32 hash;
+        Fulfillment fulfillment;
+		} 
+        
+    struct Plan {
+		bytes32 conditionP;
+		mapping(bytes32 => Service) service;    // The key is XOR of serviceId and agent address 
+		Desire conditionQ;
+        mapping(bytes32 => string) ipfs;
+        Project state;
+        address creator;
+        address curator;
+		}
+        enum Project { PENDING, STARTED, CLOSED }
 
-    /// @notice Notifies the controller about an approval allowing the
-    ///  controller to react if desired
-    /// @param _owner The address that calls `approve()`
-    /// @param _spender The spender in the `approve()` call
-    /// @param _amount The amount in the `approve()` call
-    /// @return False if the controller does not authorize the approval
-    function onApprove(address _owner, address _spender, uint _amount) public
-        returns(bool);
+    struct Promise {
+        address doer;
+        bytes32 thing;
+        uint timeHard;   // proposed timeline
+        uint256 value;
+        bytes32 hash;
+    }
+
+    struct Fulfillment {
+        address doer;
+        bytes32 promise;
+        bytes32 proof;
+        Level rubric;
+        uint timestamp;
+        bytes32 hash;
+        mapping(bytes32 => Verification) check;  // key is hash of fulfillment
+        }
+        enum Level { POOR,SATISFACTORY,GOOD,EXCELLENT }
+        struct Verification {
+            address prover;
+            bool complete;
+            uint timestamp;
+            bytes32 hash;
+            }
+
+    enum Flag { 
+		experience,e,
+		reputation,r,
+		talent,t,
+		index,i,
+		hashB,HB,
+		country,c,
+		cAuthority,CA,
+		score,s,
+		hashQ,HQ,
+		goal,g,
+		statusD,SD,
+		statusI,SI,
+		service,S,
+		payout,p
+		}
+
+/////////////////
+// Database Contract
+/////////////////
+
+    struct Creator {
+		bool active;
+		uint256 myDoers;
+	}
+	mapping(address => Creator) creators;
+///////////////////
+/// @dev `SomeDoer` defines the Sovereignty of an agent
+///////////////////
+    struct Doer {
+        address doer;
+        bool active;
+        }
+        mapping(bytes32 => Doer) doersUuid;
+        mapping(address => Doer) doersAddress;
+        address[] doersAccts;
+        uint public doerCount;	// !!! Can I call length of areDoers instead??!!!
+
+///////////////////
+/// @dev `B-D-I` is the structure that prescribes a strategy model to an actual agent
+///////////////////
+
+    mapping(bytes32 => Qualification) qualification;
+    
+    //enum Level {PRIMARY,SECONDARY,TERTIARY,CERTIFICATE,DIPLOMA,BACHELOR,MASTER,DOCTORATE,LICENSE,CERTIFICATION}
+        
+    mapping(address => BDI) internal bdi;
+        
+    mapping(bytes32 => Plan) internal plans;
+
+    bytes32[] allPlans;
+
+    mapping(address => bytes32[]) public Promises;
+  
+    uint public promiseCount;
+
+    uint public orderCount;
+    uint public fulfillmentCount;
+
+    function Database(Controller _ctrl) public {
+        controller = msg.sender;
+        contrl = _ctrl;
+        contrl.registerContract("Database", this);
+        }
+
+    // function getPlan(bytes32 _plan) view internal returns (Plan) {
+    //     return plans[_plan];
+    // }
+
+    // function getBDI() view internal returns (BDI) {
+    //     return bdi[tx.origin];
+    // }
+
+    // function setPlan(bytes32 _planId, Plan _data) onlyController internal returns (bool) {
+    //     plans[_planId] = _data;
+    //     return true;
+    // }
+
+    // function setBDI(BDI _data) onlyController internal returns (bool) {
+    //     bdi[tx.origin] = _data;
+    //     return true;
+    // }
 }
 
-//contract Kazini is TokenController, Able {
-
-    // /// @notice Called when `_owner` sends ether to the Doit Token contract
-    // /// @param _owner The address that sent the ether to create tokens
-    // /// @return True if the ether is accepted, false if it throws
-    // function proxyPayment(address _owner) public payable returns(bool) {
-    //     doPayment(_owner);
-    //     return true;
-    // }
-
-    // /// @notice Notifies the controller about a token transfer allowing the
-    // ///  controller to react if desired
-    // /// @param _from The origin of the transfer
-    // /// @param _to The destination of the transfer
-    // /// @param _amount The amount of the transfer
-    // /// @return False if the controller does not authorize the transfer
-    // function onTransfer(address _from, address _to, uint _amount) public returns(bool) {
-    //     return true;
-    // }
-
-
-    // /// @notice Notifies the controller about an approval allowing the
-    // ///  controller to react if desired
-    // /// @param _owner The address that calls `approve()`
-    // /// @param _spender The spender in the `approve()` call
-    // /// @param _amount The amount in the `approve()` call
-    // /// @return False if the controller does not authorize the approval
-    // function onApprove(address _owner, address _spender, uint _amount) public returns(bool) {
-    //     return true;
-    // }
-//}

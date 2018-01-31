@@ -1,17 +1,23 @@
 pragma solidity ^0.4.19;
+import "./Able.sol";
+import "./DoitToken.sol";
+import "./Creators.sol";
+import "./ControlAbstract.sol";
 pragma experimental ABIEncoderV2;
 
-//import "./Able.sol";
-//import "./Doers.sol";
-import "./Creators.sol";
-import "./DoitToken.sol";
 
-
-contract InputFactor is Controlled {
+contract InputFactor is Database, DoitToken {
     
     address public deployer;
 
     Creators public doers;
+    
+    Controller contrl;
+
+    Database public dbs;
+
+    // enum Project { PENDING, STARTED, CLOSED }
+
 
     // Service Services;
 
@@ -37,11 +43,17 @@ contract InputFactor is Controlled {
         _;
     }
 
-    function InputFactor(Creators abs) public {
+    modifier onlyController {
+        require(msg.sender == deployer); 
+        _;}
+
+    function InputFactor(Creators _abs, Controller _ctrl, Database _db) public {
         fulfillmentCount = 0;
         deployer = msg.sender;
-        doers = abs;
-        Controlled.registerContract("InpuFactors", this);
+        doers = _abs;
+        contrl = _ctrl;
+        dbs = _db;
+        contrl.registerContract("InputFactor", this);
     }
 
     // Data -> Plan
@@ -72,58 +84,85 @@ contract InputFactor is Controlled {
         // uint expire;
 		// } 
 
-    function plan(bytes32 _intention, bytes32 _desire, Belief _preConditions, string _projectUrl) public payable onlyCreators {
-        require((Controlled.plans[_intention].status != Project.STARTED) || // This is 
-        (Controlled.plans[_intention].status != Project.CLOSED)); // a new plan?
-        Controlled.plans[_intention].conditionQ = Doers(msg.sender).getDesire(_desire).goal; // Creator and project share a goal
-        bytes32 serviceId = Controlled.plans[_intention].conditionQ ^ bytes32(msg.sender);  // bitwise XOR builds a map of serviceIds
-        Controlled.plans[_intention].service[serviceId].conditionP = _preConditions; // pCondition of the curate that will define the concept.
+    function plan(bytes32 _intention, bytes32 _desire, bytes32 _preConditions, string _projectUrl) public payable onlyCreators {
+        require((uint(plans[_intention].state) != uint(Project.STARTED)) || // This is 
+        (uint(plans[_intention].state) != uint(Project.CLOSED))); // a new plan?
+        plans[_intention].conditionQ = bdi[tx.origin].desires[_desire]; // Creator and project share a goal
+        // plans[_intention].conditionQ = myBDI.getDesire(_desire).goal; // Creator and project share a goal
+        bytes32 serviceId = plans[_intention].conditionQ.goal ^ bytes32(msg.sender);  // bitwise XOR builds a map of serviceIds
+        plans[_intention].service[serviceId].conditionP.hash = _preConditions; // pCondition of the curate that will define the concept.
         bytes32 url = keccak256(_projectUrl);
-        Controlled.plans[_intention].ipfs[url] = _projectUrl; // Store the prefeasibility at the main project repo.
-        Controlled.plans[_intention].status == Project.PENDING;
-        Controlled.plans[_intention].creator = tx.origin;
+        plans[_intention].ipfs[url] = _projectUrl; // Store the prefeasibility at the main project repo.
+        uint(plans[_intention].state) == uint(Project.PENDING);
+        plans[_intention].creator = tx.origin;
         // push event for new plan
     }
 
-    function plan(bytes32 _intention, bytes32 _serviceId, bytes32 _myQCondition, Belief _nextPCondition) public payable onlyDoers {
-        require(Controlled.plans[_intention].status == Project.PENDING); // Project is not pending or closed
-        require(Controlled.bdi[tx.origin].beliefs.index >= Controlled.plans[_intention].service[_serviceId].conditionP.index); // Curate 
-        Controlled.plans[_intention].service[_serviceId].conditionP = Controlled.bdi[tx.origin].beliefs; // meets or exceeds the pCondition
+    function plan(
+        bytes32 _intention, 
+        bytes32 _serviceId, 
+        bytes32 _myQCondition, 
+        bool _myGgoal, 
+        uint _experience, 
+        bytes32 _reputation, 
+        bytes32 _talent, 
+        bytes32 _index, 
+        bytes32 hash, 
+        bytes32 _country, 
+        bytes32 _cAuthority, 
+        bytes32 _score) public payable onlyDoers {
+        require(uint(plans[_intention].state) == uint(Project.PENDING)); // Project is not pending or closed
+        require(hash == keccak256(_country,_cAuthority,_score,_experience,_reputation,_talent));
+        require(bdi[tx.origin].beliefs.index >= plans[_intention].service[_serviceId].conditionP.index); // Curate meets or exceeds
+        plans[_intention].service[_serviceId].conditionP = bdi[tx.origin].beliefs; // current pCondition, set new curate
         bytes32 nServiceId = _serviceId ^ bytes32(msg.sender);
-        Controlled.plans[_intention].service[_serviceId].conditionQ = _myQCondition;
-        Controlled.plans[_intention].service[nServiceId].conditionP = _nextPCondition;
-        Controlled.plans[_intention].service[_serviceId].hash = keccak256(_myQCondition, _nextPCondition);
-        Controlled.plans[_intention].curator = tx.origin;
-    }
+        plans[_intention].service[_serviceId].conditionQ = Desire({goal: _myQCondition, status: _myGgoal});
+        Database.Belief memory beliefTmp = Database.Belief({
+            talent: _talent, 
+            reputation: _reputation, 
+            experience: _experience, 
+            index: _index, 
+            hash: hash 
+            });
+        plans[_intention].service[nServiceId].conditionP = beliefTmp;
+        Database.Qualification memory meritTmp = Database.Qualification({
+            country: _country, 
+            cAuthority: _cAuthority, 
+            score: _score
+            });
+        plans[_intention].service[nServiceId].conditionP.qualification[hash] = meritTmp;
+        plans[_intention].service[_serviceId].hash = keccak256(_myQCondition, hash);
+        plans[_intention].curator = tx.origin;
+        }
     
     // pCondition must be present before project is started
     // qCondition must be present before project is closed
     function plan(bytes32 _intention, bytes32 _prerequisites, string _projectUrl, bytes32 _verity) public payable onlyDoers {
-        require(Controlled.plans[_intention].curator == tx.origin); // curate meets the pCondition
-        Controlled.plans[_intention].conditionP = keccak256(_prerequisites, Controlled.plans[_intention].conditionP); // Use a merkle tree
+        require(plans[_intention].curator == tx.origin); // curate meets the pCondition
+        plans[_intention].conditionP = keccak256(_prerequisites, plans[_intention].conditionP); // Use a merkle tree
         bytes32 url = keccak256(_projectUrl); // function and base the design pCondition to the merkle tree
-        Controlled.plans[_intention].ipfs[url] = _projectUrl; // additional urls of project repo.
-        //Controlled.plans[_intention].conditionQ = keccak256(_verity, Controlled.plans[_intention].conditionQ);
-        Controlled.allPlans.push(_intention);
-        Controlled.plans[_intention].status == Project.STARTED;
+        plans[_intention].ipfs[url] = _projectUrl; // additional urls of project repo.
+        //plans[_intention].conditionQ = keccak256(_verity, plans[_intention].conditionQ);
+        allPlans.push(_intention);
+        plans[_intention].state == Project.STARTED;
     }      
 
     function promise(bytes32 _intention, bytes32 _desire, bytes32 _serviceId, uint _time, bool _thing) public payable onlyDoers {
-        require(Controlled.bdi[tx.origin].beliefs.index >= Controlled.plans[_intention].service[_serviceId].conditionP.index);
-        require(Controlled.bdi[tx.origin].desires[_desire].goal == Controlled.plans[_intention].service[_serviceId].conditionQ);
-        require((_time > block.timestamp) || (_time < Controlled.plans[_intention].service[_serviceId].expire));
+        require(bdi[tx.origin].beliefs.index >= plans[_intention].service[_serviceId].conditionP.index);
+        require(bdi[tx.origin].desires[_desire].goal == plans[_intention].service[_serviceId].conditionQ.goal);
+        require((_time > block.timestamp) || (_time < plans[_intention].service[_serviceId].expire));
         require(msg.value > 0);
-        require(Controlled.bdi[tx.origin].beliefs.index > Controlled.bdi[Controlled.plans[_intention].service[_serviceId].taskT.doer].beliefs.index);
+        require(bdi[tx.origin].beliefs.index > bdi[plans[_intention].service[_serviceId].taskT.doer].beliefs.index);
         bytes32 eoi = keccak256(msg.sender, _intention, _serviceId);
-        Controlled.plans[_intention].service[_serviceId].taskT = Promise({
+        plans[_intention].service[_serviceId].taskT = Promise({
             doer: tx.origin, 
-            thing: Controlled.bdi[tx.origin].intentions[_thing].service, 
-            timeAlt: _time, 
+            thing: bdi[tx.origin].intentions[_thing].service, 
+            timeHard: _time, 
             value: msg.value, 
             hash: eoi});
-        Controlled.Promises[tx.origin].push(_serviceId);
+        Promises[tx.origin].push(_serviceId);
         promiseCount++;
-        Controlled.promiseCount++; //!!! COULD REMOVE ONE COUNTER, LEFT HERE FOR DEBUGGING
+        promiseCount++; //!!! COULD REMOVE ONE COUNTER, LEFT HERE FOR DEBUGGING
         }
 
     // }
@@ -132,34 +171,33 @@ contract InputFactor is Controlled {
     //     bool status;
     //     }
     // struct Intention {
-    //     Agent status;
+    //     State status;
     //     bytes32 service;
     //     uint256 payout;
     //     }
     
 
-    function order(bytes32 _intention, bytes32 _serviceId, bool _check, string thing, string proof) public payable onlyDoers {
+    function fulfill(bytes32 _intention, bytes32 _serviceId, bool _check, bytes32 proof, Level _level) public payable onlyDoers {
         // Validate existing promise.
-        if (Controlled.bdi[Controlled.plans[_intention].service[_serviceId].taskT.doer].intentions[_check].status != 
-        Controlled.Agent.ACTIVE) {
-            Controlled.Promise storage reset;
-            Controlled.plans[_intention].service[_serviceId].taskT = reset;
+        if (bdi[plans[_intention].service[_serviceId].taskT.doer].intentions[_check].state != 
+        State.ACTIVE) {
+            Promise memory reset;
+            plans[_intention].service[_serviceId].taskT = reset;
             }
         bytes32 lso = keccak256(msg.sender, _serviceId); // Use merkle tree function to build order tree, rebase design plan 
-        require(block.timestamp < Controlled.plans[_intention].service[lso].expire);
+        require(block.timestamp < plans[_intention].service[lso].expire);
         bytes32 verity = keccak256(msg.sender, proof);
-        Controlled.Fulfillment storage checker;
-        orders[verity] = Order({doer: msg.sender, promise: Controlled.plans[_intention].service[lso].taskT.hash, proof: proof, timestamp: block.timestamp, check: checker, hash: verity});
-        Controlled.orderCount++;
+        plans[_intention].service[_serviceId].fulfillment = Fulfillment({doer: msg.sender, promise: plans[_intention].service[lso].taskT.hash, proof: proof, rubric: _level, timestamp: block.timestamp, hash: verity});
+        orderCount++;
         }
 
-    function fulfill(bytes32 _intention, bytes32 _verity, bytes32 _thing) public payable onlyDoers {
+    function verify(bytes32 _intention, bytes32 _serviceId, bytes32 _verity, bytes32 _thing) public payable onlyDoers {
         // Validate existing promise.
-        Controlled.orders[_verity].hash = _thing;
+        plans[_intention].service[_serviceId].fulfillment.hash = _thing;
         _verity = keccak256(msg.sender, _verity); // Use merkle tree function to build as-built tree, change/configuration management
-        orders[_verity].check = Fulfillment({prover: tx.origin, timestamp: block.timestamp, hash: _verity, complete: true});
-        Controlled.fulfillmentCount++;
-        // function setReputation(Controlled.Intention _service, bool _intention) internal onlyDoer {
+        plans[_intention].service[_serviceId].fulfillment.check[_verity] = Verification({prover: tx.origin, complete: true, timestamp: block.timestamp, hash: _verity});
+        fulfillmentCount++;
+        // function setReputation(Intention _service, bool _intention) internal onlyDoer {
         //     myBDI.beliefs.reputation = _service;  !!! Working on
 		}
 
@@ -167,9 +205,9 @@ contract InputFactor is Controlled {
         return deployer;
     }
 
-    function getDoers() internal constant returns (Creators) {
-        return doers;
-    }
+    // function getDoers() internal constant returns (Creators) {
+    //     return doers;
+    // }
 
     function getPromiseCount() internal constant returns (uint) {
         return promiseCount;
@@ -178,34 +216,57 @@ contract InputFactor is Controlled {
     function getFulfillmentCount() internal constant returns (uint) {
         return fulfillmentCount;
     }
+
+    // function setDeployer(bytes23 _db) onlyController internal {
+    //     dbs = contrl.databases[_db];
+    //     // return true;
+    // }
+
 ////////////////
 // Events
 ////////////////
     event PlanEvent(address indexed _from, address indexed _to, uint256 _amount);
     event PromiseEvent(address indexed _from, address indexed _to, uint256 _amount);
     event Fulfill(address indexed _from, address indexed _to, uint256 _amount);
-}
+// }
 
-contract FactorPayout is DoitToken {
+// contract FactorPayout is DoitToken {
 
 bytes32 public currentChallenge;                         // The coin starts with a challenge
 uint public timeOfLastProof;                             // Variable to keep track of when rewards were given
 uint public difficulty = 10**32;                         // Difficulty starts reasonably low
 uint256 amount;
 
-function FactorPayout() internal {
-    Controlled.registerContract("InputFactor", this);
-    }
+// function FactorPayout() internal {
+//     Controller.registerContract("FactorPayout", this);
+//     }
 
-function payout(uint nonce, bytes32 _verity, bytes32 _intention, bytes32 _serviceId) internal {
+function payout(uint nonce, bytes32 _intention, bytes32 _serviceId) internal {
     bytes8 n = bytes8(keccak256(nonce, currentChallenge));    // Generate a random hash based on input
     require(n >= bytes8(difficulty));                   // Check if it's under the difficulty
     uint timeSinceLastProof = (now - timeOfLastProof);  // Calculate time since last reward was given
     require(timeSinceLastProof >= 5 seconds);         // Rewards cannot be given too quickly
-    require(orders[_verity].timestamp < Controlled.plans[_intention].service[_serviceId].expire);
-    uint payableTime = (Controlled.plans[_intention].service[_serviceId].timeOpt * 
-    ((Controlled.plans[_intention].service[_serviceId].expire - orders[_verity].timestamp) /
-    (Controlled.plans[_intention].service[_serviceId].expire - Controlled.plans[_intention].service[_serviceId].timeOpt)));
+    require(plans[_intention].service[_serviceId].fulfillment.timestamp < 
+    plans[_intention].service[_serviceId].expire);
+    uint totalTime;
+    uint payableTime;
+    if (plans[_intention].service[_serviceId].fulfillment.timestamp < 
+    plans[_intention].service[_serviceId].timeSoft) {
+        payableTime = plans[_intention].service[_serviceId].timeSoft;
+    } else if (plans[_intention].service[_serviceId].fulfillment.timestamp > 
+    plans[_intention].service[_serviceId].taskT.timeHard) {
+        totalTime = plans[_intention].service[_serviceId].expire - 
+        plans[_intention].service[_serviceId].timeSoft;
+        payableTime = ((plans[_intention].service[_serviceId].expire - 
+        plans[_intention].service[_serviceId].fulfillment.timestamp) / totalTime) * 
+        plans[_intention].service[_serviceId].timeSoft;
+        } else {
+        totalTime = plans[_intention].service[_serviceId].taskT.timeHard - 
+        plans[_intention].service[_serviceId].timeSoft;
+        payableTime = ((plans[_intention].service[_serviceId].taskT.timeHard - 
+        plans[_intention].service[_serviceId].fulfillment.timestamp) / totalTime) * 
+        plans[_intention].service[_serviceId].timeSoft;
+    }
     amount += payableTime / 60 seconds * 42 / 10;  // The reward to the winner grows by the minute
     difficulty = difficulty * 10 minutes / timeSinceLastProof + 1;  // Adjusts the difficulty
     approveAndCall(msg.sender, amount, "");
