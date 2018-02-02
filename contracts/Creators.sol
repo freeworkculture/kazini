@@ -1,44 +1,22 @@
 pragma solidity ^0.4.19;
+
 import "./Able.sol";
-import "./ControlAbstract.sol";
+
 pragma experimental ABIEncoderV2;
 
-// Doers is a class library of natural or artificial entities within A multi-agent system (MAS).
-// The agents are collectively capable of reaching goals that are difficult to achieve by an 
-// individual agent or monolithic system. The class can be added to, modified and reconstructed, 
-// without the need for detailed rewriting. 
-// The nature of an agent is: 
-// An identity structure
-// A behaviour method
-// A capability model
-// 
 
 ///////////////////
 // Beginning of Contract
 ///////////////////
 
-contract Creators is Database {
+contract Creators is Data {
 
 /// @dev The actual agent contract, the nature of the agent is identified controller is the msg.sender
 ///  that deploys the contract, so usually this token will be deployed by a
 ///  token controller contract.
 
-	modifier onlyCreator {
-		if (!creators[msg.sender].active) 
-		revert();
-		_;
-	}
-
-	modifier onlyDoer {
-		if (!doersAddress[msg.sender].active) 
-		revert();
-		_;
-	}
-
 	bytes32 public userName;
 	address ownAddress;
-
-	Database DB;
 
     // enum Flag { 
 	// 	experience,e,
@@ -57,17 +35,20 @@ contract Creators is Database {
 	// 	payout,p
 	// 	}
 
-	function Creators(bytes32 _name) internal {
+	function Creators(Able _ctrl, Database _db, bytes32 _name) public {
 		userName = _name;
 		ownAddress = msg.sender;
-		doerCount = 0;
-		creators[msg.sender] = Creator(true, 1);
-		//addDoer(creator);
-		contrl.registerContract("Creators", this);
+		contrl = _ctrl;
+		database = _db;
+// 		contrl.registerContract("Creators", this);
+// 		database = _ctrl.getDatabase();
+// 		database.call.setCreator(msg.sender, Database.Creator(true, 1));
+// 		database.setDoersNum(0);
+		
 	}
 
 	function makeDoer(
-		bytes32 _name, 
+	    bytes32 _name,
 		bytes32 _fPrint,
         bytes32 _idNumber,
 		bytes32 _email,
@@ -78,63 +59,78 @@ contract Creators is Database {
 		bytes32 _data,
         int256 _birth,
 		bool _active
-		) onlyCreator public returns (Doers) {
-			require(creators[msg.sender].myDoers > 0);
-			bytes32 uuidCheck = keccak256(_birth, _fName, _lName, _idNumber);
-			require(!doersUuid[uuidCheck].active);
+		) onlyCreator public returns (bool,address) {
+			require(database.getCreatorsNum() > 0);
+			bytes32 uuidCheck = keccak256(_fPrint, _birth, _lName, _idNumber);
+			require(!database.isDoer(uuidCheck));
 			// Doers newDoer = new Doers(this, _name);
 			// newDoer.setDoer(setDoer(_fPrint,_idNumber,_email,_fName,_lName,_hash,_tag,_data,_birth,_active));
-			address newDoer = new Doers(this, _name,setDoer(_fPrint,_idNumber,_email,_fName,_lName,_hash,_tag,_data,_birth,_active));
-			doersUuid[uuidCheck] = Doer(newDoer, true);
-			doersAddress[newDoer].active = true;
-			doersAccts.push(newDoer);
-			creators[msg.sender].myDoers--;
-			doerCount++;		
+			Doers newDoer = new Doers(_name, setDoer(_fPrint,_idNumber,_email,_fName,_lName,_hash,_tag,_data,_birth,_active));
+			database.setDoersUuid(Database.Doer(newDoer, true), uuidCheck);
+			database.setDoersAdd(newDoer, true);
+			database.setDoersAdd(newDoer);
+			database.setDoersDec();
+			database.setDoersInc();
+			return (true,newDoer);
             }
 
-	function getOwner() view public returns (address) {
+    // Get the address of an existing contract frrom the controller.
+    function getDatabase() public view returns (Database) {
+        return database;   
+    }
+	
+	function getOwner() public view returns (address) {
         return ownAddress;
 	}
 
 	function getCreator(address _address) view public returns (bool,uint256) {
-        return (creators[_address].active, creators[_address].myDoers);
+        return database.getCreators(_address);
 	}
 
 	function getDoerCount() view public returns (uint) {
-		return doerCount;
+		return database.countDoers();
 	}
 
-	function getDoers() view public returns (address[]) {
-		return doersAccts;
+// 	function getDoers() view public returns (address[]) {
+// 		return database.getDoers();
+// 	}
+
+// 	function getPlans() view internal onlyDoer returns (bytes32[]) {
+// 		return database.allPlans;
+// 	}
+
+	function isCreator() public view returns (bool) { // Consider use of delegateCall
+		return database.isCreator(tx.origin);
+	}
+	
+	function isCreator(bool _active, uint _num) public {
+		database.isCreator(Database.Creator({active:_active, myDoers: _num}));
 	}
 
-	function getPlans() view internal onlyDoer returns (bytes32[]) {
-		return allPlans;
+	function isDoer() view public returns (bool) { // Point this to oraclise service checking MSD on 
+		return database.isDoer(tx.origin);	// https://pgp.cs.uu.nl/paths/4b6b34649d496584/to/4f723b7662e1f7b5.json
 	}
-
-	function isCreator(address _address) view public returns (bool) {
-		return (creators[_address].active);
-	}
-
+	
 	function isDoer(address _address) view public returns (bool) { // Point this to oraclise service checking MSD on 
-		return (doersAddress[_address].active);	// https://pgp.cs.uu.nl/paths/4b6b34649d496584/to/4f723b7662e1f7b5.json
+		return database.isDoer(_address);	// https://pgp.cs.uu.nl/paths/4b6b34649d496584/to/4f723b7662e1f7b5.json
 	}
 
 	function isDoer(bytes32 _uuid) view public returns (bool) {
-		return (doersUuid[_uuid].active);
+		return database.isDoer(_uuid);
 	}
 
 	function isPlanning(bytes32 _intention) view public returns (uint256) { 
-        return uint256(plans[_intention].state);
+        return database.isPlanning(_intention);
     }
 
-	function setCreator(address _address, bool _active) internal onlyController {
-		creators[_address] = Creator(_active, 0);
-	}
+// 	function setCreator(address _address, bool _active) internal onlyController {
+// 		database.creators[_address] = database.Creator(_active, 0);
+// 	}
 
-	function setMyDoers(address _address, uint _allowed) internal onlyController {
-		creators[_address].myDoers += _allowed;
-	}
+// 	function setMyDoers(address _address, uint _allowed) internal onlyController {
+// 		database.creators[_address].myDoers += _allowed;
+// 	}
+
 	function setDoer(
 		bytes32 _fPrint,
 		bytes32 _idNumber,
@@ -146,8 +142,8 @@ contract Creators is Database {
 		bytes32 _data,
 		int256 _birth,
 		bool _active
-		) internal pure returns (SomeDoer) {
-			return SomeDoer({
+		) internal pure returns (Database.SomeDoer) {
+			return Database.SomeDoer({
 				fPrint:_fPrint, 
 				idNumber:_idNumber, 
 				email:_email, 
@@ -160,42 +156,28 @@ contract Creators is Database {
 				active:_active});
 		}
 
-	function setBDI(Flag _flag, bytes32 _var, bool _bvar, uint256 _cvar, uint256 _evar, bytes32 _level) internal onlyDoer returns (bool) {
-		if ((_flag == Flag.experience) || (_flag == Flag.e)) {
-			bdi[msg.sender].beliefs.experience = _cvar;
-			return true;
-			} else if ((_flag == Flag.reputation) || (_flag == Flag.r)) {
-				bdi[msg.sender].beliefs.reputation = _var;
-				return true;
-			} else if ((_flag == Flag.index) || (_flag == Flag.i)) {
-				bdi[msg.sender].beliefs.index = _var;
-				return true;
-			} else if ((_flag == Flag.hashB) || (_flag == Flag.HB)) {
-				bdi[msg.sender].beliefs.hash = _var;
-				return true;
-			} else if ((_flag == Flag.hashQ) || (_flag == Flag.HQ)) {
-				bdi[msg.sender].beliefs.qualification[_level].score = _var;
-				return true;
-			} else if ((_flag == Flag.payout) || (_flag == Flag.p)) {
-				bdi[msg.sender].intentions[_bvar].payout = _evar;
-				return true;
-				} else {
-					return false;
-					}
+	function setBDI(
+	    Database.Flag _flag, 
+	    bytes32 _var, 
+	    bool _bvar, 
+	    uint256 _cvar, 
+	    uint256 _evar, 
+	    bytes32 _level) internal onlyDoer returns (bool) {
+	    return database.setDoerBDI(_flag, _var, _bvar, _cvar, _evar, _level);
 		}
 
-	function setQualification(Qualification _qualification) internal onlyDoer {
-		bytes32 hash = keccak256(_qualification); 
-		bdi[msg.sender].beliefs.qualification[hash] = _qualification;
+	function setQualification(Database.Qualification _qualification) internal onlyDoer {
+		database.setDoerQualify(_qualification);
 		}
 	
-	function setDesire(Desire _goal, bytes32 _desire) internal onlyDoer {
-		bdi[msg.sender].desires[_desire] = _goal;
+	function setDesire(Database.Desire _goal, bytes32 _desire) internal onlyDoer {
+		database.setDoerDesire(_goal, _desire);
 		}
 
-	function setIntention(Intention _service, bool _intention) internal onlyDoer {
-		bdi[msg.sender].intentions[_intention] = _service;
-		}	
+	function setIntention(Database.Intention _service, bool _intention) internal onlyDoer {
+		database.setDoerIntent(_service, _intention);
+		}
+		
 
 	//function Creators() {registerContract("Creators", this);}
 
@@ -241,24 +223,24 @@ contract Doers {
 	address public doer;
 	bytes32 public userName;
 
-	Creators.SomeDoer public Me;// = SomeDoer(0x4fc6c65443d1b988, "whoiamnottelling", 346896000, "Iam", "Not", false);		
+	Database.SomeDoer public Me;// = SomeDoer(0x4fc6c65443d1b988, "whoiamnottelling", 346896000, "Iam", "Not", false);		
 			
-	Creators.BDI myBDI;
+	Database.BDI myBDI;
 	
-	Creators.Promise public myPromises;
+	Database.Promise public myPromises;
 	uint256 promiseCount;
 
-	Creators.Fulfillment[] myOrders;
+	Database.Fulfillment[] myOrders;
 	uint256 orderCount;
 	
 	//Creators.Flag aflag;
 	
 	function Doers(
-		address _address,
+// 		address _address,
 		bytes32 _name,
-		Creators.SomeDoer _adoer
+		Database.SomeDoer _adoer
 		) public {
-			myCreator = _address;
+			myCreator = msg.sender;
 			doer = tx.origin;
 			userName = _name;
 			setDoer(_adoer);
@@ -294,7 +276,7 @@ contract Doers {
 			myBDI.beliefs.qualification[_level].score);
 		}
 
-	function getDesire(bytes32 _desire) view public returns (Creators.Desire) {
+	function getDesire(bytes32 _desire) view public returns (Database.Desire) {
 		return myBDI.desires[_desire];
 		}
 	
@@ -316,12 +298,12 @@ contract Doers {
 	}
 
 		function setBDI(
-			Creators.Flag _flag, bytes32 _goal, 
+			Database.Flag _flag, bytes32 _goal, 
 			bool _intent, 
 			bytes32 _var, 
 			bool _status,
 			bytes32 _level, 
-			Creators.State _avar) internal onlyDoer returns (bool) {
+			Database.State _avar) internal onlyDoer returns (bool) {
 				if ((_flag == Database.Flag.talent) || (_flag == Database.Flag.t)) {
 					return true;
 					} else if ((_flag == Database.Flag.country) || (_flag == Database.Flag.c)) {
@@ -350,24 +332,24 @@ contract Doers {
 							}
 		}
 	
-	function setDoer(Creators.SomeDoer _aDoer) public onlyCreator {
+	function setDoer(Database.SomeDoer _aDoer) public onlyCreator {
 		Me = _aDoer;
 	}
 
-	function setBelief(Creators.Belief _belief) internal onlyDoer {
+	function setBelief(Database.Belief _belief) internal onlyDoer {
 		myBDI.beliefs = _belief;
 	}
 
-	function setQualification(Creators.Qualification _qualification) internal onlyDoer {
+	function setQualification(Database.Qualification _qualification) internal onlyDoer {
 		bytes32 hash = keccak256(_qualification);
 		myBDI.beliefs.qualification[hash] = _qualification;
 	}
 	
-	function setDesire(Creators.Desire _goal, bytes32 _desire) internal onlyDoer {
+	function setDesire(Database.Desire _goal, bytes32 _desire) internal onlyDoer {
 		myBDI.desires[_desire] = _goal;
 	}
 
-	function setIntention(Creators.Intention _service, bool _intention) internal onlyDoer {
+	function setIntention(Database.Intention _service, bool _intention) internal onlyDoer {
 		myBDI.intentions[_intention] = _service;
 	}
 }

@@ -3,51 +3,90 @@ pragma experimental ABIEncoderV2;
 
 /// @dev `Owned` is a base level contract that assigns an `owner` that can be
 ///  later changed
-contract Able {
+contract Controlled {
 
     /// @dev `owner` is the only address that can call a function with this
     /// modifier
-    modifier onlyAble {require (msg.sender == owner); _;}
+    modifier onlyController {
+        require (msg.sender == controller); 
+        _;
+    }
 
-    address public owner;
+    address public controller;
+    
+    Able internal contrl;
 
     /// @notice The Constructor assigns the message sender to be `owner`
-    function Able() internal {owner = msg.sender;}
+    function Controlled() internal {
+        controller = msg.sender;
+        contrl = Able(msg.sender);
+    }
 
     /// @notice `owner` can step down and assign some other address to this role
     /// @param _newOwner The address of the new owner. 0x0 can be used to create
     ///  an unowned neutral vault, however that cannot be undone
-    function changeOwner(address _newOwner) internal onlyAble {
-        owner = _newOwner;
+    function changeController(address _newOwner) public onlyController {
+        controller = _newOwner;
+    }
+    
+    function registerCon(bytes32 _name) public returns (bool) {
+        contrl.registerContract(_name, this);
+    }
+    
+    function getContrl() view public returns (Able) {
+        return contrl;
     }
 }
 
+/// @dev `Owned` is a base level contract that assigns an `owner` that can be
+///  later changed
+contract Data is Controlled {
+    
+    Database internal database;
 
-contract Controller {
-    /// @notice The address of the controller is the only address that can call
-    ///  a function with this modifier
-    modifier onlyController { 
-        require(msg.sender == controller); 
-        _; 
-        }
+	modifier onlyCreator {
+		require(database.isCreator(msg.sender));
+		_;
+	}
 
-    address public controller;
+	modifier onlyDoer {
+		require (database.isDoer(msg.sender)); 
+		_;
+	}
+    
+    // Get the address of an existing contract frrom the controller.
+    function getDatabase() onlyController public view returns (Database) {
+        return database;   
+    }
+}
+
+contract Able is Data {
+    // /// @notice The address of the controller is the only address that can call
+    // ///  a function with this modifier
+    // modifier onlyController { 
+    //     require(msg.sender == controller); 
+    //     _; 
+    //     }
+
+    // address public controller;
 
     // This is where we keep all the contracts.
     mapping (bytes32 => address) public contracts;
 
-    mapping (bytes32 => Database) public databases;
+    // mapping (bytes32 => Database) public databases;
+    
+    Creators internal create;
 
-    function Controller() public { 
-        controller = msg.sender;
-        registerContract("Controller", this);
+    function Able() public { 
+        // controller = msg.sender;
+        registerContract("Able", this);
         }
 
-    /// @notice Changes the controller of the contract
-    /// @param _newController The new controller of the contract
-    function changeController(address _newController) public onlyController {
-        controller = _newController;
-    }
+    // /// @notice Changes the controller of the contract
+    // /// @param _newController The new controller of the contract
+    // function changeController(address _newController) public onlyController {
+    //     controller = _newController;
+    // }
 
     // Get the address of an existing contract frrom the controller.
     function getContract(bytes32 name) onlyController internal constant returns (address) {
@@ -55,8 +94,8 @@ contract Controller {
     }
 
     // Add a new contract to the controller. This will overwrite an existing contract.
-    function registerContract(bytes32 name, address addr) onlyController public returns (bool) {
-    // Only do validation if there is an actions contract.
+    function registerContract(bytes32 name, address addr) onlyController public returns (bool) { // This guard exhibits buglike behaviour, 
+    // Only do validation if there is an actions contract.                                          stops contract from registering itself.
         address cName = contracts[name];
         if (cName != 0x0) {
            return false;
@@ -81,14 +120,28 @@ contract Controller {
     }
 
     // Make a new database contract.
-    function makeDatabase(bytes32 _name) onlyController internal returns (bool,address) {
+    function makeDatabase(bytes32 _name) onlyController public returns (bool,address) {
+        require(_name != 0x0);
         address cName = contracts[_name];
         if (cName != 0x0) {
             return (false,cName);
             } else {
-                Database newDB = new Database(this);
-                contracts[_name] = newDB;
-                return (true,newDB);
+                database = new Database(this);
+                contracts[_name] = database;
+                return (true,database);
+                }
+                }
+                
+    // Make a new creators contract.
+    function makeCreators(bytes32 _name) onlyController public returns (bool,address) {
+        require(_name != 0x0);
+        address cName = contracts[_name];
+        if (cName != 0x0) {
+            return (false,cName);
+            } else {
+                create = new Creators(this,database,_name);
+                contracts[_name] = create;
+                return (true,create);
                 }
                 }
     
@@ -111,21 +164,32 @@ contract Controller {
     // }
 }
 
+
 /////////////////
 // Database Controller Contract
 /////////////////
-contract Database is Able {
+contract Database is Controlled {
 
-    /// @notice The address of the controller is the only address that can call
-    ///  a function with this modifier
-    modifier onlyController {
-        require(msg.sender == controller);
-        _;
-        }
+    // /// @notice The address of the controller is the only address that can call
+    // ///  a function with this modifier
+    // modifier onlyController {
+    //     require(msg.sender == controller);
+    //     _;
+    //     }
 
-    address public controller;
+    // address public controller;
+    
+    
+	modifier onlyCreator {
+		require(isCreator(msg.sender));
+		_;
+	}
 
-    Controller contrl;
+	modifier onlyDoer {
+		require (isDoer(msg.sender)); 
+		_;
+	}
+
 
 ///////////////////
 /// @dev `SomeDoer` defines the basic universal structure of an agent
@@ -284,9 +348,9 @@ contract Database is Able {
 
     struct Creator {
 		bool active;
-		uint256 myDoers;
+		uint myDoers;
 	}
-	mapping(address => Creator) creators;
+	mapping(address => Creator) internal creators;
 ///////////////////
 /// @dev `SomeDoer` defines the Sovereignty of an agent
 ///////////////////
@@ -294,10 +358,10 @@ contract Database is Able {
         address doer;
         bool active;
         }
-        mapping(bytes32 => Doer) doersUuid;
+        mapping(bytes32 => Doer) internal doersUuid;
         mapping(address => Doer) doersAddress;
-        address[] doersAccts;
-        uint public doerCount;	// !!! Can I call length of areDoers instead??!!!
+        address[] internal doersAccts;
+        uint internal doerCount;	// !!! Can I call length of areDoers instead??!!!
 
 ///////////////////
 /// @dev `B-D-I` is the structure that prescribes a strategy model to an actual agent
@@ -320,28 +384,158 @@ contract Database is Able {
     uint public orderCount;
     uint public fulfillmentCount;
 
-    function Database(Controller _ctrl) public {
-        controller = msg.sender;
+    function Database(Able _ctrl) public {
+        // controller = _ctrl;
         contrl = _ctrl;
-        contrl.registerContract("Database", this);
         }
 
-    // function getPlan(bytes32 _plan) view internal returns (Plan) {
-    //     return plans[_plan];
-    // }
+    function getPlan(bytes32 _plan) view internal returns (Plan) {
+        return plans[_plan];
+    }
 
-    // function getBDI() view internal returns (BDI) {
-    //     return bdi[tx.origin];
-    // }
+    function getBDI() view internal returns (BDI) {
+        return bdi[tx.origin];
+    }
 
-    // function setPlan(bytes32 _planId, Plan _data) onlyController internal returns (bool) {
-    //     plans[_planId] = _data;
-    //     return true;
-    // }
+    function setPlan(bytes32 _planId, Plan _data) onlyController internal returns (bool) {
+        plans[_planId] = _data;
+        return true;
+    }
 
-    // function setBDI(BDI _data) onlyController internal returns (bool) {
-    //     bdi[tx.origin] = _data;
-    //     return true;
-    // }
+    function setBDI(BDI _data) onlyController internal returns (bool) {
+        bdi[tx.origin] = _data;
+        return true;
+    }
+    
+	function isCreator(address _address) view public returns (bool) {
+		return creators[_address].active;
+	}
+	
+	function isCreator(Creator _data) public {
+// 		creators[msg.sender] = _data;   // Testing effect of ppassing address
+		creators[tx.origin] = _data;    // Propose to use a delegateCall function
+	}
+
+	function isDoer(address _address) public view returns (bool) { // Point this to oraclise service checking MSD on 
+		return doersAddress[_address].active;	// https://pgp.cs.uu.nl/paths/4b6b34649d496584/to/4f723b7662e1f7b5.json
+	}
+
+	function isDoer(bytes32 _uuid) public view returns (bool) {
+		return doersUuid[_uuid].active;
+	}
+	
+	function isPlanning(bytes32 _intention) public view returns (uint256) { 
+        return uint256(plans[_intention].state);
+    }
+	
+	function countDoers() onlyController public view returns(uint) {
+		return doerCount;
+	}
+	
+	function getCreatorsNum() public view returns(uint) {
+		return creators[tx.origin].myDoers ;
+	}
+	
+	function getCreators(address _address) view public returns (bool,uint256) {
+        return (creators[_address].active, creators[_address].myDoers);
+	}
+	
+	function getDoersAccts() view public returns (address[]) {
+		return doersAccts;
+	}
+	
+	function getDoersUuid(bytes32 _uuid) public view returns(bool) {
+		return doersUuid[_uuid].active;
+	}
+
+	function getPlans() onlyController internal view returns (bytes32[]) {
+		return allPlans;
+	}
+	
+	function setCreator(address _address, bool _active, uint _num) onlyController internal {
+		creators[_address] = Creator(_active, _num);
+	}
+
+	function setDoersNum(uint _num) public onlyController {
+		doerCount = _num;
+	}
+	
+	function setDoersUuid(Doer _data, bytes32 _uuid) public {
+		doersUuid[_uuid] = _data;
+	}
+	
+	function setDoersAdd(address _addr, bool _ans) public {
+	    doersAddress[_addr].active = _ans;
+	   // if (_ans == true) {
+	   //     doersAccts.push(_addr);
+	   // }
+	}
+
+	function setDoersAdd(address _addr) public {
+	    doersAccts.push(_addr);
+	}	
+	
+	function setDoersDec() public { // Decrement a Creators Doers
+	    creators[msg.sender].myDoers--;
+	}
+	
+	function setDoersInc() public { // Increment all Doers
+	    doerCount++;
+	}
+			
+	function setMyDoers(address _address, uint _allowed) internal onlyController {
+		creators[_address].myDoers += _allowed;
+	}
+	
+	function setDoerBDI(
+	    Flag _flag, 
+	    bytes32 _var, 
+	    bool _bvar, 
+	    uint256 _cvar, uint256 _evar, bytes32 _level) onlyController public returns (bool) { // Check to Call by onlyDoer
+		if ((_flag == Flag.experience) || (_flag == Flag.e)) {
+			bdi[msg.sender].beliefs.experience = _cvar;
+			return true;
+			} else if ((_flag == Flag.reputation) || (_flag == Flag.r)) {
+				bdi[msg.sender].beliefs.reputation = _var;
+				return true;
+			} else if ((_flag == Flag.index) || (_flag == Flag.i)) {
+				bdi[msg.sender].beliefs.index = _var;
+				return true;
+			} else if ((_flag == Flag.hashB) || (_flag == Flag.HB)) {
+				bdi[msg.sender].beliefs.hash = _var;
+				return true;
+			} else if ((_flag == Flag.hashQ) || (_flag == Flag.HQ)) {
+				bdi[msg.sender].beliefs.qualification[_level].score = _var;
+				return true;
+			} else if ((_flag == Flag.payout) || (_flag == Flag.p)) {
+				bdi[msg.sender].intentions[_bvar].payout = _evar;
+				return true;
+				} else {
+					return false;
+					}
+		}
+		
+	function setDoerQualify(Qualification _qualification) onlyController public { //block to onlyDoer
+		bytes32 hash = keccak256(_qualification); 
+		bdi[msg.sender].beliefs.qualification[hash] = _qualification;
+		}
+	
+	function setDoerDesire(Desire _goal, bytes32 _desire) onlyController public { //block to onlyDoer
+		bdi[msg.sender].desires[_desire] = _goal;
+		}
+
+	function setDoerIntent(Database.Intention _service, bool _intention) onlyController public { //block to onlyDoer
+		bdi[msg.sender].intentions[_intention] = _service;
+		}	
 }
 
+
+// Doers is a class library of natural or artificial entities within A multi-agent system (MAS).
+// The agents are collectively capable of reaching goals that are difficult to achieve by an 
+// individual agent or monolithic system. The class can be added to, modified and reconstructed, 
+// without the need for detailed rewriting. 
+// The nature of an agent is: 
+// An identity structure
+// A behaviour method
+// A capability model
+// 
