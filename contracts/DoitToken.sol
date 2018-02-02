@@ -4,7 +4,7 @@ pragma solidity ^0.4.18;
     
     FreeWork Culture version 1.0.0
 
-    Copyright (c) 2017, Chris Daniels <iamnot@kazini.work>
+    Copyright (c) 2017, iamnot@kazini.work
     !!! <TODO>
 
     This program is free software: you can redistribute it and/or modify
@@ -26,7 +26,7 @@ pragma solidity ^0.4.18;
     Some of the components included in DOIT Token Dapp are licensed under 
     free or open source licenses. We wish to thank the contributors to those projects.
          
-    Credits to: Jordi Baylina "jordi@baylina.cat"
+    Credits to: Jordi
                 Shlomi
                 Bucky
                 Nurrik, Phoenix & Devin
@@ -45,7 +45,8 @@ pragma solidity ^0.4.18;
 // Include Libraries and Modules
 ///////////////////
 
-import "./Able.sol";
+import "./ControlAbstract.sol";
+import "./TokenController.sol";
 
 ///////////////////
 // Contract Interface
@@ -62,7 +63,7 @@ contract ApproveAndCallFallBack {
 /// @dev The actual token contract, the default controller is the msg.sender
 ///  that deploys the contract, so usually this token will be deployed by a
 ///  token controller contract.
-contract DoitToken is Controlled {
+contract DoitToken is Controller {
 
     string public name;                 //The Token's name: e.g. DigixDAO Tokens
     string public symbol;               //An identifier: e.g. REP
@@ -578,10 +579,10 @@ contract DoitToken is Controlled {
 /// @dev This contract is used to generate clone contracts from a contract.
 ///  In solidity this is the way to create a contract from a contract of the
 ///  same class
-contract DoitTokenFactory is Controlled {
+contract DoitTokenFactory is Controller {
 
     function DoitTokenFactory() internal {
-        Controlled.registerContract("DoitTokenFactory", this);
+        registerContract("DoitTokenFactory", this);
         }
 
     /// @notice Update the DApp by creating a new token with new functionalities

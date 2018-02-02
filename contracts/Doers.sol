@@ -1,5 +1,5 @@
 pragma solidity ^0.4.19;
-//pragma experimental ABIEncoderV2;
+pragma experimental ABIEncoderV2;
 
 import "./Able.sol";
 
@@ -17,79 +17,22 @@ import "./Able.sol";
 // Beginning of Contract
 ///////////////////
 
-contract Doers is Controlled {
-
+contract Doers {
+	
+	address public Controller;
 	address public myCreator;
 	address public doer;
-	string public userName;
+	bytes32 public userName;
 
-	//uint8 public Belief;
-	//struct Desire {bytes32 achievement; bool status;}
-	//struct Intention {bytes32 action; bool status;}
-
-///////////////////
-/// @dev `SomeDoer` defines the Sovereignty of an agent
-///////////////////
-
-	struct SomeDoer {
-		bytes32 fPrint;
-		string email;
-		int birth;
-		string fName;
-		string lName;
-		bytes32 idNumber;
-		bool active;	
-		}
-/// SomeDoer aDoer {hex, string, uint, string, string, true, now}
-/// @dev Interp. aDoer {fPrint, email, birth, fName, lName, active, lastUpdate} is an agent with
-					// fPrint is PGP Key fingerprint
-					// email is PGP key email
-					// birth is date of birth in seconds from 1970
-					// fName is first name in identity document MRZ
-					// lName is last name in identity document MRZ
-					// status is dead or alive state of agent
-					// lastUpdate is timestamp of last record entry
-	SomeDoer public thisDoer;// = SomeDoer(0x4fc6c65443d1b988, "whoiamnottelling", 346896000, "Iam", "Not", false);	
-
-	// function funcForSomeDoer(SomeDoer _aDoer) {
-	// 	(...	(_aDoer.fPrint),
-	// 			(_aDoer.email),
-	// 			(_aDoer.birth),
-	// 			(_aDoer.fName),
-	// 			(_aDoer.lName),
-	// 			(_aDoer.status)
-	// 			}
-/// Template rules used:
-/// - Compound: 6 fields
-///			
-
-///////////////////
-/// @dev `B-D-I` is the structure that prescribes a strategy model to an actual agent
-///////////////////
-///////////////////
-/// @dev `B-D-I` is the structure that prescribes a strategy model to an actual agent
-///////////////////
+	Controlled.SomeDoer public Me;// = SomeDoer(0x4fc6c65443d1b988, "whoiamnottelling", 346896000, "Iam", "Not", false);		
+			
+	Controlled.BDI myBDI;
 	
-	/// Belief myBelief {hex, int, int8, hex}
-	/// @dev Interp. myBelief {Qualification, Experience, Reputation, Talent} is an agent with
-					// Qualification is (<ISO 3166-1 numeric-3>,<Conferring Authority>,<Score>)
-					// experience is age in seconds
-					// reputaion is PGP trust level flag !!! CITE RFC PART
-					// talent is user declared string of talents
-	//Belief myBelief; // = Belief(myQualification, 1, 0x004, 0x00);
-	// function funcForBelief(Belief _aBelief) {
-	// 	(...	(_aBelief.myQualification),
-	// 			(_aBelief.experience),
-	// 			(_aBelief.reputation),
-	// 			(_aBelief.talent),
-	// 			}
-/// Template rules used:
-/// - Compound: 4 fields
-///				
-	//BDI myBDI;
-	
-	bytes32[] myPromises;
+	Controlled.Promise public myPromises;
 	uint256 promiseCount;
+
+	Controlled.Order[] myOrders;
+	uint256 orderCount;
 
 	modifier onlyCreator {
 		if (msg.sender != myCreator) 
@@ -98,81 +41,122 @@ contract Doers is Controlled {
 	}
 
 	modifier onlyDoer {
-		if (!thisDoer.active) 
+		if (!Me.active) 
 		revert();
 		_;
 	}
 	
 	function Doers(
-		address _address, 
-		string _name, 
-		bytes32 _fPrint, 
-		string _email, 
-		int _birth, 
-		string _fName, 
-		string _lName,
-		bytes32 _idNumber, 
-		bool _active) public {
+		address _address,
+		bytes32 _name,
+		Controlled.SomeDoer _adoer
+		) public {
 			myCreator = _address;
 			doer = tx.origin;
 			userName = _name;
-			thisDoer.fPrint = _fPrint;
-			thisDoer.email = _email;
-			thisDoer.birth = _birth;
-			thisDoer.fName = _fName;
-			thisDoer.lName = _lName;
-			thisDoer.idNumber = _idNumber;
-			thisDoer.active = _active;
+			setDoer(_adoer);
 			}
-
-	function getCreator() constant public returns (address) {
-		return myCreator;
-	}
 	
-	// function getDoer() view public returns (SomeDoer) {
-	// 	return (thisDoer);
-    // }
-	
-	// function getBelief() view public returns (Belief) {
-	// 	return (Controlled.bdi[this].beliefs);
-    // }
-
-	// function getDesire(bytes32 _desire) view public returns (Desire) {
-	// 	return (Controlled.bdi[this].desires[_desire]);
-    // }
-
-	// function getIntention(bool _check) view public returns (Intention) {
-	// 	return (Controlled.bdi[this].intentions[_check]);
-    // }
-
 	function isDoer() constant public returns (bool) {
-		if (thisDoer.active) {
+		if (Me.active) {
 			return true;}
 			return false;
+			}
+
+	function getInfo() constant public returns (address,address,bytes32) {
+		return (myCreator, doer, userName);
+		}
+	
+	function getDoer() view public returns (bytes32,bytes32,bytes32,bytes32,bytes32,bytes32,bytes32,bytes32,int256,bool) {
+		return (Me.fPrint,Me.idNumber,Me.email,Me.fName,Me.lName,Me.hash,Me.tag,Me.data,Me.birth,Me.active);
+		}
+	
+	function getBelief() view public returns (int256, bytes32,bytes32,bytes32,bytes32) {
+		return (
+			myBDI.beliefs.experience,
+			myBDI.beliefs.reputation,
+			myBDI.beliefs.talent,
+			myBDI.beliefs.index,
+			myBDI.beliefs.hash);
+		}
+	
+	function getQualification(bytes32 _level, uint8 _key) view public returns (bytes32,bytes32,bytes32,bytes32) {
+		return (
+			myBDI.beliefs.qualification.country,
+			myBDI.beliefs.qualification.cAuthority,
+			myBDI.beliefs.qualification.score,
+			myBDI.beliefs.qualification.hash);
+		}
+
+	function viewDesire(bytes32 _desire) view public returns (bytes32,bool) {
+		return (
+			myBDI.desires[_desire].goal,
+			myBDI.desires[_desire].status);
+			}
+
+	function getDesire(bytes32 _desire) view public returns (Controlled.Desire) {
+		return myBDI.desires[_desire];
+			}		
+
+	function getIntention(bool _check) view public returns (Controlled.Agent,bytes32,uint256) {
+		return (
+			myBDI.intentions[_check].status,
+			myBDI.intentions[_check].service,
+			myBDI.intentions[_check].payout);
+			}
+	
+	function getPromise() internal view onlyDoer returns (address,bytes32,uint,uint,bytes32) {
+		return (myPromises.doer, myPromises.thing, myPromises.timeAlt, myPromises.value, myPromises.hash);
+	}
+
+		function setBDI(Controlled.Flag _flag, bytes32 _goal, bool _intent, bytes32 _var, bool _status, Controlled.Agent _avar) internal onlyDoer returns (bool) {
+		if ((_flag == Controlled.Flag.talent) || (_flag == Controlled.Flag.t)) {
+				myBDI.beliefs.talent = _var;
+				return true;
+			} else if ((_flag == Controlled.Flag.country) || (_flag == Controlled.Flag.c)) {
+				myBDI.beliefs.qualification.country = _var;
+				return true;
+			} else if ((_flag == Controlled.Flag.cAuthority) || (_flag == Controlled.Flag.CA)) {
+				myBDI.beliefs.qualification.cAuthority = _var;
+				return true;
+			} else if ((_flag == Controlled.Flag.score) || (_flag == Controlled.Flag.s)) {
+				myBDI.beliefs.qualification.score = _var;
+				return true;
+			} else if ((_flag == Controlled.Flag.goal) || (_flag == Controlled.Flag.g)) {
+				myBDI.desires[_goal].goal = _var;
+				return true;
+			} else if ((_flag == Controlled.Flag.statusD) || (_flag == Controlled.Flag.SD)) {
+				myBDI.desires[_goal].status = _status;
+				return true;
+			} else if ((_flag == Controlled.Flag.statusI) || (_flag == Controlled.Flag.SI)) {
+				myBDI.intentions[_intent].status = _avar;
+				return true;
+			} else if ((_flag == Controlled.Flag.service) || (_flag == Controlled.Flag.S)) {
+				myBDI.intentions[_intent].service = _var;
+				return true;
+				} else {
+					return false;
+					}
+		}
+	
+	function setDoer(Controlled.SomeDoer _aDoer) internal onlyCreator {
+		Me = _aDoer;
+	}
+
+	function setBelief(Controlled.Belief _belief) internal onlyDoer {
+		myBDI.beliefs = _belief;
+	}
+
+	function setQualification(Controlled.Qualification _qualification) internal onlyDoer {
+		myBDI.beliefs.qualification = _qualification;
 	}
 	
-	function getPromise() internal view onlyDoer returns (bytes32[]) {
-		return Controlled.Promises[this];
+	function setDesire(Controlled.Desire _goal, bytes32 _desire) internal onlyDoer {
+		myBDI.desires[_desire] = _goal;
 	}
 
-	function getPromise(bytes32 _intention, bytes32 _serviceId) internal view onlyDoer returns (Promise) {
-		return Controlled.plans[_intention].service[_serviceId].taskT;
-	}
-
-	function setDoer(SomeDoer _aDoer) internal onlyController {
-		thisDoer = _aDoer;
-	}
-
-	function setBDI(Belief _belief) internal onlyController {
-		Controlled.bdi[this].beliefs = _belief;
-	}
-
-	function setBDI(bytes32 _desire, Desire _goal) internal onlyController {
-		Controlled.bdi[this].desires[_desire] = _goal;
-	}
-
-	function setBDI(bool _intention, Intention _service) internal onlyController {
-		Controlled.bdi[this].intentions[_intention] = _service;
+	function setIntention(Controlled.Intention _service, bool _intention) internal onlyDoer {
+		myBDI.intentions[_intention] = _service;
 	}
 }
 
