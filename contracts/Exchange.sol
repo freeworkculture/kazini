@@ -1,15 +1,19 @@
 pragma solidity ^0.4.18;
 
-import "./DoitToken.sol";
+import "./Reserve.sol";
 
-contract Exchange is DoitToken {
+contract Exchange is Reserve {
 ////////////////
 // Enable tokens buy/sell
 ////////////////
     uint256 public sellPrice;
     uint256 public buyPrice;
 
-    function Exchange() {registerContract("Exchange", this);}
+    function Exchange(Able _ctrl, Database _db, DoitToken _diy) {
+        contrl = _ctrl;
+        database = _db;
+        tokenContract = _diy;
+        }
 
     /// @notice Allow users to buy tokens for `newBuyPrice` eth and sell tokens for `newSellPrice` eth
     /// @param newSellPrice Price the users can sell to the contract

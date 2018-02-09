@@ -1,12 +1,16 @@
 pragma solidity ^0.4.18;
 
-import "./DoitToken.sol";
+import "./Reserve.sol";
 
-contract InputStake is DoitToken {
+contract InputStake is Reserve {
     
     mapping (address => bool) public frozenAccount;
     
-    function InputStake() {registerContract("InputStake", this);}
+    function InputStake(Able _ctrl, Database _db, DoitToken _diy) {
+        contrl = _ctrl;
+        database = _db;
+        tokenContract = _diy;
+        }
 
 ////////////////
 // Generate and destroy tokens

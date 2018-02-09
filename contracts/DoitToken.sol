@@ -45,7 +45,9 @@ pragma solidity ^0.4.18;
 // Include Libraries and Modules
 ///////////////////
 
-import "./ControlAbstract.sol";
+// import "./ControlAbstract.sol";
+// import "./Controlled.sol";
+import "./Able.sol";
 import "./TokenController.sol";
 
 ///////////////////
@@ -63,7 +65,7 @@ contract ApproveAndCallFallBack {
 /// @dev The actual token contract, the default controller is the msg.sender
 ///  that deploys the contract, so usually this token will be deployed by a
 ///  token controller contract.
-contract DoitToken is Controller {
+contract DoitToken is Controlled {
 
     string public name;                 //The Token's name: e.g. DigixDAO Tokens
     string public symbol;               //An identifier: e.g. REP
@@ -141,7 +143,8 @@ contract DoitToken is Controller {
         uint8 _decimalUnits,
         string _tokenVersion,
         uint _tokenMaturity,
-        bool _transfersEnabled
+        bool _transfersEnabled,
+        Able _ctrl
     ) public {
         tokenFactory = DoitTokenFactory(_tokenFactory);
         name = _tokenName;                                 // Set the name
@@ -153,7 +156,8 @@ contract DoitToken is Controller {
         parentSnapShotBlock = _parentSnapShotBlock;
         transfersEnabled = _transfersEnabled;
         creationBlock = block.number;
-        registerContract("DoitToken", this);
+        // registerContract("DoitToken", this);
+        contrl = _ctrl;
     }
 
 ////////////////
@@ -392,7 +396,8 @@ contract DoitToken is Controller {
         string _cloneVersion,
         uint _cloneMaturity,
         uint _snapshotBlock,
-        bool _transfersEnabled
+        bool _transfersEnabled,
+        Able _ctrl
         ) public returns(address)
         {
             if (_snapshotBlock == 0)
@@ -405,7 +410,8 @@ contract DoitToken is Controller {
                 _cloneDecimalUnits,
                 _cloneVersion,
                 _cloneMaturity,
-                _transfersEnabled
+                _transfersEnabled,
+                _ctrl
             );
 
         cloneToken.changeController(msg.sender);
@@ -464,6 +470,19 @@ contract DoitToken is Controller {
     function enableTransfers(bool _transfersEnabled) public onlyController {
         transfersEnabled = _transfersEnabled;
     }
+
+////////////////
+// Freeze Account
+////////////////
+    
+    /// @notice `freeze? Prevent | Allow` `target` from sending & receiving tokens
+    /// @param target Address to be frozen
+    /// @param freeze either to freeze it or not
+    function freezeAccount(address target, bool freeze) onlyController public {
+        frozenAccount[target] = freeze;
+        FrozenFunds(target, freeze);/// @notice Enables token holders to transfer their tokens freely if true
+    }
+
 
 ////////////////
 // Internal helper functions to query and set a value in a snapshot array
@@ -541,6 +560,14 @@ contract DoitToken is Controller {
         require(TokenController(controller).proxyPayment.value(msg.value)(msg.sender));
     }
 
+    function getBalances(address _address) external view returns (Checkpoint[]) {
+        return balances[_address];
+    }
+
+    function getTotalSupplyHistory() external view returns (Checkpoint[]) {
+        return totalSupplyHistory;
+    }
+
 //////////
 // Safety Methods
 //////////
@@ -579,10 +606,13 @@ contract DoitToken is Controller {
 /// @dev This contract is used to generate clone contracts from a contract.
 ///  In solidity this is the way to create a contract from a contract of the
 ///  same class
-contract DoitTokenFactory is Controller {
+contract DoitTokenFactory is Data {
+    
 
-    function DoitTokenFactory() internal {
-        registerContract("DoitTokenFactory", this);
+    function DoitTokenFactory(Able _ctrl, Database _dbs) internal {
+        // registerContract("DoitTokenFactory", this);
+        contrl = _ctrl;
+        database = _dbs;
         }
 
     /// @notice Update the DApp by creating a new token with new functionalities
@@ -603,7 +633,8 @@ contract DoitTokenFactory is Controller {
         uint8 _decimalUnits,
         string _tokenVersion,
         uint _tokenMaturity,
-        bool _transfersEnabled
+        bool _transfersEnabled,
+        Able _ctrl
     ) public returns (DoitToken)
     {
         DoitToken newToken = new DoitToken(
@@ -615,7 +646,8 @@ contract DoitTokenFactory is Controller {
             _decimalUnits,
             _tokenVersion,
             _tokenMaturity,
-            _transfersEnabled
+            _transfersEnabled,
+            _ctrl
             );
 
         newToken.changeController(msg.sender);
