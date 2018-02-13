@@ -1,4 +1,4 @@
-pragma solidity ^0.4.6;
+pragma solidity ^0.4.19;
 
 /*
     Copyright 2017, Jordi Baylina
@@ -59,13 +59,11 @@ contract Owned {
 
 contract Reserve is TokenController, Owned, Data {
 
-    DoitToken doit;
-
     uint public startFundingTime;       // In UNIX Time Format
     uint public endFundingTime;         // In UNIX Time Format
     uint public maximumFunding;         // In wei
     uint public totalCollected;         // In wei
-    DoitToken public tokenContract;   // The new token for this Campaign
+    DoitToken public doitContract;   // The new token for this Campaign
     address public vaultAddress;        // The address to hold the funds donated
 
 /// @notice 'Campaign()' initiates the Campaign by setting its funding
@@ -96,7 +94,7 @@ contract Reserve is TokenController, Owned, Data {
         startFundingTime = _startFundingTime;
         endFundingTime = _endFundingTime;
         maximumFunding = _maximumFunding;
-        tokenContract = DoitToken(_tokenAddress);// The Deployed Token Contract
+        doitContract = DoitToken(_tokenAddress);// The Deployed Token Contract
         vaultAddress = _vaultAddress;
         contrl = _ctrl;
         database = _db;
@@ -157,7 +155,7 @@ contract Reserve is TokenController, Owned, Data {
 // First check that the Campaign is allowed to receive this donation
         require((now >= startFundingTime) &&
             (now <= endFundingTime) &&
-            (tokenContract.controller() != 0) &&           // Extra check
+            (doitContract.controller() != 0) &&           // Extra check
             (msg.value != 0) &&
             (totalCollected + msg.value <= maximumFunding));
 
@@ -169,7 +167,7 @@ contract Reserve is TokenController, Owned, Data {
 
 // Creates an equal amount of tokens as ether sent. The new tokens are created
 //  in the `_owner` address
-        require (tokenContract.generateTokens(_owner, msg.value));
+        require (doitContract.generateTokens(_owner, msg.value));
 
         return;
     }
@@ -181,7 +179,7 @@ contract Reserve is TokenController, Owned, Data {
 
     function finalizeFunding() {
         require(now >= endFundingTime);
-        tokenContract.changeController(0);
+        doitContract.changeController(0);
     }
 
 
@@ -200,4 +198,47 @@ uint public timeOfLastProof;                             // Variable to keep tra
 uint public difficulty = 10**32;                         // Difficulty starts reasonably low
 uint256 amount;
 
+function factorPayout(uint nonce, bytes32 _intention, bytes32 _serviceId) internal {
+    bytes8 n = bytes8(keccak256(nonce, currentChallenge));    // Generate a random hash based on input
+    require(n >= bytes8(difficulty));                   // Check if it's under the difficulty
+    uint timeSinceLastProof = (now - timeOfLastProof);  // Calculate time since last reward was given
+    require(timeSinceLastProof >= 5 seconds);         // Rewards cannot be given too quickly
+    // require(database.plans[_intention].service[_serviceId].fulfillment.timestamp < 
+    // database.plans[_intention].service[_serviceId].expire);
+    require(database.getFulfillmentData(_intention, _serviceId).timestamp < database.getServiceData(_intention, _serviceId).expire);
+    uint totalTime;
+    uint payableTime;
+    if (database.getFulfillmentData(_intention, _serviceId).timestamp < 
+    database.getServiceData(_intention, _serviceId).timeSoft) {
+        payableTime = database.getServiceData(_intention, _serviceId).timeSoft;
+    } else if (database.getFulfillmentData(_intention, _serviceId).timestamp > 
+    database.getServiceData(_intention, _serviceId).taskT.timeHard) {
+        totalTime = database.getServiceData(_intention, _serviceId).expire - 
+        database.getServiceData(_intention, _serviceId).timeSoft;
+        payableTime = (((database.getServiceData(_intention, _serviceId).expire - 
+        database.getFulfillmentData(_intention, _serviceId).timestamp) / totalTime) * 
+        database.getServiceData(_intention, _serviceId).timeSoft);
+        } else {
+        totalTime = database.getServiceData(_intention, _serviceId).taskT.timeHard - 
+        database.getServiceData(_intention, _serviceId).timeSoft;
+        payableTime = (((database.getServiceData(_intention, _serviceId).taskT.timeHard - 
+        database.getFulfillmentData(_intention, _serviceId).timestamp) / totalTime) * 
+        database.getServiceData(_intention, _serviceId).timeSoft);
+    }
+    amount += payableTime / 60 seconds * 42 / 10;  // The reward to the winner grows by the minute
+    difficulty = difficulty * 10 minutes / timeSinceLastProof + 1;  // Adjusts the difficulty
+    doitContract.approveAndCall(msg.sender, amount, "");
+
+    timeOfLastProof = now;                              // Reset the counter
+    currentChallenge = keccak256(nonce, currentChallenge, block.blockhash(block.number - 1));  // Save a hash that will be used as the next proof
+    }
+
+////////////////
+// Events
+////////////////
+
+    event FactorPayout(address indexed _from, address indexed _to, uint256 _amount);
+    event PlanEvent(address indexed _from, address indexed _to, uint256 _amount);
+    event PromiseEvent(address indexed _from, address indexed _to, uint256 _amount);
+    event Fulfill(address indexed _from, address indexed _to, uint256 _amount);
 }

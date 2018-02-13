@@ -80,7 +80,7 @@ contract Able is Data {
 
     function Able() public { 
         // controller = msg.sender;
-        registerContract("Able", this);
+        contracts["Able"] = this;
         }
 
     // /// @notice Changes the controller of the contract
@@ -95,15 +95,17 @@ contract Able is Data {
     }
 
     // Add a new contract to the controller. This will overwrite an existing contract.
-    function registerContract(bytes32 name, address addr) onlyController public returns (bool) { // This guard exhibits buglike behaviour, 
-    // Only do validation if there is an actions contract.                                          stops contract from registering itself.
-        address cName = contracts[name];
-        if (cName != 0x0) {
-           return false;
-           } else {
-               contracts[name] = addr;
-               return true;
-           }
+    function registerContract(
+		bytes32 name, 
+		address addr) onlyController public returns (bool)	 // This guard exhibits buglike behaviour, 
+		{ 													// Only do validation if there is an actions contract.	
+			address cName =	contracts[name];	 			// stops contract from registering itself.
+			if (cName != 0x0) {
+				return false;
+				} else {
+				contracts[name] = addr;
+				return true;
+			}
         
     }
 
@@ -121,13 +123,13 @@ contract Able is Data {
     }
 
     // Make a new database contract.
-    function makeDatabase(bytes32 _name) onlyController public returns (bool,address) {
+    function makeDatabase(Database _addr, bytes32 _name) onlyController public returns (bool,address) {
         require(_name != 0x0);
         address cName = contracts[_name];
         if (cName != 0x0) {
             return (false,cName);
             } else {
-                database = new Database(this);
+                database = _addr;
                 contracts[_name] = database;
                 return (true,database);
                 }
@@ -212,7 +214,7 @@ contract Database is Controlled {
 					// birth is date of birth in seconds from 1970
 					// fName is first name in identity document MRZ
 					// lName is last name in identity document MRZ
-					// status is dead or alive state of agent
+					// state is deliberative state of agent
 					// lastUpdate is timestamp of last record entry
 	//SomeDoer public thisDoer;// = SomeDoer(0x4fc6c65443d1b988, "whoiamnottelling", 346896000, "Iam", "Not", false);	
 
@@ -222,7 +224,7 @@ contract Database is Controlled {
 	// 			(_aDoer.birth),
 	// 			(_aDoer.fName),
 	// 			(_aDoer.lName),
-	// 			(_aDoer.status)
+	// 			(_aDoer.state)
 	// 			}
 /// Template rules used:
 /// - Compound: 6 fields
@@ -250,11 +252,11 @@ contract Database is Controlled {
         bool status;
         }
     struct Intention {
-        State state;
+        Agent state;
         bytes32 service;
         uint256 payout;
         }
-        enum State {ACTIVE, INACTIVE, RESERVED}
+        enum Agent {ACTIVE, INACTIVE, RESERVED}
 	/// Belief myBelief {hex, int, int8, hex}
 	/// @dev Interp. myBelief {Qualification, Experience, Reputation, Talent} is an agent with
 					// Qualification is (<ISO 3166-1 numeric-3>,<Conferring Authority>,<Score>)
@@ -363,7 +365,7 @@ contract Database is Controlled {
         uint internal doerCount;	// !!! Can I call length of areDoers instead??!!!
 
 ///////////////////
-/// @dev `B-D-I` is the structure that prescribes a strategy model to an actual agent
+/// @dev `Initialised data structures
 ///////////////////
 
     mapping(bytes32 => Qualification) qualification;
@@ -387,7 +389,212 @@ contract Database is Controlled {
         // controller = _ctrl;
         contrl = _ctrl;
         }
-        
+
+
+/////////////////
+// Database Read/Write
+/////////////////
+
+
+
+
+    // Data -> Plan
+    // Produce a Plan
+        // struct Plan {
+		// bytes32 conditionP;
+		// mapping(bytes32 => Service) service;
+        // mapping(bytes32 => Service[]) services;
+        // mapping(bytes32 => string) project;
+		// bytes32 conditionQ;
+		// }
+        // mapping(bytes32 => Plan) plans;
+    // function concept(bytes32 _wish, bytes32 _goal, bytes32 _preConditions) returns (Plan); // STUB
+    // Examples
+    // desire(aWish, aGoal, aPreconditions, aProjectUrl);
+    // url = keccak256(aUrl)
+        // struct Service {
+		// bytes32 conditionP;
+		// Promise taskT;
+		// bytes32 conditionQ;
+		// } 
+        //} 
+        //     struct Service {
+		// Belief conditionP;
+		// Promise taskT;
+        // bytes32 conditionQ;
+        // uint timeOpt;  // preferred timeline
+        // uint expire;
+		// } 
+
+    function plan(bytes32 _intention, bytes32 _desire, bytes32 _preConditions, string _projectUrl) public payable onlyCreator returns (bool) {
+        require((plans[_intention].state != Project.STARTED) || // This is 
+        (plans[_intention].state != Project.CLOSED)); // a new plan?
+        plans[_intention].conditionQ = bdi[tx.origin].desires[_desire]; // Creator and project share a goal
+																			// Get this from Doers direct.
+        bytes32 serviceId = plans[_intention].conditionQ.goal ^ bytes32(msg.sender);  // bitwise XOR builds a map of serviceIds
+        plans[_intention].service[serviceId].conditionP.hash = _preConditions; // pCondition of the curate that will define the concept.
+        bytes32 url = keccak256(_projectUrl);
+        plans[_intention].ipfs[url] = _projectUrl; // Store the prefeasibility at the main project repo.
+        plans[_intention].state == Project.PENDING;
+        plans[_intention].creator = tx.origin;
+        // push event for new plan
+		return true;
+    }
+
+    function serviceId(bytes32 _intention) internal view onlyCreator returns (bytes32) {
+        return bytes32(msg.sender) ^ plans[_intention].conditionQ.goal;  // bitwise XOR builds a map of serviceIds
+    }
+
+    function plan(
+		bytes32 _intention, 
+		bytes32 _theCondQ, 
+        bool _theGoalG, 
+        uint _experience, 
+        bytes32 _reputation, 
+        bytes32 _talent, 
+        bytes32 _index, 
+        bytes32 hash, 
+        bytes32 _country, 
+        bytes32 _cAuthority, 
+        bytes32 _score) public payable onlyDoer returns (bool)
+		{
+			require(plans[_intention].state == Project.PENDING); // Project is not pending or closed
+			require(bdi[tx.origin].beliefs.index >= bdi[plans[_intention].curator].beliefs.index); // Curate // meets or exceeds the current Curator
+			// require(bdi[tx.origin].beliefs.index >= plans[_intention].service[_intention ^ bytes32(plans[_intention].curator)].conditionP.index); // Curate // meets or exceeds the pCondition
+			require(hash == keccak256(_country,_cAuthority,_score,_experience,_reputation,_talent));
+			plans[_intention].service[serviceId(_intention)].conditionP = bdi[tx.origin].beliefs; // Creates the curators microservice
+			// bytes32 nServiceId = _serviceId ^ bytes32(msg.sender);
+			plans[_intention].service[serviceId(_intention)].conditionQ = Desire(_theCondQ, _theGoalG);
+			plans[_intention].service[serviceId(_intention)].hash = keccak256(_theCondQ, hash);
+			planAdv(_intention, _talent, _reputation, _experience, _index, hash, _country, _cAuthority, _score);
+			plans[_intention].curator = tx.origin;
+			return true;
+	}
+
+	function planAdv(
+        bytes32 _intention, 
+		bytes32 _talent, 
+		bytes32 _reputation, 
+		uint _experience, 
+		bytes32 _index, 
+		bytes32 hash, 
+		bytes32 _country, 
+		bytes32 _cAuthority, 
+		bytes32 _score) onlyDoer internal returns (bool)
+        {
+            plans[_intention].service[serviceId(serviceId(_intention))].conditionP = Belief({
+					talent: _talent, 
+					reputation: _reputation, 
+					experience: _experience, 
+					index: _index, 
+					hash: hash
+					});
+			plans[_intention].service[serviceId(serviceId(_intention))].conditionP.qualification[keccak256(_country, _cAuthority, _score)] = Qualification({
+					country: _country, 
+					cAuthority: _cAuthority, 
+					score: _score
+					});
+			return true;
+	}
+    
+    // pCondition must be present before project is started
+    // qCondition must be present before project is closed
+    function plan(bytes32 _intention, bytes32 _prerequisites, string _projectUrl, bytes32 _verity) public payable onlyDoer returns (bool) {
+        require(plans[_intention].curator == tx.origin); // curate meets the pCondition
+        plans[_intention].ipfs[keccak256(_projectUrl)] = _projectUrl; // additional urls of project repo.
+		plans[_intention].conditionP = keccak256(_prerequisites, plans[_intention].conditionP); // Use a merkle tree // function and base the design pCondition to the merkle tree
+        //plans[_intention].conditionQ = keccak256(_verity, plans[_intention].conditionQ);
+        allPlans.push(_intention);
+        plans[_intention].state == Project.STARTED;
+		return true;
+    }      
+
+    function promise(bytes32 _intention, bytes32 _desire, bytes32 _serviceId, uint _time, bool _thing) public payable onlyDoer returns (bool) {
+        require(bdi[tx.origin].beliefs.index >= plans[_intention].service[_serviceId].conditionP.index);
+        require(bdi[tx.origin].desires[_desire].goal == plans[_intention].service[_serviceId].conditionQ.goal);
+        require((_time > block.timestamp) || (_time < plans[_intention].service[_serviceId].expire));
+        require(msg.value > 0);
+        require(bdi[tx.origin].beliefs.index > bdi[plans[_intention].service[_serviceId].taskT.doer].beliefs.index);
+        bytes32 eoi = keccak256(msg.sender, _intention, _serviceId);
+        plans[_intention].service[_serviceId].taskT = Promise({
+            doer: tx.origin, 
+            thing: bdi[tx.origin].intentions[_thing].service, 
+            timeHard: _time, 
+            value: msg.value, 
+            hash: eoi});
+        Promises[tx.origin].push(_serviceId);
+        promiseCount++;
+		return true;
+        }
+
+    // }
+    //     struct Desire {
+    //     bytes32 goal;
+    //     bool status;
+    //     }
+    // struct Intention {
+    //     Agent state;
+    //     bytes32 service;
+    //     uint256 payout;
+    //     }
+    
+
+    // function order(bytes32 _intention, bytes32 _serviceId, bool _check, string thing, string proof) public payable onlyDoer {
+
+    //     Fulfillment storage checker;
+    //     orders[verity] = Order({doer: msg.sender, promise: plans[_intention].service[lso].taskT.hash, proof: proof, timestamp: block.timestamp, check: checker, hash: verity});
+    //     orderCount++;
+    //     }
+
+    function fulfill(bytes32 _intention, bytes32 _serviceId, bool _check, bytes32 _proof, Database.Level _level) public payable onlyDoer returns (bool) {
+		        // Validate existing promise.
+        if (bdi[plans[_intention].service[_serviceId].taskT.doer].intentions[_check].state != 
+        Agent.ACTIVE) {
+            Promise storage reset;
+            plans[_intention].service[_serviceId].taskT = reset;
+            }
+        bytes32 lso = keccak256(msg.sender, _serviceId); // Use merkle tree function to build order tree, rebase design plan 
+        require(block.timestamp < plans[_intention].service[lso].expire);
+        bytes32 verity = keccak256(msg.sender, _proof);
+		plans[_intention].service[_serviceId].fulfillment = Fulfillment({
+				doer: msg.sender, 
+				promise: plans[_intention].service[_serviceId].taskT.hash, 
+				proof: _proof, 
+				rubric: _level, 
+				timestamp: block.timestamp, 
+				hash: verity
+				});
+		orderCount++;
+        // function setReputation(Intention _service, bool _intention) internal onlyDoer {
+        //     myBDI.beliefs.reputation = _service;  !!! Working on
+		return true;
+		}
+
+    function verify(bytes32 _intention, bytes32 _serviceId, bytes32 _verity, bytes32 _thing) public payable onlyDoer returns(bool) {
+        // Validate existing promise.
+        // plans[_intention].service[_serviceId].fulfillment.hash = _thing;
+        require(_verity == plans[_intention].service[_serviceId].fulfillment.hash);
+        // _verity = keccak256(msg.sender, _verity); // Use merkle tree function to build as-built tree, change/configuration management
+		plans[_intention].service[_serviceId].fulfillment.check[_verity] = Verification({
+				prover: tx.origin, 
+				complete: true, 
+				timestamp: block.timestamp, 
+				hash: _verity
+				});   
+		fulfillmentCount++;
+        // function setReputation(Intention _service, bool _intention) internal onlyDoer { // Oraclise function, sets the trust level
+        //     myBDI.beliefs.reputation = _service;  !!! Working on             // between creator -> doer && verifier -> doer
+		return true;
+		}
+
+
+    function getPromiseCount() internal constant returns (uint) {
+        return promiseCount;
+    }
+
+    function getFulfillmentCount() internal constant returns (uint) {
+        return fulfillmentCount;
+    }        
 /////////////////
 // All ASSERTS
 /////////////////
@@ -419,57 +626,101 @@ contract Database is Controlled {
 // All GETTERS
 /////////////////
 
-    function getPlan(bytes32 _plan) view internal returns (bytes32,Desire storage ref,Project,address,address) {
-        return (plans[_plan].conditionP,plans[_plan].conditionQ,plans[_plan].state,plans[_plan].creator,plans[_plan].curator);
+    function getPlan(bytes32 _plan) view internal returns (Plan) {
+        return plans[_plan];
+    }
+	
+	struct PlanData {			//An object to enable external bulk data transfer
+		bytes32 conditionP;
+		Desire conditionQ;
+		Project state;
+		address creator;
+		address curator;
+		} 
+    function getPlanData(bytes32 _plan) view external returns (PlanData) {
+        return PlanData({
+			conditionP: plans[_plan].conditionP, 
+			conditionQ: plans[_plan].conditionQ, 
+			state: plans[_plan].state, 
+			creator: plans[_plan].creator, 
+			curator: plans[_plan].curator
+			});
     }
 
-    function getService(bytes32 _plan, bytes32 _serviceId) view internal returns (Promise,Desire storage ref,uint,uint,bytes32) {
-        return (
-		plans[_plan].service[_serviceId].taskT,
-		plans[_plan].service[_serviceId].conditionQ,
-		plans[_plan].service[_serviceId].timeSoft,
-		plans[_plan].service[_serviceId].expire,
-		plans[_plan].service[_serviceId].hash
-		);
+	struct ServiceData {			//An object to enable external bulk data transfer
+		Promise taskT;
+		Desire conditionQ;
+		uint timeSoft;
+		uint expire;
+		bytes32 hash;
+		} 
+    function getServiceData(bytes32 _plan, bytes32 _serviceId) view external returns (ServiceData) {
+        return ServiceData({
+			taskT: plans[_plan].service[_serviceId].taskT, 
+			conditionQ: plans[_plan].service[_serviceId].conditionQ, 
+			timeSoft: plans[_plan].service[_serviceId].timeSoft, 
+			expire: plans[_plan].service[_serviceId].expire, 
+			hash: plans[_plan].service[_serviceId].hash
+			});
 	}
 
-    function getServiceExpire(bytes32 _plan, bytes32 _serviceId) view external returns (uint) {
-        return plans[_plan].service[_serviceId].expire;
+    struct CondPData {
+        uint experience;
+        bytes32 reputation;
+        bytes32 talent;
+        bytes32 index;
+        bytes32 hash;
+        }
+    function getCondPData(bytes32 _plan, bytes32 _serviceId) view external returns (CondPData) {
+        return CondPData({
+			experience: plans[_plan].service[_serviceId].conditionP.experience, 
+			reputation: plans[_plan].service[_serviceId].conditionP.reputation, 
+			talent: plans[_plan].service[_serviceId].conditionP.talent, 
+			index: plans[_plan].service[_serviceId].conditionP.index, 
+			hash: plans[_plan].service[_serviceId].conditionP.hash
+			});
 	}
 
-    function getServiceTimeSoft(bytes32 _plan, bytes32 _serviceId) view external returns (uint) {
-        return plans[_plan].service[_serviceId].timeSoft;
+    // // function getServiceTimeSoft(bytes32 _plan, bytes32 _serviceId) view external returns (uint) {
+    // //     return plans[_plan].service[_serviceId].timeSoft;
+	// // }
+
+    // // function getServiceTaskT(bytes32 _plan, bytes32 _serviceId) view external returns (Promise ref) {
+    // //     return plans[_plan].service[_serviceId].taskT;
+	// // }
+	struct FulfillmentData {
+        address doer;
+        bytes32 promise;
+        bytes32 proof;
+        Level rubric;
+        uint timestamp;
+        bytes32 hash;
+		}
+	function getFulfillmentData(bytes32 _plan, bytes32 _serviceId) view external returns (FulfillmentData) {
+        return FulfillmentData({
+		doer: plans[_plan].service[_serviceId].fulfillment.doer, 
+		promise: plans[_plan].service[_serviceId].fulfillment.promise, 
+		proof: plans[_plan].service[_serviceId].fulfillment.proof, 
+		rubric: plans[_plan].service[_serviceId].fulfillment.rubric, 
+		timestamp: plans[_plan].service[_serviceId].fulfillment.timestamp, 
+		hash: plans[_plan].service[_serviceId].fulfillment.hash
+		});
 	}
 
-    function getServiceTaskT(bytes32 _plan, bytes32 _serviceId) view external returns (Promise ref) {
-        return plans[_plan].service[_serviceId].taskT;
-	}
+	// function getFulfillmentVerif(bytes32 _plan, bytes32 _serviceId) view external returns (bytes32) {
+    //     return plans[_plan].service[_serviceId].fulfillment.check[plans[_plan].service[_serviceId].fulfillment.hash].hash;
+	// }
 
-	function getFulfillment(bytes32 _plan, bytes32 _serviceId) view external returns (address,bytes32,bytes32,Level,uint,bytes32) {
-        return (
-		plans[_plan].service[_serviceId].fulfillment.doer,
-		plans[_plan].service[_serviceId].fulfillment.promise,
-		plans[_plan].service[_serviceId].fulfillment.proof,
-		plans[_plan].service[_serviceId].fulfillment.rubric,
-		plans[_plan].service[_serviceId].fulfillment.timestamp,
-		plans[_plan].service[_serviceId].fulfillment.hash
-		);
-	}
+	// function getFulfillmentTimeStamp(bytes32 _plan, bytes32 _serviceId) view external returns (uint) {
+    //     return plans[_plan].service[_serviceId].fulfillment.timestamp;
+	// }
 
-	function getFulfillmentVerif(bytes32 _plan, bytes32 _serviceId) view external returns (Verification ref) {
-        return plans[_plan].service[_serviceId].fulfillment.check[plans[_plan].service[_serviceId].fulfillment.hash];
-	}
-
-	function getFulfillmentTimeStamp(bytes32 _plan, bytes32 _serviceId) view external returns (uint) {
-        return plans[_plan].service[_serviceId].fulfillment.timestamp;
-	}
-
-    function getBDI() view internal returns (BDI) {
-        return bdi[tx.origin];
-    }
+//     function getBDI() view internal returns (BDI) {
+//         return bdi[tx.origin];
+//     }
 
 	
-	function viewDoers() onlyController public view returns(uint) {
+	function countDoers() onlyController public view returns(uint) {
 		return doerCount;
 	}
 	
@@ -480,18 +731,29 @@ contract Database is Controlled {
 	function getCreators(address _address) view public returns (bool,uint256) {
         return (creators[_address].active, creators[_address].myDoers);
 	}
-	
-	function getDoersAccts() view public returns (address[]) {
-		return doersAccts;
-	}
-	
-	function getDoersUuid(bytes32 _uuid) public view returns(bool) {
-		return doersUuid[_uuid].active;
+
+	function countPromise() view external onlyController returns (uint) {
+		return promiseCount;
 	}
 
-	function getPlans() onlyController internal view returns (bytes32[]) {
-		return allPlans;
-	}
+	function countOrder() view external onlyController returns (uint) {
+		return orderCount;
+	}	
+
+	function countFulfillment() view external onlyController returns (uint) {
+		return fulfillmentCount;
+	}		
+// 	function getDoersAccts() view public returns (address[]) {
+// 		return doersAccts;
+// 	}
+	
+// 	function getDoersUuid(bytes32 _uuid) public view returns(bool) {
+// 		return doersUuid[_uuid].active;
+// 	}
+
+// 	function getPlans() onlyController internal view returns (bytes32[]) {
+// 		return allPlans;
+// 	}
 
 /////////////////
 // All SETTERS
@@ -503,10 +765,137 @@ contract Database is Controlled {
         return true;
     }
 
-    function setBDI(BDI _data) onlyController internal returns (bool) {
-        bdi[tx.origin] = _data;
+    function setPlan(bytes32 _planId, bytes32 _condP) onlyController external returns (bool) {
+        plans[_planId].conditionP = _condP;
         return true;
     }
+
+    function setPlanCurator(bytes32 _planId, bytes32 _serviceId) onlyController external returns (bool) {
+        plans[_planId].service[_serviceId].conditionP = bdi[msg.sender].beliefs; // current pCondition, set new curate
+		plans[_planId].curator = msg.sender;
+        return true;
+    }
+
+    function setPlan(bytes32 _planId, bytes32 _url, string _projectUrl) onlyController external returns (bool) {
+		plans[_planId].ipfs[_url] = _projectUrl; // additional urls of project repo.
+        return true;
+    }
+
+    function setPlanSCondP(
+			bytes32 _planId, 
+			bytes32 _serviceId,
+			bytes32 _country, 
+			bytes32 _hash,
+			bytes32 _cAuthority, 
+			bytes32 _score, 
+			bytes32 _talent, 
+			bytes32 _reputation, 
+			uint _experience, 
+			bytes32 _index, 
+			bytes32 hash) onlyController external returns (bool) 
+			{
+				plans[_planId].service[_serviceId].conditionP = Belief({
+					talent: _talent, 
+					reputation: _reputation, 
+					experience: _experience, 
+					index: _index, 
+					hash: hash
+					});
+				plans[_planId].service[_serviceId].conditionP.qualification[_hash] = Qualification({
+					country: _country, 
+					cAuthority: _cAuthority, 
+					score: _score
+					});
+				return true;
+		}
+
+    function setPlanSCondQ(
+		bytes32 _planId, 
+		bytes32 _serviceId, 
+		bytes32 _theCondQ, 
+		bool _theGoalG) onlyController external returns (bool) 
+		{
+			plans[_planId].service[_serviceId].conditionQ = Desire(_theCondQ, _theGoalG);
+        	return true;
+    }
+
+    function setPlanSHash(bytes32 _planId, bytes32 _serviceId, bytes32 _data) onlyController external returns (bool) {
+		plans[_planId].service[_serviceId].hash = _data;
+        return true;
+    }
+
+    function setPlanSTaskT(bytes32 _planId, bytes32 _serviceId, bytes32 _reset) external onlyController returns (bool) {
+		require(_reset == "reset");
+		Database.Promise memory reset;
+		plans[_planId].service[_serviceId].taskT = reset;
+	}
+	
+    function setPlanSTaskT(
+		bytes32 _planId, 
+		bytes32 _serviceId, 
+		bytes32 _doersThing, 
+		uint _time,
+		uint256 _value, 
+		bytes32 _eoi) onlyController external returns (bool) 
+		{
+			plans[_planId].service[_serviceId].taskT = Promise(
+				tx.origin,
+				_doersThing,
+				_time,
+				_value,
+				_eoi);
+        	return true;
+    }
+
+    function setPlanSFulfillment(
+		bytes32 _planId, 
+		bytes32 _serviceId, 
+		bytes32 _proof, 
+		Level _level, 
+		bytes32 _verity) onlyController external returns (bool) 
+		{
+			plans[_planId].service[_serviceId].fulfillment = Fulfillment({
+				doer: msg.sender, 
+				promise: plans[_planId].service[_serviceId].taskT.hash, 
+				proof: _proof, 
+				rubric: _level, 
+				timestamp: block.timestamp, 
+				hash: _verity
+				});
+			orderCount++;
+        	return true;
+    }
+
+    function setPlanSFVerification(
+		bytes32 _planId, 
+		bytes32 _serviceId, 
+		bool _state, 
+		bytes32 _proof, 
+		bytes32 _verity) onlyController external returns (bool) 
+		{
+			plans[_planId].service[_serviceId].fulfillment.check[_proof] = Verification({
+				prover: tx.origin, 
+				complete: _state, 
+				timestamp: block.timestamp, 
+				hash: _verity
+				});   
+			fulfillmentCount++;
+			return true;
+    }
+
+	function setAllPlans(bytes32 _planId) external onlyController {
+		allPlans.push(_planId);
+	}
+	function setPromises(bytes32 _serviceId) external onlyController {
+		require(promiseCount < 2^256);
+		Promises[tx.origin].push(_serviceId);
+		promiseCount++;
+	}
+	
+    // function setBDI(BDI _data) onlyController internal returns (bool) {
+    //     bdi[tx.origin] = _data;
+    //     return true;
+    // }
 	
 	function setCreator(address _address, bool _active, uint _num) onlyController internal {
 		creators[_address] = Creator(_active, _num);
@@ -571,18 +960,18 @@ contract Database is Controlled {
 					}
 		}
 		
-	function setDoerQualify(Qualification _qualification) onlyController public { //block to onlyDoer
-		bytes32 hash = keccak256(_qualification); 
-		bdi[msg.sender].beliefs.qualification[hash] = _qualification;
-		}
+// 	function setDoerQualify(Qualification _qualification) onlyController public { //block to onlyDoer
+// 		bytes32 hash = keccak256(_qualification); 
+// 		bdi[msg.sender].beliefs.qualification[hash] = _qualification;
+// 		}
 	
-	function setDoerDesire(Desire _goal, bytes32 _desire) onlyController public { //block to onlyDoer
-		bdi[msg.sender].desires[_desire] = _goal;
-		}
+// 	function setDoerDesire(Desire _goal, bytes32 _desire) onlyController public { //block to onlyDoer
+// 		bdi[msg.sender].desires[_desire] = _goal;
+// 		}
 
-	function setDoerIntent(Intention _service, bool _intention) onlyController public { //block to onlyDoer
-		bdi[msg.sender].intentions[_intention] = _service;
-		}
+// 	function setDoerIntent(Intention _service, bool _intention) onlyController public { //block to onlyDoer
+// 		bdi[msg.sender].intentions[_intention] = _service;
+// 		}
 
 
     // Data -> Plan
@@ -612,160 +1001,6 @@ contract Database is Controlled {
         // uint timeOpt;  // preferred timeline
         // uint expire;
 		// } 
-
-    function plan(bytes32 _intention, bytes32 _desire, bytes32 _preConditions, string _projectUrl) public payable onlyCreator {
-        require((uint(plans[_intention].state) != uint(Project.STARTED)) || // This is 
-        (uint(plans[_intention].state) != uint(Project.CLOSED))); // a new plan?
-        plans[_intention].conditionQ = bdi[tx.origin].desires[_desire]; // Creator and project share a goal
-        // plans[_intention].conditionQ = myBDI.getDesire(_desire).goal; // Creator and project share a goal
-        // bytes32 serviceId = plans[_intention].conditionQ.goal ^ bytes32(msg.sender);  // bitwise XOR builds a map of serviceIds
-        plans[_intention].service[serviceId(_intention)].conditionP.hash = _preConditions; // pCondition of the curate that will define the concept.
-        bytes32 url = keccak256(_projectUrl);
-        plans[_intention].ipfs[url] = _projectUrl; // Store the prefeasibility at the main project repo.
-        uint(plans[_intention].state) == uint(Project.PENDING);
-        plans[_intention].creator = tx.origin;
-        // push event for new plan
-    }
-
-    function serviceId(bytes32 _intention) internal view onlyCreator returns (bytes32) {
-        return plans[_intention].conditionQ.goal ^ bytes32(msg.sender);  // bitwise XOR builds a map of serviceIds
-    }
-
-    function plan(
-        bytes32 _intention,
-        bytes32 _theCondQ, 
-        bool _theGoalG, 
-        uint _experience, 
-        bytes32 _reputation, 
-        bytes32 _talent, 
-        bytes32 _index, 
-        bytes32 hash, 
-        bytes32 _country, 
-        bytes32 _cAuthority, 
-        bytes32 _score) external payable onlyDoer returns (bool)
-		{
-			require(uint(plans[_intention].state) == uint(Project.PENDING)); // Project is not pending or closed
-			require(hash == keccak256(_country,_cAuthority,_score,_experience,_reputation,_talent));
-			require(bdi[tx.origin].beliefs.index >= plans[_intention].service[serviceId(_intention)].conditionP.index); // Curate meets or exceeds
-			plans[_intention].service[serviceId(_intention)].conditionP = bdi[tx.origin].beliefs; // current pCondition, set new curate
-			plans[_intention].service[serviceId(_intention)].conditionQ = Desire({goal: _theCondQ, status: _theGoalG});
-			plans[_intention].service[serviceId(_intention)].hash = keccak256(_theCondQ, hash);
-        	plans[_intention].curator = tx.origin;
-			planAdv(_intention, _talent, _reputation, _experience, _index, hash, _country, _cAuthority, _score);
-			return true;
-		}
-
-	function planAdv(
-		bytes32 _intention, 
-		bytes32 _talent, 
-		bytes32 _reputation, 
-		uint _experience, 
-		bytes32 _index, 
-		bytes32 hash, 
-		bytes32 _country, 
-		bytes32 _cAuthority, 
-		bytes32 _score) onlyDoer internal returns (bool) 
-		{
-		plans[_intention].service[serviceId(serviceId(_intention))].conditionP = Belief({
-            talent: _talent, 
-            reputation: _reputation, 
-            experience: _experience, 
-            index: _index, 
-            hash: hash 
-            });
-		plans[_intention].service[serviceId(serviceId(_intention))].conditionP.qualification[keccak256(_country, _cAuthority, _score)] = Qualification({
-            country: _country, 
-            cAuthority: _cAuthority, 
-            score: _score
-			});
-			return true;
-			}
-    
-    // pCondition must be present before project is started
-    // qCondition must be present before project is closed
-    function plan(bytes32 _intention, bytes32 _prerequisites, string _projectUrl, bytes32 _verity) public payable onlyDoer returns (bool) {
-        require(plans[_intention].curator == tx.origin); // curate meets the pCondition
-        plans[_intention].conditionP = keccak256(_prerequisites, _verity, plans[_intention].conditionP); // Use a merkle tree
-        bytes32 url = keccak256(_projectUrl); // function and base the design pCondition to the merkle tree
-        plans[_intention].ipfs[url] = _projectUrl; // additional urls of project repo.
-        //plans[_intention].conditionQ = keccak256(_verity, plans[_intention].conditionQ);
-        allPlans.push(_intention);
-        plans[_intention].state == Project.STARTED;
-		return true;
-    }      
-
-    function promise(bytes32 _intention, bytes32 _desire, bytes32 _serviceId, uint _time, bool _thing) public payable onlyDoer returns (bool) {
-        require(bdi[tx.origin].beliefs.index >= plans[_intention].service[_serviceId].conditionP.index);
-        require(bdi[tx.origin].desires[_desire].goal == plans[_intention].service[_serviceId].conditionQ.goal);
-        require((_time > block.timestamp) || (_time < plans[_intention].service[_serviceId].expire));
-        require(msg.value > 0);
-        require(bdi[tx.origin].beliefs.index > bdi[plans[_intention].service[_serviceId].taskT.doer].beliefs.index);
-        bytes32 eoi = keccak256(msg.sender, _intention, _serviceId);
-        plans[_intention].service[_serviceId].taskT = Promise({
-            doer: tx.origin, 
-            thing: bdi[tx.origin].intentions[_thing].service, 
-            timeHard: _time, 
-            value: msg.value, 
-            hash: eoi});
-        Promises[tx.origin].push(_serviceId);
-        promiseCount++;
-        promiseCount++; //!!! COULD REMOVE ONE COUNTER, LEFT HERE FOR DEBUGGING
-		return true;
-        }
-
-    function fulfill(bytes32 _intention, bytes32 _serviceId, bool _check, bytes32 proof, Level _level) public payable onlyDoer returns (bool) {
-        // Validate existing promise.
-        if (bdi[plans[_intention].service[_serviceId].taskT.doer].intentions[_check].state != 
-        State.ACTIVE) {
-            Promise memory reset;
-            plans[_intention].service[_serviceId].taskT = reset;
-            }
-        bytes32 lso = keccak256(msg.sender, _serviceId); // Use merkle tree function to build order tree, rebase design plan 
-        require(block.timestamp < plans[_intention].service[lso].expire);
-        bytes32 verity = keccak256(msg.sender, proof);
-        plans[_intention].service[_serviceId].fulfillment = Fulfillment({doer: msg.sender, promise: plans[_intention].service[lso].taskT.hash, proof: proof, rubric: _level, timestamp: block.timestamp, hash: verity});
-        orderCount++;
-		return true;
-        }
-
-    function verify(bytes32 _intention, bytes32 _serviceId, bytes32 _verity, bytes32 _thing) public payable onlyDoer returns(bool) {
-        // Validate existing promise.
-        plans[_intention].service[_serviceId].fulfillment.hash = _thing;
-        _verity = keccak256(msg.sender, _verity); // Use merkle tree function to build as-built tree, change/configuration management
-        plans[_intention].service[_serviceId].fulfillment.check[_verity] = Verification({prover: tx.origin, complete: true, timestamp: block.timestamp, hash: _verity});
-        fulfillmentCount++;
-        // function setReputation(Intention _service, bool _intention) internal onlyDoer {
-        //     myBDI.beliefs.reputation = _service;  !!! Working on
-		return true;
-		}
-
-    // function getDeployer() internal constant returns (address) {
-    //     return deployer;
-    // }
-
-    // function getDoers() internal constant returns (Creators) {
-    //     return doers;
-    // }
-
-    function getPromiseCount() internal constant returns (uint) {
-        return promiseCount;
-    }
-
-    function getFulfillmentCount() internal constant returns (uint) {
-        return fulfillmentCount;
-    }
-
-    // function setDeployer(bytes23 _db) onlyController internal {
-    //     dbs = contrl.databases[_db];
-    //     // return true;
-    // }
-
-////////////////
-// Events
-////////////////
-    event PlanEvent(address indexed _from, address indexed _to, uint256 _amount);
-    event PromiseEvent(address indexed _from, address indexed _to, uint256 _amount);
-    event Fulfill(address indexed _from, address indexed _to, uint256 _amount);
 
 }
 // Doers is a class library of natural or artificial entities within A multi-agent system (MAS).
@@ -895,7 +1130,7 @@ contract Creators is Data {
 	}
 
 	function getDoerCount() view public returns (uint) {
-		return database.viewDoers();
+		return database.countDoers();
 	}
 
 // 	function getDoers() view public returns (address[]) {
@@ -957,17 +1192,17 @@ contract Creators is Data {
 	    return database.setDoerBDI(_flag, _var, _bvar, _cvar, _evar, _level);
 		}
 
-	function setQualification(Database.Qualification _qualification) internal onlyDoer {
-		database.setDoerQualify(_qualification);
-		}
+// 	function setQualification(Database.Qualification _qualification) internal onlyDoer {
+// 		database.setDoerQualify(_qualification);
+// 		}
 	
-	function setDesire(Database.Desire _goal, bytes32 _desire) internal onlyDoer {
-		database.setDoerDesire(_goal, _desire);
-		}
+// 	function setDesire(Database.Desire _goal, bytes32 _desire) internal onlyDoer {
+// 		database.setDoerDesire(_goal, _desire);
+// 		}
 
-	function setIntention(Database.Intention _service, bool _intention) internal onlyDoer {
-		database.setDoerIntent(_service, _intention);
-		}
+// 	function setIntention(Database.Intention _service, bool _intention) internal onlyDoer {
+// 		database.setDoerIntent(_service, _intention);
+// 		}
 		
 
 	//function Creators() {registerContract("Creators", this);}
@@ -1057,25 +1292,37 @@ contract Doers {
 	function getDoer() view public returns (bytes32,bytes32,bytes32,bytes32,bytes32,bytes32,bytes32,bytes32,int256,bool) {
 		return (Me.fPrint,Me.idNumber,Me.email,Me.fName,Me.lName,Me.hash,Me.tag,Me.data,Me.birth,Me.active);
 		}
-	
-	function getBelief() view public returns (uint256, bytes32,bytes32,bytes32,bytes32) {
-		return (
+
+	struct BeliefData {
+        uint experience;
+        bytes32 reputation;
+        bytes32 talent;
+        bytes32 index;
+        bytes32 hash;
+        }
+	function getBelief() view public returns (BeliefData) {
+		return BeliefData(
 			myBDI.beliefs.experience,
 			myBDI.beliefs.reputation,
 			myBDI.beliefs.talent,
 			myBDI.beliefs.index,
 			myBDI.beliefs.hash);
 		}
-	
-	function getQualification(bytes32 _level) view public returns (bytes32,bytes32,bytes32) {
-		return (
-			myBDI.beliefs.qualification[_level].country,
-			myBDI.beliefs.qualification[_level].cAuthority,
-			myBDI.beliefs.qualification[_level].score);
+		struct QualificationData {
+        bytes32 country;
+        bytes32 cAuthority;
+        bytes32 score;
+        }
+	function getQualification(bytes32 _level) view external returns (Database.Qualification) {
+		return (myBDI.beliefs.qualification[_level]);
 		}
 
 	function getDesire(bytes32 _desire) view public returns (Database.Desire) {
 		return myBDI.desires[_desire];
+		}
+
+	function getIntention(bool _check) view external returns (Database.Intention) {
+		return myBDI.intentions[_check];
 		}
 	
 	function viewDesire(bytes32 _desire) view public returns (bytes32,bool) {
@@ -1084,7 +1331,7 @@ contract Doers {
 			myBDI.desires[_desire].status);
 			}
 
-	function getIntention(bool _check) view public returns (uint256,bytes32,uint256) {
+	function viewIntention(bool _check) view public returns (uint256,bytes32,uint256) {
 		return (
 			uint256(myBDI.intentions[_check].state),
 			myBDI.intentions[_check].service,
@@ -1107,7 +1354,7 @@ contract Doers {
 		bytes32 _var, 
 		bool _status,
 		bytes32 _level, 
-		Database.State _avar) internal onlyDoer returns (bool) 
+		Database.Agent _avar) internal onlyDoer returns (bool) 
 		{
 			if ((_flag == Database.Flag.talent) || (_flag == Database.Flag.t)) {
 				return true;
@@ -1157,6 +1404,13 @@ contract Doers {
 	function setIntention(Database.Intention _service, bool _intention) internal onlyDoer {
 		myBDI.intentions[_intention] = _service;
 	}
+
+////////////////
+// Events
+////////////////
+    event PlanEvent(address indexed _from, address indexed _to, uint256 _amount);
+    event PromiseEvent(address indexed _from, address indexed _to, uint256 _amount);
+    event Fulfill(address indexed _from, address indexed _to, uint256 _amount);
 }
 
 // interface SomeDoers {

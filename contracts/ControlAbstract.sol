@@ -54,7 +54,7 @@ contract ControlAbstract {
 		bool _active
 		) internal returns (Database.SomeDoer);
 
-	function setBDI(Database.Flag _flag, bytes32 _var, bytes32 _avar, bool _bvar, int256 _cvar, Database.State _dvar, uint256 _evar) internal returns (bool);
+	function setBDI(Database.Flag _flag, bytes32 _var, bytes32 _avar, bool _bvar, int256 _cvar, Database.Agent _dvar, uint256 _evar) internal returns (bool);
 
 /////////////////
 // Controller interface
@@ -134,7 +134,7 @@ contract ControlAbstract {
 		bool _intent, bytes32 _var, 
 		bool _status, 
 		bytes32 _level, 
-		Database.State _avar) internal returns (bool);
+		Database.Agent _avar) internal returns (bool);
 	
 	function setDoer(Database.SomeDoer _aDoer) internal;
 
