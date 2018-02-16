@@ -1,6 +1,6 @@
 pragma solidity ^0.4.19;
 import "./Able.sol";
-//pragma experimental ABIEncoderV2;
+pragma experimental ABIEncoderV2;
 
 // Doers is a class library of natural or artificial entities within A multi-agent system (MAS).
 // The agents are collectively capable of reaching goals that are difficult to achieve by an 
