@@ -143,7 +143,7 @@ contract Able is Data {
     //     if (cName != 0x0) {
     //         return (false,cName);
     //         } else {
-    //             database = new Database(this);
+    //             database = new Database(msg.sender);
     //             contracts[_name] = database;
     //             return (true,database);
     //             }
@@ -963,12 +963,12 @@ contract Database is Controlled {
 	
 	function setMyDoersDec() public { // Decrement a Creators Doers
 	    require(creators[tx.origin].myDoers-- > 0);
-		creators[msg.sender].myDoers -= 1;
+// 		creators[tx.origin].myDoers -=1;
 	}
 	
 	function setAllDoersInc() public { // Increment all Doers
-		require(doerCount < 2^256);
-	    doerCount++;
+		require(doerCount++ < 2^256);
+	   // doerCount++;
 	}
 			
 	function setMyDoers(address _address, uint _allowed) internal onlyController {
@@ -1125,7 +1125,7 @@ contract Creators is Data {
 				ownUuid, 
 				setDoer(_fPrint,_idNumber,_email,_fName,_lName,_hash,_tag,_data,_birth,_active));
 			database.initDoer(Database.Doer(newDoer, true), uuidCheck, newDoer, true);
-// 			database.setMyDoersDec();
+			database.setMyDoersDec();
 			database.setAllDoersInc();
 			return (true,newDoer);
 	}
