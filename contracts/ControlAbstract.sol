@@ -18,6 +18,141 @@ pragma experimental ABIEncoderV2;
 
 contract ControlAbstract {
 
+/* Constants */
+
+/* User Types */
+
+	enum KBase {PRIMARY,SECONDARY,TERTIARY,CERTIFICATION,DIPLOMA,LICENSE,BACHELOR,MASTER,DOCTORATE}
+    // Weights	   1,		2,		 4,		    8,		   16,	    32,		64,	    128    256
+	enum IS {ACTIVE, INACTIVE, RESERVED, CREATOR, CURATOR, PROVER}
+	enum Project { PENDING, APPROVED, STARTED, CLOSED }
+	enum Level { POOR,SATISFACTORY,GOOD,EXCELLENT }
+	enum Flag {
+		experience,e,
+		reputation,r,
+		talent,t,
+		index,i,
+		hashB,HB,
+		country,c,
+		cAuthority,CA,
+		score,s,
+		hashQ,HQ,
+		goal,g,
+		statusD,SD,
+		statusI,SI,
+		service,S,
+		payout,p
+	}
+
+	struct SomeDoer {
+        bytes32 fPrint;
+        bytes32 idNumber;
+		bytes32 email;
+		bytes32 fName;
+		bytes32 lName;
+        bytes32 hash;
+		bytes32 tag;
+        bytes32 data;
+        uint age;
+		bool active;
+	}
+
+	struct BDI {
+        Belief beliefs;
+        Desire desires;
+	    Intention intentions;
+		} 
+	struct Belief {
+		Merits merits;
+		Qualification qualification;
+		} 
+	struct Merits {
+		uint experience;
+		bytes32 reputation;
+		bytes32 talent;
+		uint8 index;
+		bytes32 hash;
+		} 
+	struct Qualification {
+		bytes32 country; //ISO3166-2:KE-XX;
+		bytes32 cAuthority;
+		bytes32 score;
+		} 
+	struct Desire {
+        bytes32 goal;
+        bool status;
+		} 
+	struct Intention {
+        IS state;
+        bytes32 service;
+        uint256 payout;
+		}
+
+    struct Plans {
+		Plan plan;
+		bool project;
+		Services services;
+		} 
+	struct Plan {
+		bytes32 preCondition;
+		Desire postCondition;
+		string projectUrl;
+		Project state;
+		address creator;
+		address curator;
+		} 
+	struct Services {
+		Service definition;
+		Promises promises;
+		} 
+	struct Service {
+		Belief preCondition;
+		Desire postCondition;
+		Metas metas;
+		} 
+	struct Metas {
+		uint timeSoft;  // preferred timeline
+		uint expire;
+		bytes32 hash;
+		string serviceUrl;
+		address doer;
+		} 
+	struct Promises {
+		Promise order;
+		Fulfillments fulfillment;
+		} 
+	struct Promise {
+		bytes32 thing;
+		uint timeHard;   // proposed timeline
+		uint256 value;
+		bytes32 hash;
+		bytes32 lso;
+		} 
+	struct Fulfillments {
+		Fulfillment completion;
+		Verification verification;
+		} 
+	struct Fulfillment {
+		bytes32 proof;
+		Level rubric;
+		uint timestamp;
+		bytes32 hash;
+		} 
+	struct Verification {
+		bytes32 verity;
+		bool complete;
+		uint timestamp;
+		bytes32 hash;
+		}
+
+/* State Variables */
+
+/* Events */
+
+/* Modifiers */
+
+/* Functions */
+
 /// @dev The actual agent contract, the nature of the agent is identified controller is the msg.sender
 ///  that deploys the contract, so usually this token will be deployed by a
 ///  token controller contract.
@@ -177,7 +312,7 @@ contract ControlAbstract {
     
 	function isCreator(address _address) view public returns (bool);
 	
-	function isCreator(Database.Creator _data) public;
+	function isCreator(Database.Agent _data) public;
 
 	function isDoer(address _address) public view returns (bool);
 
@@ -257,7 +392,7 @@ contract ControlAbstract {
 
 	function setDoersNum(uint _num) public;
 	
-	function setDoersUuid(Database.Doer _data, bytes32 _uuid) public;
+	function setDoersUuid(Database.Agent _data, bytes32 _uuid) public;
 	
 	function setDoersAdd(address _addr, bool _ans) public;
 
