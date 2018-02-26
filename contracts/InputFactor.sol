@@ -24,30 +24,31 @@ contract InputFactor is Database {
 
 /* Events */
 
-    // event FactorPayout(address indexed _from, address indexed _to, uint256 _amount);
-    // event PlanEvent(address indexed _from, address indexed _to, uint256 _amount);
-    // event PromiseEvent(address indexed _from, address indexed _to, uint256 _amount);
-    // event Fulfill(address indexed _from, address indexed _to, uint256 _amount);
+    event FactorPayout(address indexed _from, address indexed _to, uint256 _amount);
+    event PlanEvent(address indexed _from, address indexed _to, uint256 _amount);
+    event PromiseEvent(address indexed _from, address indexed _to, uint256 _amount);
+    event Fulfill(address indexed _from, address indexed _to, uint256 _amount);
+    
 	
 
 /* Modifiers */
 
-    // /// @notice The address of the controller is the only address that can call
-    // ///  a function with this modifier
-    // modifier onlyController {
-    //     require(msg.sender == controller);
-    //     _;
-    //     }
+    /// @notice The address of the controller is the only address that can call
+    ///  a function with this modifier
+    modifier onlyController {
+        require(msg.sender == controller);
+        _;
+        }
     
-	// modifier onlyCreator {
-	// 	require(isCreator(msg.sender));
-	// 	_;
-	// }
+	modifier onlyCreator {
+		require(userbase.isCreator());
+		_;
+	}
 
-	// modifier onlyDoer {
-	// 	require (isDoer(msg.sender)); 
-	// 	_;
-	// }
+	modifier onlyDoer {
+		require (userbase.isDoer()); 
+		_;
+	}
 
 /* Functions */
 
@@ -371,7 +372,7 @@ contract InputFactor is Database {
 			    verify(_message_,_v,_r,_s)].verification[msg.sender] = Verification({
 					verity: _verity,
 					complete: true, 
-					timestamp: block.timestamp, 
+					timestampV: block.timestamp, 
 					hash: _verity
 					});
 					fulfillmentCount++;
@@ -379,6 +380,43 @@ contract InputFactor is Database {
 			//     myBDI.beliefs.reputation = _service;  !!! Working on             // between creator -> doer && verifier -> doer
 			return true;
 	}
+
+bytes32 public currentChallenge;                         // The coin starts with a challenge
+uint public timeOfLastProof;                             // Variable to keep track of when rewards were given
+uint public difficulty = 10**32;                         // Difficulty starts reasonably low
+uint256 amount;
+
+function factorPayout(bytes32 _intention, bytes32 _serviceId, bytes32 sig, uint nonce, bytes32 r, bytes32 s) internal {
+    bytes8 n = bytes8(keccak256(nonce, currentChallenge));    // Generate a random hash based on input
+    require(n >= bytes8(difficulty));                   // Check if it's under the difficulty
+    uint timeSinceLastProof = (now - timeOfLastProof);  // Calculate time since last reward was given
+    require(timeSinceLastProof >= 5 seconds);         // Rewards cannot be given too quickly
+    // require(database.plans[_intention].service[_serviceId].fulfillment.timestamp < 
+    // database.plans[_intention].service[_serviceId].expire);
+    require(plans[_intention].services[_serviceId].procure[msg.sender].verification[verify(sig,uint8(nonce),r,s)].timestampV < 
+	plans[_intention].services[_serviceId].definition.metas.expire);
+    uint totalTime;
+    uint payableTime;
+	uint expire_ = plans[_intention].services[_serviceId].definition.metas.expire;
+	uint timestamp_ = plans[_intention].services[_serviceId].procure[msg.sender].fulfillment.timestamp;
+	uint timesoft_ = plans[_intention].services[_serviceId].definition.metas.timeSoft;
+	uint timehard_ = plans[_intention].services[_serviceId].procure[msg.sender].promise.timeHard;
+    if (timestamp_ < timesoft_) { // Completed on Schedule, Pays Maximum Payout
+        payableTime = timesoft_;
+    } else if (timestamp_ > timehard_) {	// Completed after deadline, enters liquidation
+        totalTime = expire_ - timesoft_;
+        payableTime = (((expire_ - timestamp_) / totalTime) * timesoft_);
+        } else {				// Completed within the deadline, pays prorata
+        totalTime = timehard_ - timesoft_;
+        payableTime = (((timehard_ - timestamp_) / totalTime) * timesoft_);
+    }
+    amount += payableTime / 60 seconds * 42 / 10;  // The reward to the winner grows by the minute
+    difficulty = difficulty * 10 minutes / timeSinceLastProof + 1;  // Adjusts the difficulty
+    doit.approveAndCall(msg.sender, amount, "");
+
+    timeOfLastProof = now;                              // Reset the counter
+    currentChallenge = keccak256(nonce, currentChallenge, block.blockhash(block.number - 1));  // Save a hash that will be used as the next proof
+    }
 
 }
 /* End of Input Factor */

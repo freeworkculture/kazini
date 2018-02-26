@@ -129,6 +129,11 @@ contract Controlled {
         require(contrl.getContract(msg.sender) != 0x00);
     }
     
+    function setContrl(Able _ctrl) internal returns (bool) {
+        contrl = _ctrl;
+        return true;
+    }
+    
     function safeSend(address _recipient, uint _ether)
         internal
         preventReentry()
@@ -158,12 +163,12 @@ contract Data is Controlled {
 /* Modifiers */
 
 	modifier onlyCreator {
-		require(database.isCreator());
+		require(userbase.isCreator());
 		_;
 	}
 
 	modifier onlyDoer {
-		require (database.isDoer()); 
+		require (userbase.isDoer()); 
 		_;
 	}
     
@@ -200,8 +205,9 @@ contract Able is Data {
         controller = msg.sender;
         cName = CONTRACTNAME;
         contracts[this] = cName;
-        database = makeDatabase();
-		ContractEvent(this,msg.sender,tx.origin);
+//         database = Database(makeContract("database"));
+//         userbase = Userbase(makeContract("userbase"));
+// 		ContractEvent(this,msg.sender,tx.origin);
 	}
 
     /// @notice Get the address of an existing contract frrom the controller.
@@ -218,8 +224,8 @@ contract Able is Data {
 		address _address, 
 		bytes32 _name) external onlyController returns (bool)	 // This guard exhibits buglike behaviour, 
 		{													// Only do validation if there is an actions contract. stops contract from overwriting itself.
-			require(contracts[msg.sender] == 0x0);
-			contracts[msg.sender] = _name;
+			require(contracts[_address] == 0x0);
+			contracts[_address] = _name;
 			ContractCallEvent(this,msg.sender,tx.origin,_name);
 			return true;
 	}
@@ -234,18 +240,26 @@ contract Able is Data {
 		return true;
     }
                 
-    // Make a new database contract.
-    function makeDatabase() onlyController public returns (Database data) {
-        data = new Database();
-        contracts[data] = data.cName();
-    }
+    // // Make a new contract.
+    // function makeContract(bytes32 _base) public returns (address contract_) {
+    //     if (_base == "database") {
+    //         contract_ = new Database();
+    //         contracts[contract_] = Database(contract_).cName();
+    //     } else if (_base == "userbase") {
+    //         contract_ = new Userbase();
+    //         contracts[contract_] = Userbase(contract_).cName();
+    //     } else if (_base == "creator") {
+    //         contract_ = new Creators(this,userbase,_base);
+    //         contracts[contract_] = Creators(contract_).cName();
+    //     }
+    // }
         
                 
-    // Make a new creators contract.
-    function makeCreators(bytes32 _name) onlyController public returns (Creators create) {
-        create = new Creators(this,userbase,_name);
-        contracts[create] = create.cName();
-    }
+    // // Make a new creators contract.
+    // function makeCreators(bytes32 _name) onlyController public returns (Creators create) {
+    //     create = new Creators(this,userbase,_name);
+    //     contracts[create] = create.cName();
+    // }
 }
 /* End of Able */
 
@@ -402,7 +416,7 @@ contract Database is Controlled {
         	} struct Verification {
         		bytes32 verity;
         		bool complete;
-        		uint timestamp;
+        		uint timestampV;
         		bytes32 hash;
 	}
 
@@ -475,8 +489,9 @@ contract Database is Controlled {
 	}
 /* Functions */ 
 
-    function Database() public {
+    function Database(Able _ctrl) public {
         cName = CONTRACTNAME;
+        contrl = _ctrl;
 		ContractEvent(this,msg.sender,tx.origin);
 	}
 
@@ -736,7 +751,7 @@ contract Database is Controlled {
 			plans[_intention].services[_serviceId].procure[_doer].verification[_prover] = Verification({
 				verity: _verity, 
 				complete: _complete, 
-				timestamp: _timestamp, 
+				timestampV: _timestamp, 
 				hash: hash});
 	}
 
@@ -1010,8 +1025,9 @@ contract Userbase is Controlled {
 	}
 /* Functions */ 
 
-    function Userbase() public {
+    function Userbase(Able _ctrl) public {
         cName = CONTRACTNAME;
+        contrl = _ctrl;
 		ContractEvent(this,msg.sender,tx.origin);
 	}
 
@@ -1189,10 +1205,11 @@ contract Creators is Data {
 	address ownAddress;	
 
 	function Creators(Able _ctrl, Userbase _ubs, bytes32 _name) public {
-		userName = _name;
-		ownAddress = msg.sender;
-		userbase = _ubs;
 		cName = CONTRACTNAME;
+		contrl = _ctrl;
+		userbase = _ubs;
+		ownAddress = msg.sender;
+		userName = _name;
 		ContractEvent(this,msg.sender,tx.origin);
 	}
 
