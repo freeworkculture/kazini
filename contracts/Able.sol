@@ -240,19 +240,19 @@ contract Able is Data {
 		return true;
     }
                 
-    // // Make a new contract.
-    // function makeContract(bytes32 _base) public returns (address contract_) {
-    //     if (_base == "database") {
-    //         contract_ = new Database();
-    //         contracts[contract_] = Database(contract_).cName();
-    //     } else if (_base == "userbase") {
-    //         contract_ = new Userbase();
-    //         contracts[contract_] = Userbase(contract_).cName();
-    //     } else if (_base == "creator") {
-    //         contract_ = new Creators(this,userbase,_base);
-    //         contracts[contract_] = Creators(contract_).cName();
-    //     }
-    // }
+    // Make a new contract.
+    function makeContract(bytes32 _base) public returns (address contract_) {
+        if (_base == "database") {
+            contract_ = new Database();
+            contracts[contract_] = Database(contract_).cName();
+        } else if (_base == "userbase") {
+            contract_ = new Userbase();
+            contracts[contract_] = Userbase(contract_).cName();
+        } else if (_base == "creator") {
+            contract_ = new Creators(this,userbase,_base);
+            contracts[contract_] = Creators(contract_).cName();
+        }
+    }
         
                 
     // // Make a new creators contract.
