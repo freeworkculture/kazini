@@ -152,6 +152,8 @@ contract Data is Controlled {
 /* State Variables */
     
     Database internal database;
+    
+    Userbase internal userbase;
 
 /* Modifiers */
 
@@ -241,7 +243,7 @@ contract Able is Data {
                 
     // Make a new creators contract.
     function makeCreators(bytes32 _name) onlyController public returns (Creators create) {
-        create = new Creators(this,database,_name);
+        create = new Creators(this,userbase,_name);
         contracts[create] = create.cName();
     }
 }
@@ -841,6 +843,324 @@ contract Database is Controlled {
 /* End of Database */
 }
 
+////////////////////
+// Userbase Contract
+////////////////////
+contract Userbase is Controlled {
+    
+/* Constants */
+
+    bytes32 constant internal CONTRACTNAME = "Userbase";
+	uint8 constant internal BASE = 2;
+
+/* State Variables */
+
+	enum KBase {PRIMARY,SECONDARY,TERTIARY,CERTIFICATION,DIPLOMA,LICENSE,BACHELOR,MASTER,DOCTORATE}
+    // Weights	   1,		2,		 4,		    8,		   16,	    32,		64,	    128    256
+	enum IS { CREATOR, CURATOR, ACTIVE, INACTIVE, RESERVED, PROVER }
+	enum Project { PENDING, INITIATED, APPROVED, STARTED, CLOSED }
+	enum Level { POOR,SATISFACTORY,GOOD,EXCELLENT }
+	enum Flag {
+		experience,e,
+		reputation,r,
+		talent,t,
+		index,i,
+		hashB,HB,
+		country,c,
+		cAuthority,CA,
+		score,s,
+		hashQ,HQ,
+		goal,g,
+		statusD,SD,
+		statusI,SI,
+		service,S,
+		payout,p
+	}
+    
+	uint public plansCount;
+	uint public promiseCount;
+    uint public orderCount;
+    uint public fulfillmentCount;
+	uint public verificationCount;
+	
+	uint internal talentK; 						// Total number of all identified talents
+	uint internal talentI;	  					// Total number of talents of all individuals
+	uint internal talentR;						// Total number of unique talents
+
+	uint public doerCount;	// !!! Can I call length of areDoers instead??!!!
+
+	/// @notice `SomeDoer` defines the basic universal structure of an agent
+	// @dev Interp. aDoer {fPrint, email, birth, fName, lName, active, lastUpdate} is an agent with
+	// fPrint is PGP Key fingerprint
+	// email is PGP key email
+	// birth is date of birth in seconds from 1970
+	// fName is first name in identity document MRZ
+	// lName is last name in identity document MRZ
+	// state is deliberative state of agent
+	// lastUpdate is timestamp of last record entry
+	struct SomeDoer {
+        bytes32 fPrint;
+        bytes32 idNumber;
+		bytes32 email;
+		bytes32 fName;
+		bytes32 lName;
+        bytes32 hash;
+		bytes32 tag;
+        bytes32 data;
+        uint age;
+		bool active;
+	}
+
+	/// @notice `Belief_Desire_Intention` is the type that defines a strategy model of an actual agent
+	// @dev Interp. myBelief {Qualification, Experience, Reputation, Talent} is an agent with
+	// Qualification is (<ISO 3166-1 numeric-3>,<Conferring Authority>,<Score>)
+	// experience is period from qualification in seconds
+	// reputaion is PGP trust level flag !!! CITE RFC PART
+	// talent is user declared string of talents
+	struct BDI {
+        Belief beliefs;
+        mapping(bytes1 => Desire) desires;
+	    mapping(bool => Intention) intentions;
+	} struct Belief {
+		Merits merits;
+		mapping(uint8 => Qualification) qualification; // Key is the keccak256 hash of the struct contents
+		} struct Merits {
+			uint experience;
+			bytes32 reputation;
+			bytes32 talent;
+			uint8 index;
+			bytes32 hash;
+			} struct Qualification {
+			bytes32 country; //ISO3166-2:KE-XX;
+			bytes32 cAuthority;
+			bytes32 score;
+	} struct Desire {
+        bytes32 goal;
+        bool status;
+	} struct Intention {
+        IS state;
+        bytes32 service;
+        uint256 payout;
+	}
+
+	/// @notice `Creator && Doer lookup` is the type that defines a strategy model of an actual agent
+	// @dev Interp. myBelief {Qualification, Experience, Reputation, Talent} is an agent with
+	// Qualification is (<ISO 3166-1 numeric-3>,<Conferring Authority>,<Score>)
+	// experience is period from qualification in seconds
+	// reputaion is PGP trust level flag !!! CITE RFC PART
+	// talent is user declared string of talents
+
+    struct Agent {
+        bytes32 keyId;
+		IS state;
+        bool active;
+		uint myDoers;
+	}
+
+	/// @dev `Initialised data structures
+	/// @notice `Creator && Doer lookup` is the type that defines a strategy model of an actual agent
+	// @dev Interp. myBelief {Qualification, Experience, Reputation, Talent} is an agent with
+	// Qualification is (<ISO 3166-1 numeric-3>,<Conferring Authority>,<Score>)
+	// experience is period from qualification in seconds
+	// reputaion is PGP trust level flag !!! CITE RFC PART
+	// talent is user declared string of talents
+
+    mapping(bytes32 => uint) public talentF; 	// Frequency of occurence of a talent  
+        
+    mapping(address => Agent) public agents;
+
+	mapping(bytes32 => address) public keyid;
+
+	mapping(address => bytes32[]) public allPromises;
+
+    bytes32[] public allPlans;
+
+	address[] public doersAccts;
+
+
+/* Events */
+
+	event NewPlan(address indexed _from, address indexed _sender, address indexed _creator, bytes32 _intention, bytes32 _prequalification);
+
+/* Modifiers */    
+    
+	modifier onlyCreator {
+		require(agents[msg.sender].state == IS.CREATOR);
+		_;
+	}
+
+	modifier onlyDoer {
+		require (agents[msg.sender].state != IS.CREATOR); 
+		_;
+	}
+
+	modifier onlyCurator {
+		require (agents[msg.sender].state == IS.CURATOR); 
+		_;
+	}
+
+	modifier onlyTrustee {
+		require (agents[msg.sender].state == IS.ACTIVE); 
+		_;
+	}
+
+	modifier onlyProver {
+		require (agents[msg.sender].state == IS.PROVER); 
+		_;
+	}
+/* Functions */ 
+
+    function Userbase() public {
+        cName = CONTRACTNAME;
+		ContractEvent(this,msg.sender,tx.origin);
+	}
+
+/////////////////
+// All ASSERTS
+/////////////////
+
+	function isAble() view public returns (bytes32) {
+		contrl.KEYID;
+	}
+
+	function isAgent(address _address) public view returns (bool) {
+		return agents[_address].active;
+	}
+
+	function isAgent(bytes32 _uuid) public view returns (bool) { // Point this to oraclise service checking MSD on 
+		return agents[keyid[_uuid]].active;	// https://pgp.cs.uu.nl/paths/4b6b34649d496584/to/4f723b7662e1f7b5.json
+	}
+	
+	function isCreator() external view returns (bool) {
+		agents[msg.sender].state == IS.CREATOR ? true : false;
+	}
+
+	function isDoer() external view returns (bool) {
+		agents[msg.sender].state != IS.CREATOR ? true : false;
+	}
+
+
+
+/////////////////
+// All GETTERS
+/////////////////
+
+	/// @notice Get the data of all Talents in the ecosystem.
+    /// @param _data The query condition of the contract
+	//  @dev `anybody` can retrive the talent data in the contract
+	function getTalents(bytes32 _data) view external returns (uint var1, uint var2, uint var3, uint var4) {
+		// check_condition ? true : false;
+		var1 = talentI;
+		var2 = talentF[_data];
+		var3 = talentR;
+		var4 = talentK;
+	}
+
+	/// @notice Get the number of doers that can be spawned by a Creators.
+    /// The query condition of the contract
+	//  @dev `anybody` can retrive the count data in the contract
+	function getCreatorsNum() view external onlyCreator returns(uint) {
+		return agents[tx.origin].myDoers ;
+	}
+
+	/// @notice Get the active status of a Creator and its number of doers spawned.
+    /// @param _address The query condition of the contract
+	//  @dev `anybody` can retrive the count data in the contract
+	function getCreators(address _address) view external returns (bool,uint256) {
+        return (agents[_address].active, agents[_address].myDoers);
+	}
+
+	function getDoer(address _address) public view returns (Agent) {
+		return agents[_address];
+	}
+
+	function getDoer(bytes32 _uuid) public view returns (Agent) { // Point this to oraclise service checking MSD on 
+		return agents[keyid[_uuid]];	// https://pgp.cs.uu.nl/paths/4b6b34649d496584/to/4f723b7662e1f7b5.json
+	}
+
+/////////////////
+// All SETTERS
+/////////////////
+
+	/// @notice Get the initialisation data of a plan created by a Creator. 
+    /// The query condition of the contract
+	//  @dev `anybody` can retrive the plan data in the contract Plan has five levels
+
+	function updateTalent() public onlyDoer returns (bool) {
+		if (talentF[Doers(msg.sender).getBeliefn("talent_")] == 0) {  // First time Doer 
+			require(talentR++ < 2^256);
+			}
+		require(talentF[Doers(msg.sender).getBeliefn("talent_")]++ < 2^256);
+		require(talentI++ < 2^256);
+		require(talentK++ < 2^256);
+	}
+
+	function changeTalent() public onlyDoer returns (bool) {
+		require(talentF[Doers(msg.sender).getBeliefn("talent_")]-- > 0);
+		if (talentF[Doers(msg.sender).getBeliefn("talent_")] == 0) {  // First time Doer 
+			require(talentR-- > 0);
+			}
+		require(talentI-- > 0);
+	}
+
+	function initDoer(Agent _data, bytes32 _uuid, address _address) public returns (bool) {
+		agents[_address] = _data;
+		keyid[_uuid] = _address;
+	}
+
+	function setAllPlans(bytes32 _planId) external onlyController {
+		allPlans.push(_planId);
+	}
+	function setPromise(bytes32 _serviceId) external onlyController {
+		require(promiseCount++ < 2^256);
+		allPromises[tx.origin].push(_serviceId);
+	}
+
+	function setAgent(Agent _data, address _address, bytes32 _keyId) public onlyController {
+		agents[_address] = _data;
+		keyid[_keyId] = _address;
+	}
+	function setAgent(address _address, bytes32 _keyId) external onlyController {
+		agents[_address].keyId = _keyId;
+		keyid[_keyId] = _address;
+	}
+
+	function setAgent(address _address, IS _state) external onlyController {
+		agents[_address].state = _state;
+	}
+
+	function setAgent(address _address, bool _active) external onlyController {
+		agents[_address].active = _active;
+	}
+
+	function setAgent(address _address, uint _allowed) external onlyController {
+		require(agents[_address].state == IS.CREATOR);
+		agents[_address].myDoers += _allowed;
+	}
+
+	function decMyDoers() public { // Decrement a Creators Doers
+	    require(agents[tx.origin].myDoers-- > 0);
+		//agents[tx.origin].myDoers -=1;
+	}
+	
+	function incAllDoers() public { // Increment all Doers
+		require(doerCount++ < 2^256);
+	   // doerCount++;
+	}
+
+	function setDoersNum(uint _num) public onlyController {
+		doerCount = _num;
+	}
+	
+	function setDoersAdd(address _address) public {
+	    doersAccts.push(_address);
+	}
+
+
+/* End of Userbase */
+}
+
+
 
 // Doers is a class library of natural or artificial entities within A multi-agent system (MAS).
 // The agents are collectively capable of reaching goals that are difficult to achieve by an 
@@ -868,10 +1188,10 @@ contract Creators is Data {
 	bytes32 public ownUuid;
 	address ownAddress;	
 
-	function Creators(Able _ctrl, Database _db, bytes32 _name) public {
+	function Creators(Able _ctrl, Userbase _ubs, bytes32 _name) public {
 		userName = _name;
 		ownAddress = msg.sender;
-		database = _db;
+		userbase = _ubs;
 		cName = CONTRACTNAME;
 		ContractEvent(this,msg.sender,tx.origin);
 	}
@@ -887,16 +1207,16 @@ contract Creators is Data {
 		bool _active
 		) onlyCreator public returns (bool,address) 
 		{
-			require(database.getCreatorsNum() > 0);
+			require(userbase.getCreatorsNum() > 0);
 			bytes32 uuidCheck = keccak256(_fPrint, _birth, _lName, _idNumber);
-			require(!database.isAgent(uuidCheck));
+			require(!userbase.isAgent(uuidCheck));
 			Doers newDoer = new Doers(
-				database,
+				userbase,
 				ownUuid, 
 				setDoer(_fPrint,_idNumber,_lName,_hash,_tag,_data,_birth,_active));
-			database.initDoer(Database.Agent(ownUuid, Database.IS.INACTIVE, true, 0), uuidCheck, newDoer);
-			database.decMyDoers();
-			database.incAllDoers();
+			userbase.initDoer(Userbase.Agent(ownUuid, Userbase.IS.INACTIVE, true, 0), uuidCheck, newDoer);
+			userbase.decMyDoers();
+			userbase.incAllDoers();
 			return (true,newDoer);
 	}
 
@@ -905,24 +1225,24 @@ contract Creators is Data {
 /////////////////
 
 	function isDoer(address _address) view external returns (bool) { // Point this to oraclise service checking MSD on 
-		return database.isAgent(_address);	// https://pgp.cs.uu.nl/paths/4b6b34649d496584/to/4f723b7662e1f7b5.json
+		return userbase.isAgent(_address);	// https://pgp.cs.uu.nl/paths/4b6b34649d496584/to/4f723b7662e1f7b5.json
 	}
 
 	function isDoer(bytes32 _keyId) view external returns (bool) {
-		return database.isAgent(_keyId);
+		return userbase.isAgent(_keyId);
 	}
 
 	function isCreator() external view returns (bool) { // Consider use of delegateCall
-		database.isCreator();
+		userbase.isCreator();
 	}
 
 	function isDoer() view external returns (bool) { // Point this to oraclise service checking MSD on 
-		return database.isDoer();	// https://pgp.cs.uu.nl/paths/4b6b34649d496584/to/4f723b7662e1f7b5.json
+		return userbase.isDoer();	// https://pgp.cs.uu.nl/paths/4b6b34649d496584/to/4f723b7662e1f7b5.json
 	}
 
-	function isPlanning(bytes32 _intention) view external returns (uint256) { 
-        return database.isPlanning(_intention);
-    }
+// 	function isPlanning(bytes32 _intention) view external returns (uint256) { 
+//         return userbase.isPlanning(_intention);
+//     }
 
 /////////////////
 // All GETTERS
@@ -933,11 +1253,11 @@ contract Creators is Data {
 	}
 
 	function getCreator(address _address) view public returns (bool,uint256) {
-        return database.getCreators(_address);
+        return userbase.getCreators(_address);
 	}
 
 	function getDoerCount() view public returns (uint) {
-		return database.doerCount();
+		return userbase.doerCount();
 	}
 
 /////////////////
@@ -945,13 +1265,13 @@ contract Creators is Data {
 /////////////////
 
 	function setMyDoers(bool _active, uint _allowed) external onlyController {
-		database.setAgent(msg.sender, _active);
-		database.setAgent(msg.sender, _allowed);
+		userbase.setAgent(msg.sender, _active);
+		userbase.setAgent(msg.sender, _allowed);
 	}
 
 	function initCreator(bytes32 _keyId, Database.IS state, bool _active, uint _num) external {
-		database.setAgent(
-			Database.Agent({keyId: _keyId, state: Database.IS.CREATOR, active:_active, myDoers: _num}), msg.sender, _keyId);
+		userbase.setAgent(
+			Userbase.Agent({keyId: _keyId, state: Userbase.IS.CREATOR, active:_active, myDoers: _num}), msg.sender, _keyId);
 	}
 
 	function setDoer(
@@ -1013,7 +1333,7 @@ contract Doers is usingOraclize {
 		_;
 	}
 
-	Database dbs;
+	Userbase dbs;
 
 	address public Controller;
 	address public creatorAdd;
@@ -1057,7 +1377,7 @@ contract Doers is usingOraclize {
 	
 	//Creators.Flag aflag;
 	
-	function Doers(Database _data, bytes32 _creatorUuid, Database.SomeDoer _adoer) public {
+	function Doers(Userbase _data, bytes32 _creatorUuid, Database.SomeDoer _adoer) public {
 		dbs = _data;
 		creatorAdd = msg.sender;
 		creatorUuid = _creatorUuid;
@@ -1224,11 +1544,12 @@ function bytesToString(bytes32 _bytes) public constant returns (string) {
 // All GETTERS
 /////////////////
 
-	function viewBelief() view public returns (uint,uint,bytes32,bytes32,bytes32) {
+
+	function viewBelief() view public returns (uint,bytes32,bytes32,uint8,bytes32) {
 	    return (myBDI.beliefs.merits.experience,
-        	    myBDI.beliefs.merits.index,
         	    myBDI.beliefs.merits.reputation,
         	    myBDI.beliefs.merits.talent,
+        	    myBDI.beliefs.merits.index,
         	    myBDI.beliefs.merits.hash);
 	}
 	

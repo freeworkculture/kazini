@@ -18,7 +18,7 @@ contract InputFactor is Database {
 /* State Variables */
 
     Able internal contrl;
-	Database internal database;
+	Userbase internal userbase;
 	DoitToken internal doit;
     uint public promiseCount;
 
@@ -54,11 +54,11 @@ contract InputFactor is Database {
     
     function InputFactor(
         Able _ctrl, 
-        Database _db, 
+        Userbase _ubs, 
         DoitToken _diy) public {
 		cName = CONTRACTNAME;
         contrl = _ctrl;
-        database = _db;
+        userbase = _ubs;
         doit = _diy;
 		ContractEvent(this,msg.sender,tx.origin);
 	}
@@ -220,32 +220,6 @@ contract InputFactor is Database {
 			plans[_intention].state == Project.STARTED;
 			return true;
     }  
-    
-
-    function promise(
-		bytes32 _intention, 
-		bytes1 _desire, 
-		bytes32 _serviceId) public payable onlyDoer returns (bool) 
-		{
-			require(agents[msg.sender].state != IS.ACTIVE);
-			require(Doers(msg.sender).getBelief("index") >= plans[_intention].services[_serviceId].definition.preCondition.merits.index);
-			bytes32 a;
-			bool b;
-			Desire memory c = Desire(a,b);
-			(a,b) = Doers(tx.origin).viewDesire(_desire);
-			
-			require(c.goal == plans[_intention].services[_serviceId].definition.postCondition.goal);
-			require(msg.value > 0);
-			require(Doers(msg.sender).getBelief("index") > Doers(plans[_intention].services[_serviceId].definition.metas.doer).getBelief("index"));
-			bytes32 eoi = keccak256(msg.sender, _intention, _serviceId);
-
-			allPromises[msg.sender].push(_serviceId);
-			agents[plans[_intention].services[_serviceId].definition.metas.doer].state = IS.INACTIVE;
-			plans[_intention].services[_serviceId].definition.metas.doer = msg.sender;
-			agents[msg.sender].state = IS.RESERVED;
-			promiseCount++;
-			return true;
-	}   
 
     function promise(
 		bytes32 _intention, 
@@ -254,33 +228,99 @@ contract InputFactor is Database {
 		uint _time, 
 		bool _thing) public payable onlyDoer returns (bool) 
 		{
-			
-			Database.IS a;
-			bytes32 b;
-			uint c;
-			Intention memory dd = Intention(a,b,c);
-			(a,b,c) = Doers(msg.sender).viewIntention(_thing);
-			
+			Userbase.IS b;
+			(,b,,) = userbase.agents(msg.sender);
+			require(b != Userbase.IS.ACTIVE);
+			require(Doers(msg.sender).getBelief("index") >= plans[_intention].services[_serviceId].definition.preCondition.merits.index);
+            bytes32 a;
+            (a,) = Doers(msg.sender).viewDesire(_desire);
+// 			require(Doers(msg.sender).getDesire(_desire).goal == plans[_intention].service[_serviceId].postCondition.goal);
+			require(a == plans[_intention].services[_serviceId].definition.postCondition.goal);
 			require((_time > block.timestamp) || (_time < plans[_intention].services[_serviceId].definition.metas.expire));
 			require(msg.value > 0);
 			require(Doers(msg.sender).getBelief("index") > Doers(plans[_intention].services[_serviceId].definition.metas.doer).getBelief("index"));
 			bytes32 eoi = keccak256(msg.sender, _intention, _serviceId);
 			Order NULL;
+			bytes32 bb;
+// 			Intention memory dd = Intention(a,b,c);
+			(,bb,) = Doers(msg.sender).viewIntention(_thing);
 			plans[_intention].services[_serviceId].procure[msg.sender].promise = Promise({
-				thing: dd.service,
+				thing: bb,
+				// thing: dd.service,
 				timeHard: _time, 
 				value: msg.value, 
 				hash: eoi});
+			allPromises[msg.sender].push(_serviceId);
+			userbase.setAgent(plans[_intention].services[_serviceId].definition.metas.doer, Userbase.IS.INACTIVE);
+			plans[_intention].services[_serviceId].definition.metas.doer = msg.sender;
+			userbase.setAgent(msg.sender,Userbase.IS.RESERVED);
+			promiseCount++;
 			return true;
 	}    
+    
+    
+
+//     function promise(
+// 		bytes32 _intention, 
+// 		bytes1 _desire, 
+// 		bytes32 _serviceId) public payable onlyDoer returns (bool) 
+// 		{
+// 			require(userbase.agents[msg.sender].state != IS.ACTIVE);
+// 			require(Doers(msg.sender).getBelief("index") >= plans[_intention].services[_serviceId].definition.preCondition.merits.index);
+// 			bytes32 a;
+// 			bool b;
+// 			Desire memory c = Desire(a,b);
+// 			(a,b) = Doers(tx.origin).viewDesire(_desire);
+			
+// 			require(c.goal == plans[_intention].services[_serviceId].definition.postCondition.goal);
+// 			require(msg.value > 0);
+// 			require(Doers(msg.sender).getBelief("index") > Doers(plans[_intention].services[_serviceId].definition.metas.doer).getBelief("index"));
+// 			bytes32 eoi = keccak256(msg.sender, _intention, _serviceId);
+
+// 			allPromises[msg.sender].push(_serviceId);
+// 			userbase.userbase.agents[plans[_intention].services[_serviceId].definition.metas.doer].state = IS.INACTIVE;
+// 			plans[_intention].services[_serviceId].definition.metas.doer = msg.sender;
+// 			userbase.agents[msg.sender].state = IS.RESERVED;
+// 			promiseCount++;
+// 			return true;
+// 	}   
+
+//     function promise(
+// 		bytes32 _intention, 
+// 		bytes1 _desire, 
+// 		bytes32 _serviceId, 
+// 		uint _time, 
+// 		bool _thing) public payable onlyDoer returns (bool) 
+// 		{
+			
+// 			Database.IS a;
+// 			bytes32 b;
+// 			uint c;
+// 			Intention memory dd = Intention(a,b,c);
+// 			(a,b,c) = Doers(msg.sender).viewIntention(_thing);
+			
+// 			require((_time > block.timestamp) || (_time < plans[_intention].services[_serviceId].definition.metas.expire));
+// 			require(msg.value > 0);
+// 			require(Doers(msg.sender).getBelief("index") > Doers(plans[_intention].services[_serviceId].definition.metas.doer).getBelief("index"));
+// 			bytes32 eoi = keccak256(msg.sender, _intention, _serviceId);
+// 			Order NULL;
+// 			plans[_intention].services[_serviceId].procure[msg.sender].promise = Promise({
+// 				thing: dd.service,
+// 				timeHard: _time, 
+// 				value: msg.value, 
+// 				hash: eoi});
+// 			return true;
+// 	}    
 
     function order(bytes32 _intention, bytes32 _serviceId, bool _check, string _thing, string _proof, uint8 _v, bytes32 _r, bytes32 _s) public payable onlyDoer {
 		require(plans[_intention].state == Project.APPROVED);
 		require(plans[_intention].services[_serviceId].definition.metas.doer == msg.sender);
-		require(uint8(agents[msg.sender].state) > uint8(IS.ACTIVE));
+		Userbase.IS b;
+		(,b,,) = userbase.agents(msg.sender);
+		require(uint8(b) > uint8(Userbase.IS.ACTIVE));
 		require(verified(plans[_intention].services[_serviceId].procure[msg.sender].promise.hash,_v,_r,_s));
 		plans[_intention].services[_serviceId].order = Order(plans[_intention].services[_serviceId].procure[msg.sender].promise.hash,_v,_r,_s);
-		agents[msg.sender].state = IS.ACTIVE;
+		userbase.setAgent(msg.sender,Userbase.IS.ACTIVE);
 		orderCount++;
         }
 
