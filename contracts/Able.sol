@@ -734,7 +734,7 @@ contract Database is BaseController {
 		bytes32 _intention, 
 		bytes32 _serviceId, 
 		address _doer,
-		bytes32 _thing,
+		Intention _thing,
 		uint _timeHard,   // proposed timeline
 		uint256 _value,
 		bytes32 hash,
@@ -744,7 +744,6 @@ contract Database is BaseController {
         	plans[_intention].services[_serviceId].procure[_doer].promise = Promise({
 				thing: _thing, 
 				timeHard: _timeHard,
-				value: _value, 
 				hash: hash});
 	}
 	
@@ -1660,8 +1659,8 @@ function bytesToString(bytes32 _bytes) public constant returns (string) {
 		return myBDI.intentions[_check];
 	}
 	
-	function getPromise() internal view onlyDoer returns (bytes32,uint,uint,bytes32) {
-		return (myPromises.thing, myPromises.timeHard, myPromises.value, myPromises.hash);
+	function getPromise() internal view onlyDoer returns (Database.Intention,uint,bytes32) {
+		return (myPromises.thing, myPromises.timeHard, myPromises.hash);
 	}
 
 /////////////////
