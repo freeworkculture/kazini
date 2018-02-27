@@ -48,7 +48,7 @@ pragma solidity ^0.4.18;
 // import "./ControlAbstract.sol";
 // import "./Controlled.sol";
 import "./Able.sol";
-import "./TokenController.sol";
+// import "./TokenController.sol";
 
 ///////////////////
 // Contract Interface
@@ -65,7 +65,7 @@ contract ApproveAndCallFallBack {
 /// @dev The actual token contract, the default controller is the msg.sender
 ///  that deploys the contract, so usually this token will be deployed by a
 ///  token controller contract.
-contract DoitToken is Controlled {
+contract DoitToken is BaseController {
 
     string public name;                 //The Token's name: e.g. DigixDAO Tokens
     string public symbol;               //An identifier: e.g. REP

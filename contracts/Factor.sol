@@ -1,15 +1,15 @@
 pragma solidity ^0.4.19;
-import "./DoitToken.sol";
+// import "./DoitToken.sol";
 //import "./ControlAbstract.sol";
-// import "./Reserve.sol";
+import "./Reserve.sol";
 pragma experimental ABIEncoderV2;
 
-////////////////////
-// Database Contract
-////////////////////
+////////////////////////
+// Factor Input Contract
+////////////////////////
 
 
-contract InputFactor is Database {
+contract Factor is Database {
 
 /* Constants */
 
@@ -17,9 +17,9 @@ contract InputFactor is Database {
 
 /* State Variables */
 
-    Able internal contrl;
 	Userbase internal userbase;
 	DoitToken internal doit;
+	Reserve internal reserve;
     uint public promiseCount;
 
 /* Events */
@@ -28,8 +28,6 @@ contract InputFactor is Database {
     event PlanEvent(address indexed _from, address indexed _to, uint256 _amount);
     event PromiseEvent(address indexed _from, address indexed _to, uint256 _amount);
     event Fulfill(address indexed _from, address indexed _to, uint256 _amount);
-    
-	
 
 /* Modifiers */
 
@@ -53,14 +51,16 @@ contract InputFactor is Database {
 /* Functions */
 
     
-    function InputFactor(
+    function Factor(
         Able _ctrl, 
-        Userbase _ubs, 
-        DoitToken _diy) public {
+        Userbase _ubs,
+		DoitToken _diy,
+		Reserve _rsv) public {
 		cName = CONTRACTNAME;
         contrl = _ctrl;
         userbase = _ubs;
-        doit = _diy;
+		doit = _diy;
+		reserve = _rsv;
 		ContractEvent(this,msg.sender,tx.origin);
 	}
 
@@ -83,6 +83,7 @@ contract InputFactor is Database {
 	    verify(_lso.Sig,_lso.V,_lso.R,_lso.S) == msg.sender ? check = true : check = false;
 	}
 
+/* OLD CODE MUTED */
 	/// @notice `plan` compile a plan can step down and assign some other address to this role
     /// @param intention_ desire_ preConditions_ projectUrl_ preQualification_ The address of the new owner. 0x0 can be used to create
 	// Add a new contract to the controller. This will not overwrite an existing contract.
@@ -117,13 +118,11 @@ contract InputFactor is Database {
 	// 	Database.Plan memory a;
 	// 	(a, ) = database.plans(_intention);
     //     return a.postCondition.goal ^ bytes32(msg.sender);  // bitwise XOR builds a map of serviceIds
-    // }
+// }
 
 	/// @notice `plan` compile a plan can step down and assign some other address to this role
     /// @param _intention _desire _preConditions _projectUrl _preQualification The address of the new owner. 0x0 can be used to create
 	// Add a new contract to the controller. This will not overwrite an existing contract.
-    
-	
 	function createPlan(
 		bytes32 _intention, 
 		bytes1 _desire, 
@@ -260,57 +259,57 @@ contract InputFactor is Database {
 	}    
     
     
+/* OLD CODE MUTED */
+	//     function promise(
+	// 		bytes32 _intention, 
+	// 		bytes1 _desire, 
+	// 		bytes32 _serviceId) public payable onlyDoer returns (bool) 
+	// 		{
+	// 			require(userbase.agents[msg.sender].state != IS.ACTIVE);
+	// 			require(Doers(msg.sender).getBelief("index") >= plans[_intention].services[_serviceId].definition.preCondition.merits.index);
+	// 			bytes32 a;
+	// 			bool b;
+	// 			Desire memory c = Desire(a,b);
+	// 			(a,b) = Doers(tx.origin).viewDesire(_desire);
+				
+	// 			require(c.goal == plans[_intention].services[_serviceId].definition.postCondition.goal);
+	// 			require(msg.value > 0);
+	// 			require(Doers(msg.sender).getBelief("index") > Doers(plans[_intention].services[_serviceId].definition.metas.doer).getBelief("index"));
+	// 			bytes32 eoi = keccak256(msg.sender, _intention, _serviceId);
 
-//     function promise(
-// 		bytes32 _intention, 
-// 		bytes1 _desire, 
-// 		bytes32 _serviceId) public payable onlyDoer returns (bool) 
-// 		{
-// 			require(userbase.agents[msg.sender].state != IS.ACTIVE);
-// 			require(Doers(msg.sender).getBelief("index") >= plans[_intention].services[_serviceId].definition.preCondition.merits.index);
-// 			bytes32 a;
-// 			bool b;
-// 			Desire memory c = Desire(a,b);
-// 			(a,b) = Doers(tx.origin).viewDesire(_desire);
-			
-// 			require(c.goal == plans[_intention].services[_serviceId].definition.postCondition.goal);
-// 			require(msg.value > 0);
-// 			require(Doers(msg.sender).getBelief("index") > Doers(plans[_intention].services[_serviceId].definition.metas.doer).getBelief("index"));
-// 			bytes32 eoi = keccak256(msg.sender, _intention, _serviceId);
+	// 			allPromises[msg.sender].push(_serviceId);
+	// 			userbase.userbase.agents[plans[_intention].services[_serviceId].definition.metas.doer].state = IS.INACTIVE;
+	// 			plans[_intention].services[_serviceId].definition.metas.doer = msg.sender;
+	// 			userbase.agents[msg.sender].state = IS.RESERVED;
+	// 			promiseCount++;
+	// 			return true;
+	// 	}   
 
-// 			allPromises[msg.sender].push(_serviceId);
-// 			userbase.userbase.agents[plans[_intention].services[_serviceId].definition.metas.doer].state = IS.INACTIVE;
-// 			plans[_intention].services[_serviceId].definition.metas.doer = msg.sender;
-// 			userbase.agents[msg.sender].state = IS.RESERVED;
-// 			promiseCount++;
-// 			return true;
-// 	}   
-
-//     function promise(
-// 		bytes32 _intention, 
-// 		bytes1 _desire, 
-// 		bytes32 _serviceId, 
-// 		uint _time, 
-// 		bool _thing) public payable onlyDoer returns (bool) 
-// 		{
-			
-// 			Database.IS a;
-// 			bytes32 b;
-// 			uint c;
-// 			Intention memory dd = Intention(a,b,c);
-// 			(a,b,c) = Doers(msg.sender).viewIntention(_thing);
-			
-// 			require((_time > block.timestamp) || (_time < plans[_intention].services[_serviceId].definition.metas.expire));
-// 			require(msg.value > 0);
-// 			require(Doers(msg.sender).getBelief("index") > Doers(plans[_intention].services[_serviceId].definition.metas.doer).getBelief("index"));
-// 			bytes32 eoi = keccak256(msg.sender, _intention, _serviceId);
-// 			Order NULL;
-// 			plans[_intention].services[_serviceId].procure[msg.sender].promise = Promise({
-// 				thing: dd.service,
-// 				timeHard: _time, 
-// 				value: msg.value, 
-// 				hash: eoi});
-// 			return true;
+	//     function promise(
+	// 		bytes32 _intention, 
+	// 		bytes1 _desire, 
+	// 		bytes32 _serviceId, 
+	// 		uint _time, 
+	// 		bool _thing) public payable onlyDoer returns (bool) 
+	// 		{
+				
+	// 			Database.IS a;
+	// 			bytes32 b;
+	// 			uint c;
+	// 			Intention memory dd = Intention(a,b,c);
+	// 			(a,b,c) = Doers(msg.sender).viewIntention(_thing);
+				
+	// 			require((_time > block.timestamp) || (_time < plans[_intention].services[_serviceId].definition.metas.expire));
+	// 			require(msg.value > 0);
+	// 			require(Doers(msg.sender).getBelief("index") > Doers(plans[_intention].services[_serviceId].definition.metas.doer).getBelief("index"));
+	// 			bytes32 eoi = keccak256(msg.sender, _intention, _serviceId);
+	// 			Order NULL;
+	// 			plans[_intention].services[_serviceId].procure[msg.sender].promise = Promise({
+	// 				thing: dd.service,
+	// 				timeHard: _time, 
+	// 				value: msg.value, 
+	// 				hash: eoi});
+	// 			return true;
 // 	}    
 
     function order(bytes32 _intention, bytes32 _serviceId, bool _check, string _thing, string _proof, uint8 _v, bytes32 _r, bytes32 _s) public payable onlyDoer {
@@ -381,41 +380,42 @@ contract InputFactor is Database {
 			return true;
 	}
 
-bytes32 public currentChallenge;                         // The coin starts with a challenge
-uint public timeOfLastProof;                             // Variable to keep track of when rewards were given
-uint public difficulty = 10**32;                         // Difficulty starts reasonably low
-uint256 amount;
+/* OLD CODE MUTED */
+	bytes32 public currentChallenge;                         // The coin starts with a challenge
+	uint public timeOfLastProof;                             // Variable to keep track of when rewards were given
+	uint public difficulty = 10**32;                         // Difficulty starts reasonably low
+	uint256 amount;
 
-function factorPayout(bytes32 _intention, bytes32 _serviceId, bytes32 sig, uint nonce, bytes32 r, bytes32 s) internal {
-    bytes8 n = bytes8(keccak256(nonce, currentChallenge));    // Generate a random hash based on input
-    require(n >= bytes8(difficulty));                   // Check if it's under the difficulty
-    uint timeSinceLastProof = (now - timeOfLastProof);  // Calculate time since last reward was given
-    require(timeSinceLastProof >= 5 seconds);         // Rewards cannot be given too quickly
-    // require(database.plans[_intention].service[_serviceId].fulfillment.timestamp < 
-    // database.plans[_intention].service[_serviceId].expire);
-    require(plans[_intention].services[_serviceId].procure[msg.sender].verification[verify(sig,uint8(nonce),r,s)].timestampV < 
-	plans[_intention].services[_serviceId].definition.metas.expire);
-    uint totalTime;
-    uint payableTime;
-	uint expire_ = plans[_intention].services[_serviceId].definition.metas.expire;
-	uint timestamp_ = plans[_intention].services[_serviceId].procure[msg.sender].fulfillment.timestamp;
-	uint timesoft_ = plans[_intention].services[_serviceId].definition.metas.timeSoft;
-	uint timehard_ = plans[_intention].services[_serviceId].procure[msg.sender].promise.timeHard;
-    if (timestamp_ < timesoft_) { // Completed on Schedule, Pays Maximum Payout
-        payableTime = timesoft_;
-    } else if (timestamp_ > timehard_) {	// Completed after deadline, enters liquidation
-        totalTime = expire_ - timesoft_;
-        payableTime = (((expire_ - timestamp_) / totalTime) * timesoft_);
-        } else {				// Completed within the deadline, pays prorata
-        totalTime = timehard_ - timesoft_;
-        payableTime = (((timehard_ - timestamp_) / totalTime) * timesoft_);
-    }
-    amount += payableTime / 60 seconds * 42 / 10;  // The reward to the winner grows by the minute
-    difficulty = difficulty * 10 minutes / timeSinceLastProof + 1;  // Adjusts the difficulty
-    doit.approveAndCall(msg.sender, amount, "");
+	function factorPayout(bytes32 _intention, bytes32 _serviceId, bytes32 sig, uint nonce, bytes32 r, bytes32 s) internal {
+	    bytes8 n = bytes8(keccak256(nonce, currentChallenge));    // Generate a random hash based on input
+	    require(n >= bytes8(difficulty));                   // Check if it's under the difficulty
+	    uint timeSinceLastProof = (now - timeOfLastProof);  // Calculate time since last reward was given
+	    require(timeSinceLastProof >= 5 seconds);         // Rewards cannot be given too quickly
+	    // require(database.plans[_intention].service[_serviceId].fulfillment.timestamp < 
+	    // database.plans[_intention].service[_serviceId].expire);
+	    require(plans[_intention].services[_serviceId].procure[msg.sender].verification[verify(sig,uint8(nonce),r,s)].timestampV < 
+		plans[_intention].services[_serviceId].definition.metas.expire);
+	    uint totalTime;
+	    uint payableTime;
+		uint expire_ = plans[_intention].services[_serviceId].definition.metas.expire;
+		uint timestamp_ = plans[_intention].services[_serviceId].procure[msg.sender].fulfillment.timestamp;
+		uint timesoft_ = plans[_intention].services[_serviceId].definition.metas.timeSoft;
+		uint timehard_ = plans[_intention].services[_serviceId].procure[msg.sender].promise.timeHard;
+	    if (timestamp_ < timesoft_) { // Completed on Schedule, Pays Maximum Payout
+	        payableTime = timesoft_;
+	    } else if (timestamp_ > timehard_) {	// Completed after deadline, enters liquidation
+	        totalTime = expire_ - timesoft_;
+	        payableTime = (((expire_ - timestamp_) / totalTime) * timesoft_);
+	        } else {				// Completed within the deadline, pays prorata
+	        totalTime = timehard_ - timesoft_;
+	        payableTime = (((timehard_ - timestamp_) / totalTime) * timesoft_);
+	    }
+	    amount += payableTime / 60 seconds * 42 / 10;  // The reward to the winner grows by the minute
+	    difficulty = difficulty * 10 minutes / timeSinceLastProof + 1;  // Adjusts the difficulty
+	    doit.approveAndCall(msg.sender, amount, "");
 
-    timeOfLastProof = now;                              // Reset the counter
-    currentChallenge = keccak256(nonce, currentChallenge, block.blockhash(block.number - 1));  // Save a hash that will be used as the next proof
+	    timeOfLastProof = now;                              // Reset the counter
+	    currentChallenge = keccak256(nonce, currentChallenge, block.blockhash(block.number - 1));  // Save a hash that will be used as the next proof
     }
 
 }

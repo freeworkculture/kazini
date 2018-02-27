@@ -57,7 +57,7 @@ contract Owned {
 ///  non-profit Campaign. This contract effectively dictates the terms of the
 ///  funding round.
 
-contract Reserve is TokenController, Owned, Data {
+contract Reserve is TokenController, Owned, DataController {
 
     uint public startFundingTime;       // In UNIX Time Format
     uint public endFundingTime;         // In UNIX Time Format
@@ -190,48 +190,153 @@ contract Reserve is TokenController, Owned, Data {
         vaultAddress = _newVaultAddress;
     }
 
+    mapping (address => bool) public frozenAccount;
+    
+    function InputStake(Able _ctrl, Database _db, DoitToken _diy) {
+        contrl = _ctrl;
+        database = _db;
+        tokenContract = _diy;
+        }
 
-// contract FactorPayout is DoitToken {
+////////////////
+// Generate and destroy tokens
+////////////////
 
-bytes32 public currentChallenge;                         // The coin starts with a challenge
-uint public timeOfLastProof;                             // Variable to keep track of when rewards were given
-uint public difficulty = 10**32;                         // Difficulty starts reasonably low
-uint256 amount;
-
-function factorPayout(uint nonce, bytes32 _intention, bytes32 _serviceId) internal {
-    bytes8 n = bytes8(keccak256(nonce, currentChallenge));    // Generate a random hash based on input
-    require(n >= bytes8(difficulty));                   // Check if it's under the difficulty
-    uint timeSinceLastProof = (now - timeOfLastProof);  // Calculate time since last reward was given
-    require(timeSinceLastProof >= 5 seconds);         // Rewards cannot be given too quickly
-    // require(database.plans[_intention].service[_serviceId].fulfillment.timestamp < 
-    // database.plans[_intention].service[_serviceId].expire);
-    require(database.getFulfillmentData(_intention, _serviceId).timestamp < database.getServiceData(_intention, _serviceId).expire);
-    uint totalTime;
-    uint payableTime;
-    if (database.getFulfillmentData(_intention, _serviceId).timestamp < 
-    database.getServiceData(_intention, _serviceId).timeSoft) {
-        payableTime = database.getServiceData(_intention, _serviceId).timeSoft;
-    } else if (database.getFulfillmentData(_intention, _serviceId).timestamp > 
-    database.getServiceData(_intention, _serviceId).taskT.timeHard) {
-        totalTime = database.getServiceData(_intention, _serviceId).expire - 
-        database.getServiceData(_intention, _serviceId).timeSoft;
-        payableTime = (((database.getServiceData(_intention, _serviceId).expire - 
-        database.getFulfillmentData(_intention, _serviceId).timestamp) / totalTime) * 
-        database.getServiceData(_intention, _serviceId).timeSoft);
-        } else {
-        totalTime = database.getServiceData(_intention, _serviceId).taskT.timeHard - 
-        database.getServiceData(_intention, _serviceId).timeSoft;
-        payableTime = (((database.getServiceData(_intention, _serviceId).taskT.timeHard - 
-        database.getFulfillmentData(_intention, _serviceId).timestamp) / totalTime) * 
-        database.getServiceData(_intention, _serviceId).timeSoft);
+    /// @notice Generates `_amount` tokens that are assigned to `_owner`
+    /// @param _owner The address that will be assigned the new tokens
+    /// @param _amount The quantity of tokens generated
+    /// @return True if the tokens are generated correctly
+    function generateTokens(address _owner, uint _amount) public onlyController returns (bool) {
+        uint curTotalSupply = totalSupply();
+        require(curTotalSupply + _amount >= curTotalSupply); // Check for overflow
+        uint previousBalanceTo = balanceOf(_owner);
+        require(previousBalanceTo + _amount >= previousBalanceTo); // Check for overflow
+        updateValueAtNow(totalSupplyHistory, curTotalSupply + _amount);
+        updateValueAtNow(balances[_owner], previousBalanceTo + _amount);
+        Transfer(0, _owner, _amount);
+        return true;
     }
-    amount += payableTime / 60 seconds * 42 / 10;  // The reward to the winner grows by the minute
-    difficulty = difficulty * 10 minutes / timeSinceLastProof + 1;  // Adjusts the difficulty
-    doitContract.approveAndCall(msg.sender, amount, "");
 
-    timeOfLastProof = now;                              // Reset the counter
-    currentChallenge = keccak256(nonce, currentChallenge, block.blockhash(block.number - 1));  // Save a hash that will be used as the next proof
+    /// @notice Burns `_amount` tokens from `_owner`
+    /// @param _owner The address that will lose the tokens
+    /// @param _amount The quantity of tokens to burn
+    /// @return True if the tokens are burned correctly
+    function destroyTokens(address _owner, uint _amount
+    ) onlyController public returns (bool) {
+        uint curTotalSupply = totalSupply();
+        require(curTotalSupply >= _amount);
+        uint previousBalanceFrom = balanceOf(_owner);
+        require(previousBalanceFrom >= _amount);
+        updateValueAtNow(totalSupplyHistory, curTotalSupply - _amount);
+        updateValueAtNow(balances[_owner], previousBalanceFrom - _amount);
+        Transfer(_owner, 0, _amount);
+        return true;
     }
+
+////////////////
+// Enable tokens transfers
+////////////////
+
+    /// @notice Enables token holders to transfer their tokens freely if true
+    /// @param _transfersEnabled True if transfers are allowed in the clone
+    function enableTransfers(bool _transfersEnabled) onlyController public {
+        transfersEnabled = _transfersEnabled;
+    }
+
+////////////////
+// Freeze Account
+////////////////
+    
+    /// @notice `freeze? Prevent | Allow` `target` from sending & receiving tokens
+    /// @param target Address to be frozen
+    /// @param freeze either to freeze it or not
+    function freezeAccount(address target, bool freeze) onlyController public {
+        frozenAccount[target] = freeze;
+        FrozenFunds(target, freeze);/// @notice Enables token holders to transfer their tokens freely if true
+    }
+
+    event Transfer(address indexed _from, address indexed _to, uint256 _amount);
+    event FrozenFunds(address target, bool frozen);
+
+/* OLD CODE MUTED */
+    // contract FactorPayout is DoitToken {
+
+    // bytes32 public currentChallenge;                         // The coin starts with a challenge
+    // uint public timeOfLastProof;                             // Variable to keep track of when rewards were given
+    // uint public difficulty = 10**32;                         // Difficulty starts reasonably low
+    // uint256 amount;
+
+    // function factorPayout(uint nonce, bytes32 _intention, bytes32 _serviceId) internal {
+    //     bytes8 n = bytes8(keccak256(nonce, currentChallenge));    // Generate a random hash based on input
+    //     require(n >= bytes8(difficulty));                   // Check if it's under the difficulty
+    //     uint timeSinceLastProof = (now - timeOfLastProof);  // Calculate time since last reward was given
+    //     require(timeSinceLastProof >= 5 seconds);         // Rewards cannot be given too quickly
+    //     // require(database.plans[_intention].service[_serviceId].fulfillment.timestamp < 
+    //     // database.plans[_intention].service[_serviceId].expire);
+    //     require(database.getFulfillmentData(_intention, _serviceId).timestamp < database.getServiceData(_intention, _serviceId).expire);
+    //     uint totalTime;
+    //     uint payableTime;
+    //     if (database.getFulfillmentData(_intention, _serviceId).timestamp < 
+    //     database.getServiceData(_intention, _serviceId).timeSoft) {
+    //         payableTime = database.getServiceData(_intention, _serviceId).timeSoft;
+    //     } else if (database.getFulfillmentData(_intention, _serviceId).timestamp > 
+    //     database.getServiceData(_intention, _serviceId).taskT.timeHard) {
+    //         totalTime = database.getServiceData(_intention, _serviceId).expire - 
+    //         database.getServiceData(_intention, _serviceId).timeSoft;
+    //         payableTime = (((database.getServiceData(_intention, _serviceId).expire - 
+    //         database.getFulfillmentData(_intention, _serviceId).timestamp) / totalTime) * 
+    //         database.getServiceData(_intention, _serviceId).timeSoft);
+    //         } else {
+    //         totalTime = database.getServiceData(_intention, _serviceId).taskT.timeHard - 
+    //         database.getServiceData(_intention, _serviceId).timeSoft;
+    //         payableTime = (((database.getServiceData(_intention, _serviceId).taskT.timeHard - 
+    //         database.getFulfillmentData(_intention, _serviceId).timestamp) / totalTime) * 
+    //         database.getServiceData(_intention, _serviceId).timeSoft);
+    //     }
+    //     amount += payableTime / 60 seconds * 42 / 10;  // The reward to the winner grows by the minute
+    //     difficulty = difficulty * 10 minutes / timeSinceLastProof + 1;  // Adjusts the difficulty
+    //     doitContract.approveAndCall(msg.sender, amount, "");
+
+    //     timeOfLastProof = now;                              // Reset the counter
+    //     currentChallenge = keccak256(nonce, currentChallenge, block.blockhash(block.number - 1));  // Save a hash that will be used as the next proof
+    //     }
+
+    // bytes32 public currentChallenge;                         // The coin starts with a challenge
+    // uint public timeOfLastProof;                             // Variable to keep track of when rewards were given
+    // uint public difficulty = 10**32;                         // Difficulty starts reasonably low
+    // uint256 amount;
+
+    // function factorPayout(bytes32 _intention, bytes32 _serviceId, bytes32 sig, uint nonce, bytes32 r, bytes32 s) internal {
+    //     bytes8 n = bytes8(keccak256(nonce, currentChallenge));    // Generate a random hash based on input
+    //     require(n >= bytes8(difficulty));                   // Check if it's under the difficulty
+    //     uint timeSinceLastProof = (now - timeOfLastProof);  // Calculate time since last reward was given
+    //     require(timeSinceLastProof >= 5 seconds);         // Rewards cannot be given too quickly
+    //     // require(database.plans[_intention].service[_serviceId].fulfillment.timestamp < 
+    //     // database.plans[_intention].service[_serviceId].expire);
+    //     require(plans[_intention].services[_serviceId].procure[msg.sender].verification[verify(sig,uint8(nonce),r,s)].timestampV < 
+    // 	plans[_intention].services[_serviceId].definition.metas.expire);
+    //     uint totalTime;
+    //     uint payableTime;
+    // 	uint expire_ = plans[_intention].services[_serviceId].definition.metas.expire;
+    // 	uint timestamp_ = plans[_intention].services[_serviceId].procure[msg.sender].fulfillment.timestamp;
+    // 	uint timesoft_ = plans[_intention].services[_serviceId].definition.metas.timeSoft;
+    // 	uint timehard_ = plans[_intention].services[_serviceId].procure[msg.sender].promise.timeHard;
+    //     if (timestamp_ < timesoft_) { // Completed on Schedule, Pays Maximum Payout
+    //         payableTime = timesoft_;
+    //     } else if (timestamp_ > timehard_) {	// Completed after deadline, enters liquidation
+    //         totalTime = expire_ - timesoft_;
+    //         payableTime = (((expire_ - timestamp_) / totalTime) * timesoft_);
+    //         } else {				// Completed within the deadline, pays prorata
+    //         totalTime = timehard_ - timesoft_;
+    //         payableTime = (((timehard_ - timestamp_) / totalTime) * timesoft_);
+    //     }
+    //     amount += payableTime / 60 seconds * 42 / 10;  // The reward to the winner grows by the minute
+    //     difficulty = difficulty * 10 minutes / timeSinceLastProof + 1;  // Adjusts the difficulty
+    //     doit.approveAndCall(msg.sender, amount, "");
+
+    //     timeOfLastProof = now;                              // Reset the counter
+    //     currentChallenge = keccak256(nonce, currentChallenge, block.blockhash(block.number - 1));  // Save a hash that will be used as the next proof
+//     }
 
 ////////////////
 // Events
@@ -242,3 +347,4 @@ function factorPayout(uint nonce, bytes32 _intention, bytes32 _serviceId) intern
     event PromiseEvent(address indexed _from, address indexed _to, uint256 _amount);
     event Fulfill(address indexed _from, address indexed _to, uint256 _amount);
 }
+

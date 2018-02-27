@@ -4,15 +4,15 @@ import "./Oraclize.sol";
 pragma experimental ABIEncoderV2;
 
 //////////////////////
-// Controlled Contract
+// BaseController
 //////////////////////
-/// @dev `Controlled` is a base level contract that assigns an `controller` that can be
+/// @dev `BaseController` is a base level contract that assigns an `controller` that can be
 ///  later changed
-contract Controlled {
+contract BaseController {
 
 /* Constants */
 
-    bytes32 constant public VERSION = "Base 0.2.3";
+    bytes32 constant public VERSION = "BaseController 0.2.3";
 
 /* State Variables */
 
@@ -91,7 +91,7 @@ contract Controlled {
 /* Functions */ 
 
     /// @notice The Constructor assigns the message sender to be `owner`
-    function Controlled() internal {
+    function BaseController() internal {
         owner = tx.origin;
         contrl = Able(msg.sender);
         controller = address(contrl);
@@ -145,14 +145,43 @@ contract Controlled {
             success_ = true;}
 		}
 }
-/* End of Controller */
+/* End of BaseController */
 
-////////////////
-// Data Contract
-////////////////
+///////////////////
+// Token Controller
+///////////////////
+
+/// @dev The token controller contract must implement these functions
+contract TokenController {
+    /// @notice Called when `_owner` sends ether to the Doit Token contract
+    /// @param _owner The address that sent the ether to create tokens
+    /// @return True if the ether is accepted, false if it throws
+    function proxyPayment(address _owner) public payable returns(bool);
+
+    /// @notice Notifies the controller about a token transfer allowing the
+    ///  controller to react if desired
+    /// @param _from The origin of the transfer
+    /// @param _to The destination of the transfer
+    /// @param _amount The amount of the transfer
+    /// @return False if the controller does not authorize the transfer
+    function onTransfer(address _from, address _to, uint _amount) public returns(bool);
+
+    /// @notice Notifies the controller about an approval allowing the
+    ///  controller to react if desired
+    /// @param _owner The address that calls `approve()`
+    /// @param _spender The spender in the `approve()` call
+    /// @param _amount The amount in the `approve()` call
+    /// @return False if the controller does not authorize the approval
+    function onApprove(address _owner, address _spender, uint _amount) public
+        returns(bool);
+}
+
+//////////////////
+// Data Controller
+//////////////////
 /// @dev `Data` is a base level contract that is a `database controller` that can be
 ///  later changed
-contract Data is Controlled {
+contract DataController is BaseController {
 
 /* State Variables */
     
@@ -184,7 +213,7 @@ contract Data is Controlled {
 ////////////////
 // Able Contract
 ////////////////
-contract Able is Data {
+contract Able is DataController {
 
 /* Constants */
 // !!! ******** FOR TEST ONLY CHANGE TO ACTUAL 40 BYTES FPRINT ***********
@@ -243,10 +272,10 @@ contract Able is Data {
     // Make a new contract.
     function makeContract(bytes32 _base) public returns (address contract_) {
         if (_base == "database") {
-            contract_ = new Database();
+            contract_ = new Database(contrl);
             contracts[contract_] = Database(contract_).cName();
         } else if (_base == "userbase") {
-            contract_ = new Userbase();
+            contract_ = new Userbase(contrl);
             contracts[contract_] = Userbase(contract_).cName();
         } else if (_base == "creator") {
             contract_ = new Creators(this,userbase,_base);
@@ -266,7 +295,7 @@ contract Able is Data {
 ////////////////////
 // Database Contract
 ////////////////////
-contract Database is Controlled {
+contract Database is BaseController {
     
 /* Constants */
 
@@ -277,7 +306,7 @@ contract Database is Controlled {
 
 	enum KBase {PRIMARY,SECONDARY,TERTIARY,CERTIFICATION,DIPLOMA,LICENSE,BACHELOR,MASTER,DOCTORATE}
     // Weights	   1,		2,		 4,		    8,		   16,	    32,		64,	    128    256
-	enum IS { CREATOR, CURATOR, ACTIVE, INACTIVE, RESERVED, PROVER }
+	enum IS { CLOSED, CREATOR, CURATOR, ACTIVE, INACTIVE, RESERVED, PROVER }
 	enum Project { PENDING, INITIATED, APPROVED, STARTED, CLOSED }
 	enum Level { POOR,SATISFACTORY,GOOD,EXCELLENT }
 	enum Flag {
@@ -404,9 +433,10 @@ contract Database is Controlled {
 		    Fulfillment fulfillment;
 		    mapping(address => Verification) verification; // key is hash of fulfillment
     		} struct Promise {
-    			bytes32 thing;
+				Intention thing;
+    			// bytes32 thing;
     			uint timeHard;   // proposed timeline
-    			uint256 value;
+    			// uint256 value;
     			bytes32 hash;
     		} struct Fulfillment {
     			bytes32 proof;
@@ -861,7 +891,7 @@ contract Database is Controlled {
 ////////////////////
 // Userbase Contract
 ////////////////////
-contract Userbase is Controlled {
+contract Userbase is BaseController {
     
 /* Constants */
 
@@ -1192,7 +1222,7 @@ contract Userbase is Controlled {
 // Beginning of Contract
 ///////////////////
 
-contract Creators is Data {
+contract Creators is DataController {
 
 /// @dev The actual agent contract, the nature of the agent is identified controller is the msg.sender
 ///  that deploys the contract, so usually this token will be deployed by a
