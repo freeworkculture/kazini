@@ -14,7 +14,7 @@ GNU lesser General Public License for more details.
 <http://www.gnu.org/licenses/>.
 */
 
-pragma solidity ^0.4.0;
+pragma solidity ^0.4.19;
 
 contract Math
 {
@@ -38,7 +38,7 @@ contract Math
 /* Functions */
     function assert(bool assertion) internal constant
     {
-      if (!assertion) throw;
+      require(assertion);
     }
     
     // @dev Parametric comparitor for > or <

@@ -289,8 +289,9 @@ contract Able is DataController {
     //     create = new Creators(this,userbase,_name);
     //     contracts[create] = create.cName();
     // }
-}
 /* End of Able */
+}
+
 
 ////////////////////
 // Database Contract
@@ -302,7 +303,7 @@ contract Database is BaseController {
     bytes32 constant internal CONTRACTNAME = "Database";
 	uint8 constant internal BASE = 2;
 
-/* State Variables */
+/* Enums*/
 
 	enum KBase {PRIMARY,SECONDARY,TERTIARY,CERTIFICATION,DIPLOMA,LICENSE,BACHELOR,MASTER,DOCTORATE}
     // Weights	   1,		2,		 4,		    8,		   16,	    32,		64,	    128    256
@@ -325,18 +326,8 @@ contract Database is BaseController {
 		service,S,
 		payout,p
 	}
-    
-	uint public plansCount;
-	uint public promiseCount;
-    uint public orderCount;
-    uint public fulfillmentCount;
-	uint public verificationCount;
-	
-	uint internal talentK; 						// Total number of all identified talents
-	uint internal talentI;	  					// Total number of talents of all individuals
-	uint internal talentR;						// Total number of unique talents
 
-	uint public doerCount;	// !!! Can I call length of areDoers instead??!!!
+/* Structs*/
 
 	/// @notice `SomeDoer` defines the basic universal structure of an agent
 	// @dev Interp. aDoer {fPrint, email, birth, fName, lName, active, lastUpdate} is an agent with
@@ -463,6 +454,21 @@ contract Database is BaseController {
         bool active;
 		uint myDoers;
 	}
+
+
+/* State Variables */
+    
+	uint public plansCount;
+	uint public promiseCount;
+    uint public orderCount;
+    uint public fulfillmentCount;
+	uint public verificationCount;
+	
+	uint internal talentK; 						// Total number of all identified talents
+	uint internal talentI;	  					// Total number of talents of all individuals
+	uint internal talentR;						// Total number of unique talents
+
+	uint public doerCount;	// !!! Can I call length of areDoers instead??!!!
 
 	/// @dev `Initialised data structures
 	/// @notice `Creator && Doer lookup` is the type that defines a strategy model of an actual agent
@@ -637,14 +643,14 @@ contract Database is BaseController {
     }
 	
 	function getFulfillment(
-		bytes32 _intention, bytes32 _serviceId, address _doer, bytes32 _lso) 
+		bytes32 _intention, bytes32 _serviceId, address _doer) 
 		view external returns (Fulfillment) 
 		{
 		return plans[_intention].services[_serviceId].procure[_doer].fulfillment;
 	}
 
 	function getVerification(
-		bytes32 _intention, bytes32 _serviceId, address _doer, bytes32 _lso, address _prover) 
+		bytes32 _intention, bytes32 _serviceId, address _doer,address _prover) 
 		view external returns (Verification) 
 		{
 		return plans[_intention].services[_serviceId].procure[_doer].verification[_prover];
@@ -670,8 +676,8 @@ contract Database is BaseController {
 			require(uint(plans[_intention].state) < 0); // This is a new plan? // Cannot overwrite incomplete Plan // succesful plan??
 			plans[_intention].plan = Plan({
 				preCondition: _preCondition, 
-				postCondition: _postCondition,
-				projectUrl: _projectUrl,
+				postCondition: _postCondition, 
+				projectUrl: _projectUrl, 
 				creator: _creator, 
 				curator: _curator});
 			plans[_intention].state = _state;
@@ -736,22 +742,19 @@ contract Database is BaseController {
 		address _doer,
 		Intention _thing,
 		uint _timeHard,   // proposed timeline
-		uint256 _value,
-		bytes32 hash,
-		bytes32 _lso
-		) external onlyDoer
+		bytes32 hash
+		) public onlyDoer
 		{
         	plans[_intention].services[_serviceId].procure[_doer].promise = Promise({
 				thing: _thing, 
-				timeHard: _timeHard,
+				timeHard: _timeHard, 
 				hash: hash});
 	}
 	
 	function setFulfillment(
 		bytes32 _intention, 
 		bytes32 _serviceId, 
-		address _doer, 
-		bytes32 _lso,
+		address _doer,
 		bytes32 _proof,
 		Level _rubric,
 		uint _timestamp,
@@ -768,8 +771,7 @@ contract Database is BaseController {
 	function setVerification(
 		bytes32 _intention, 
 		bytes32 _serviceId, 
-		address _doer, 
-		bytes32 _lso, 
+		address _doer,
 		address _prover,
 		bytes32 _verity,
 		bool _complete,
@@ -827,11 +829,11 @@ contract Database is BaseController {
         plans[_intention].services[_serviceId].procure[_address].promise = _data;
     }
 	
-	function setFulfillment(Fulfillment _data, bytes32 _intention, bytes32 _serviceId, address _doer, bytes32 _lso) public onlyController {
+	function setFulfillment(Fulfillment _data, bytes32 _intention, bytes32 _serviceId, address _doer) public onlyController {
 		plans[_intention].services[_serviceId].procure[_doer].fulfillment = _data;
 	}
 
-	function setVerification( Verification _data, bytes32 _intention, bytes32 _serviceId, address _doer, bytes32 _lso, address _prover) public onlyController {
+	function setVerification( Verification _data, bytes32 _intention, bytes32 _serviceId, address _doer, address _prover) public onlyController {
 			plans[_intention].services[_serviceId].procure[_doer].verification[_prover] = _data;
 	}
 
@@ -897,7 +899,7 @@ contract Userbase is BaseController {
     bytes32 constant internal CONTRACTNAME = "Userbase";
 	uint8 constant internal BASE = 2;
 
-/* State Variables */
+/* Enums */
 
 	enum KBase {PRIMARY,SECONDARY,TERTIARY,CERTIFICATION,DIPLOMA,LICENSE,BACHELOR,MASTER,DOCTORATE}
     // Weights	   1,		2,		 4,		    8,		   16,	    32,		64,	    128    256
@@ -920,18 +922,7 @@ contract Userbase is BaseController {
 		service,S,
 		payout,p
 	}
-    
-	uint public plansCount;
-	uint public promiseCount;
-    uint public orderCount;
-    uint public fulfillmentCount;
-	uint public verificationCount;
-	
-	uint internal talentK; 						// Total number of all identified talents
-	uint internal talentI;	  					// Total number of talents of all individuals
-	uint internal talentR;						// Total number of unique talents
-
-	uint public doerCount;	// !!! Can I call length of areDoers instead??!!!
+/* Structs */
 
 	/// @notice `SomeDoer` defines the basic universal structure of an agent
 	// @dev Interp. aDoer {fPrint, email, birth, fName, lName, active, lastUpdate} is an agent with
@@ -1009,6 +1000,19 @@ contract Userbase is BaseController {
 	// reputaion is PGP trust level flag !!! CITE RFC PART
 	// talent is user declared string of talents
 
+/* State Variables */
+    
+	uint public plansCount;
+	uint public promiseCount;
+    uint public orderCount;
+    uint public fulfillmentCount;
+	uint public verificationCount;
+	
+	uint internal talentK; 						// Total number of all identified talents
+	uint internal talentI;	  					// Total number of talents of all individuals
+	uint internal talentR;						// Total number of unique talents
+
+	uint public doerCount;	// !!! Can I call length of areDoers instead??!!!
     mapping(bytes32 => uint) public talentF; 	// Frequency of occurence of a talent  
         
     mapping(address => Agent) public agents;
@@ -1084,8 +1088,6 @@ contract Userbase is BaseController {
 		agents[msg.sender].state != IS.CREATOR ? true : false;
 	}
 
-
-
 /////////////////
 // All GETTERS
 /////////////////
@@ -1156,6 +1158,7 @@ contract Userbase is BaseController {
 	function setAllPlans(bytes32 _planId) external onlyController {
 		allPlans.push(_planId);
 	}
+
 	function setPromise(bytes32 _serviceId) external onlyController {
 		require(promiseCount++ < 2^256);
 		allPromises[tx.origin].push(_serviceId);
@@ -1315,7 +1318,7 @@ contract Creators is DataController {
 		userbase.setAgent(msg.sender, _allowed);
 	}
 
-	function initCreator(bytes32 _keyId, Database.IS state, bool _active, uint _num) external {
+	function initCreator(bytes32 _keyId, bool _active, uint _num) external {
 		userbase.setAgent(
 			Userbase.Agent({keyId: _keyId, state: Userbase.IS.CREATOR, active:_active, myDoers: _num}), msg.sender, _keyId);
 	}

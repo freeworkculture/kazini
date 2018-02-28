@@ -1,4 +1,4 @@
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.19;
 
 /*
     
@@ -36,7 +36,7 @@ pragma solidity ^0.4.18;
 /// @title Doit Contract
 /// @author I am Not.
 /// @dev This token contract's goal is to make it easy for anyone to clone this
-///  token using the token distribution at a given block, this will allow DAO's
+///  _token using the token distribution at a given block, this will allow DAO's
 ///  and DApps to upgrade their features in a decentralized manner without
 ///  affecting the original token
 /// @dev It is ERC20 compliant, but still needs to under go further testing.
@@ -48,6 +48,7 @@ pragma solidity ^0.4.18;
 // import "./ControlAbstract.sol";
 // import "./Controlled.sol";
 import "./Able.sol";
+import "./Math.sol";
 // import "./TokenController.sol";
 
 ///////////////////
@@ -65,7 +66,7 @@ contract ApproveAndCallFallBack {
 /// @dev The actual token contract, the default controller is the msg.sender
 ///  that deploys the contract, so usually this token will be deployed by a
 ///  token controller contract.
-contract DoitToken is BaseController {
+contract DoitToken is BaseController, Math {
 
     string public name;                 //The Token's name: e.g. DigixDAO Tokens
     string public symbol;               //An identifier: e.g. REP

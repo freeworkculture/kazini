@@ -1,3 +1,5 @@
+pragma solidity ^0.4.19;
+
 /*
 file:   Reserve.sol
 ver:    0.3.8
@@ -16,9 +18,6 @@ See MIT Licence for further details.
 <https://opensource.org/licenses/MIT>.
 */
 
-pragma solidity ^0.4.0;
-
-import "./Math.sol";
 import "./DoitToken.sol";
 import "./LibCLL.sol";
 
@@ -157,6 +156,8 @@ contract ReserveInterface {
     /// @param _trading State to set trading to.
     function setTrading(bool _trading) 
         external returns (bool);
+
+/* End of ReserveInterface Contract */ 
 }
 
 
@@ -165,7 +166,7 @@ contract ReserveInterface {
 ///  non-profit Campaign. This contract effectively dictates the terms of the
 ///  funding round.
 
-contract Reserve is DoitToken, Math, ReserveInterface {
+contract Reserve is DoitToken, ReserveInterface {
 
 /* Structs */
 
@@ -241,7 +242,7 @@ contract Reserve is DoitToken, Math, ReserveInterface {
         priceBook.cll[HEAD][NEXT] = MAXNUM;
         priceBook.cll[MAXNUM][NEXT] = MINPRICE;
         trading = true;
-        balanceOf(owner) = totalSupply();
+        transfer(owner, totalSupply()); //!!! WHAT IS THE RESERVE BALANCE?
     }
 
 ////////////////
@@ -435,7 +436,7 @@ contract Reserve is DoitToken, Math, ReserveInterface {
     // First check that the Campaign is allowed to receive this donation
         require((now >= startFundingTime) &&
             (now <= endFundingTime) &&
-            (controller() != 0) &&           // Extra check
+            (controller != 0) &&           // Extra check
             (msg.value != 0) &&
             (totalCollected + msg.value <= maximumFunding));
 
@@ -513,7 +514,8 @@ contract Reserve is DoitToken, Math, ReserveInterface {
     }
 
     function getAmount(uint _price, address _trader) 
-        public constant returns(uint) {
+        public constant returns(uint)
+        {
         return amounts[sha3(_price, _trader)];
     }
 
@@ -627,7 +629,7 @@ contract Reserve is DoitToken, Math, ReserveInterface {
         tmsg.balance = balanceOf(msg.sender);
         tmsg.etherBalance = etherBalance[msg.sender];
         cancelIntl(tmsg);
-        balanceOf(msg.sender) = tmsg.balance;
+        transfer(msg.sender, tmsg.balance);
         etherBalance[msg.sender] = tmsg.etherBalance;
         return true;
     }
@@ -660,7 +662,7 @@ contract Reserve is DoitToken, Math, ReserveInterface {
         take(tmsg);
         make(tmsg);
         
-        balanceOf(msg.sender) = tmsg.balance;
+        transfer(msg.sender, tmsg.balance);
         etherBalance[msg.sender] = tmsg.etherBalance;
     }
     
@@ -704,7 +706,8 @@ contract Reserve is DoitToken, Math, ReserveInterface {
                     // bidder is self
                     tmsg.balance += takeAmount;
                 } else {
-                    balanceOf(maker) += takeAmount;
+                    takeAmount += balanceOf(maker);
+                    transfer(maker,takeAmount);
                 }
             } else {
                 // Buy from asker;
