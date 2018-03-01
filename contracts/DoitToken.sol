@@ -1,4 +1,4 @@
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.19;
 
 /*
     
@@ -36,7 +36,7 @@ pragma solidity ^0.4.18;
 /// @title Doit Contract
 /// @author I am Not.
 /// @dev This token contract's goal is to make it easy for anyone to clone this
-///  token using the token distribution at a given block, this will allow DAO's
+///  _token using the token distribution at a given block, this will allow DAO's
 ///  and DApps to upgrade their features in a decentralized manner without
 ///  affecting the original token
 /// @dev It is ERC20 compliant, but still needs to under go further testing.
@@ -45,8 +45,11 @@ pragma solidity ^0.4.18;
 // Include Libraries and Modules
 ///////////////////
 
-import "./ControlAbstract.sol";
-import "./TokenController.sol";
+// import "./ControlAbstract.sol";
+// import "./Controlled.sol";
+import "./Able.sol";
+import "./Math.sol";
+// import "./TokenController.sol";
 
 ///////////////////
 // Contract Interface
@@ -63,7 +66,7 @@ contract ApproveAndCallFallBack {
 /// @dev The actual token contract, the default controller is the msg.sender
 ///  that deploys the contract, so usually this token will be deployed by a
 ///  token controller contract.
-contract DoitToken is Controller {
+contract DoitToken is BaseController, Math {
 
     string public name;                 //The Token's name: e.g. DigixDAO Tokens
     string public symbol;               //An identifier: e.g. REP
@@ -115,6 +118,10 @@ contract DoitToken is Controller {
     // Used to freeze account
     mapping (address => bool) public frozenAccount;
 
+    // Used to track velocity
+    uint public totalTransactions;
+
+
 ////////////////
 // Constructor
 ////////////////
@@ -141,7 +148,8 @@ contract DoitToken is Controller {
         uint8 _decimalUnits,
         string _tokenVersion,
         uint _tokenMaturity,
-        bool _transfersEnabled
+        bool _transfersEnabled,
+        Able _ctrl
     ) public {
         tokenFactory = DoitTokenFactory(_tokenFactory);
         name = _tokenName;                                 // Set the name
@@ -153,7 +161,8 @@ contract DoitToken is Controller {
         parentSnapShotBlock = _parentSnapShotBlock;
         transfersEnabled = _transfersEnabled;
         creationBlock = block.number;
-        registerContract("DoitToken", this);
+        // registerContract("DoitToken", this);
+        contrl = _ctrl;
     }
 
 ////////////////
@@ -372,100 +381,6 @@ contract DoitToken is Controller {
     }
 
 ////////////////
-// Clone Token Method
-////////////////
-
-    /// @notice Creates a new clone token with the initial distribution being
-    ///  this token at `_snapshotBlock`
-    /// @param _cloneTokenName Name of the clone token
-    /// @param _cloneDecimalUnits Number of decimals of the smallest unit
-    /// @param _cloneTokenSymbol Symbol of the clone token
-    /// @param _snapshotBlock Block when the distribution of the parent token is
-    ///  copied to set the initial distribution of the new clone token;
-    ///  if the block is zero than the actual block, the current block is used
-    /// @param _transfersEnabled True if transfers are allowed in the clone
-    /// @return The address of the new DoitToken Contract
-    function createCloneToken(
-        string _cloneTokenName,
-        string _cloneTokenSymbol,
-        uint8 _cloneDecimalUnits,
-        string _cloneVersion,
-        uint _cloneMaturity,
-        uint _snapshotBlock,
-        bool _transfersEnabled
-        ) public returns(address)
-        {
-            if (_snapshotBlock == 0)
-            _snapshotBlock = block.number;
-            DoitToken cloneToken = tokenFactory.createCloneToken(
-                this,
-                _snapshotBlock,
-                _cloneTokenName,
-                _cloneTokenSymbol,
-                _cloneDecimalUnits,
-                _cloneVersion,
-                _cloneMaturity,
-                _transfersEnabled
-            );
-
-        cloneToken.changeController(msg.sender);
-
-        // An event to make the token easy to find on the blockchain
-        NewCloneToken(address(cloneToken), _snapshotBlock);
-        return address(cloneToken);
-    }
-
-////////////////
-// Generate and destroy tokens
-////////////////
-
-    /// @notice Generates `_amount` tokens that are assigned to `_owner`
-    /// @param _owner The address that will be assigned the new tokens
-    /// @param _amount The quantity of tokens generated
-    /// @return True if the tokens are generated correctly
-    function generateTokens(address _owner, uint _amount
-    ) public onlyController returns (bool)
-    {
-        uint curTotalSupply = totalSupply();
-        require(curTotalSupply + _amount >= curTotalSupply); // Check for overflow
-        uint previousBalanceTo = balanceOf(_owner);
-        require(previousBalanceTo + _amount >= previousBalanceTo); // Check for overflow
-        updateValueAtNow(totalSupplyHistory, curTotalSupply + _amount);
-        updateValueAtNow(balances[_owner], previousBalanceTo + _amount);
-        Transfer(0, _owner, _amount);
-        return true;
-    }
-
-
-    /// @notice Burns `_amount` tokens from `_owner`
-    /// @param _owner The address that will lose the tokens
-    /// @param _amount The quantity of tokens to burn
-    /// @return True if the tokens are burned correctly
-    function destroyTokens(address _owner, uint _amount
-    ) onlyController public returns (bool)
-    {
-        uint curTotalSupply = totalSupply();
-        require(curTotalSupply >= _amount);
-        uint previousBalanceFrom = balanceOf(_owner);
-        require(previousBalanceFrom >= _amount);
-        updateValueAtNow(totalSupplyHistory, curTotalSupply - _amount);
-        updateValueAtNow(balances[_owner], previousBalanceFrom - _amount);
-        Transfer(_owner, 0, _amount);
-        return true;
-    }
-
-////////////////
-// Enable tokens transfers
-////////////////
-
-
-    /// @notice Enables token holders to transfer their tokens freely if true
-    /// @param _transfersEnabled True if transfers are allowed in the clone
-    function enableTransfers(bool _transfersEnabled) public onlyController {
-        transfersEnabled = _transfersEnabled;
-    }
-
-////////////////
 // Internal helper functions to query and set a value in a snapshot array
 ////////////////
 
@@ -541,6 +456,14 @@ contract DoitToken is Controller {
         require(TokenController(controller).proxyPayment.value(msg.value)(msg.sender));
     }
 
+    function getBalances(address _address) external view returns (Checkpoint[]) {
+        return balances[_address];
+    }
+
+    function getTotalSupplyHistory() external view returns (Checkpoint[]) {
+        return totalSupplyHistory;
+    }
+
 //////////
 // Safety Methods
 //////////
@@ -579,10 +502,14 @@ contract DoitToken is Controller {
 /// @dev This contract is used to generate clone contracts from a contract.
 ///  In solidity this is the way to create a contract from a contract of the
 ///  same class
-contract DoitTokenFactory is Controller {
+contract DoitTokenFactory is DataController {
+    
 
-    function DoitTokenFactory() internal {
-        registerContract("DoitTokenFactory", this);
+    function DoitTokenFactory(Able _ctrl, Database _dbs, Userbase _ubs) internal {
+        // registerContract("DoitTokenFactory", this);
+        contrl = _ctrl;
+        database = _dbs;
+        userbase = _ubs;
         }
 
     /// @notice Update the DApp by creating a new token with new functionalities
@@ -603,7 +530,8 @@ contract DoitTokenFactory is Controller {
         uint8 _decimalUnits,
         string _tokenVersion,
         uint _tokenMaturity,
-        bool _transfersEnabled
+        bool _transfersEnabled,
+        Able _ctrl
     ) public returns (DoitToken)
     {
         DoitToken newToken = new DoitToken(
@@ -615,7 +543,8 @@ contract DoitTokenFactory is Controller {
             _decimalUnits,
             _tokenVersion,
             _tokenMaturity,
-            _transfersEnabled
+            _transfersEnabled,
+            _ctrl
             );
 
         newToken.changeController(msg.sender);

@@ -1,6 +1,6 @@
 pragma solidity ^0.4.19;
 import "./Able.sol";
-//pragma experimental ABIEncoderV2;
+pragma experimental ABIEncoderV2;
 
 // Doers is a class library of natural or artificial entities within A multi-agent system (MAS).
 // The agents are collectively capable of reaching goals that are difficult to achieve by an 
@@ -17,6 +17,141 @@ import "./Able.sol";
 ///////////////////
 
 contract ControlAbstract {
+
+/* Constants */
+
+/* User Types */
+
+	enum KBase {PRIMARY,SECONDARY,TERTIARY,CERTIFICATION,DIPLOMA,LICENSE,BACHELOR,MASTER,DOCTORATE}
+    // Weights	   1,		2,		 4,		    8,		   16,	    32,		64,	    128    256
+	enum IS {ACTIVE, INACTIVE, RESERVED, CREATOR, CURATOR, PROVER}
+	enum Project { PENDING, APPROVED, STARTED, CLOSED }
+	enum Level { POOR,SATISFACTORY,GOOD,EXCELLENT }
+	enum Flag {
+		experience,e,
+		reputation,r,
+		talent,t,
+		index,i,
+		hashB,HB,
+		country,c,
+		cAuthority,CA,
+		score,s,
+		hashQ,HQ,
+		goal,g,
+		statusD,SD,
+		statusI,SI,
+		service,S,
+		payout,p
+	}
+
+	struct SomeDoer {
+        bytes32 fPrint;
+        bytes32 idNumber;
+		bytes32 email;
+		bytes32 fName;
+		bytes32 lName;
+        bytes32 hash;
+		bytes32 tag;
+        bytes32 data;
+        uint age;
+		bool active;
+	}
+
+	struct BDI {
+        Belief beliefs;
+        Desire desires;
+	    Intention intentions;
+		} 
+	struct Belief {
+		Merits merits;
+		Qualification qualification;
+		} 
+	struct Merits {
+		uint experience;
+		bytes32 reputation;
+		bytes32 talent;
+		uint8 index;
+		bytes32 hash;
+		} 
+	struct Qualification {
+		bytes32 country; //ISO3166-2:KE-XX;
+		bytes32 cAuthority;
+		bytes32 score;
+		} 
+	struct Desire {
+        bytes32 goal;
+        bool status;
+		} 
+	struct Intention {
+        IS state;
+        bytes32 service;
+        uint256 payout;
+		}
+
+    struct Plans {
+		Plan plan;
+		bool project;
+		Services services;
+		} 
+	struct Plan {
+		bytes32 preCondition;
+		Desire postCondition;
+		string projectUrl;
+		Project state;
+		address creator;
+		address curator;
+		} 
+	struct Services {
+		Service definition;
+		Promises promises;
+		} 
+	struct Service {
+		Belief preCondition;
+		Desire postCondition;
+		Metas metas;
+		} 
+	struct Metas {
+		uint timeSoft;  // preferred timeline
+		uint expire;
+		bytes32 hash;
+		string serviceUrl;
+		address doer;
+		} 
+	struct Promises {
+		Promise order;
+		Fulfillments fulfillment;
+		} 
+	struct Promise {
+		bytes32 thing;
+		uint timeHard;   // proposed timeline
+		uint256 value;
+		bytes32 hash;
+		bytes32 lso;
+		} 
+	struct Fulfillments {
+		Fulfillment completion;
+		Verification verification;
+		} 
+	struct Fulfillment {
+		bytes32 proof;
+		Level rubric;
+		uint timestamp;
+		bytes32 hash;
+		} 
+	struct Verification {
+		bytes32 verity;
+		bool complete;
+		uint timestamp;
+		bytes32 hash;
+		}
+
+/* State Variables */
+
+/* Events */
+
+/* Modifiers */
+
+/* Functions */
 
 /// @dev The actual agent contract, the nature of the agent is identified controller is the msg.sender
 ///  that deploys the contract, so usually this token will be deployed by a
@@ -35,13 +170,12 @@ contract ControlAbstract {
         int256 _birth,
 		bool _active) public returns (Database.SomeDoer);
 
-	function getOwner() constant public returns (address);
+	function getOwner() view public returns (address);
 
-	function getCreator(address _address) constant public returns (bool,uint256);
+	function getCreator(address _address) view public returns (bool,uint256);
 
 	function setCreator(address _address, bool _active) internal;
-
-	function setMyDoers(address _address, uint _allowed) internal;
+	
 	function setDoer(
 		bytes32 _fPrint,
 		bytes32 _idNumber,
@@ -55,7 +189,7 @@ contract ControlAbstract {
 		bool _active
 		) internal returns (Database.SomeDoer);
 
-	function setBDI(Database.Flag _flag, bytes32 _var, bytes32 _avar, bool _bvar, int256 _cvar, Database.State _dvar, uint256 _evar) internal returns (bool);
+	function setBDI(Database.Flag _flag, bytes32 _var, bytes32 _avar, bool _bvar, int256 _cvar, Database.Agent _dvar, uint256 _evar) internal returns (bool);
 
 /////////////////
 // Controller interface
@@ -94,9 +228,9 @@ contract ControlAbstract {
     // /// @return False if the controller does not authorize the approval
     // function onApprove(address _owner, address _spender, uint _amount) public returns(bool);
 
-	function isDoer() constant public returns (bool);
+	function isDoer() view public returns (bool);
 
-	function getInfo() constant public returns (address,address,bytes32);
+	function getInfo() view public returns (address,address,bytes32);
 	
 	function getDoer() view public returns (bytes32,bytes32,bytes32,bytes32,bytes32,bytes32,bytes32,bytes32,int256,bool);
 	
@@ -135,7 +269,7 @@ contract ControlAbstract {
 		bool _intent, bytes32 _var, 
 		bool _status, 
 		bytes32 _level, 
-		Database.State _avar) internal returns (bool);
+		Database.Agent _avar) internal returns (bool);
 	
 	function setDoer(Database.SomeDoer _aDoer) internal;
 
@@ -168,5 +302,118 @@ contract ControlAbstract {
     /// @param _amount The amount in the `approve()` call
     /// @return False if the controller does not authorize the approval
     function onApprove(address _owner, address _spender, uint _amount) public returns(bool);
+
+
+	        
+/////////////////
+// All ASSERTS
+/////////////////
+
+    
+	function isCreator(address _address) view public returns (bool);
+	
+	function isCreator(Database.Agent _data) public;
+
+	function isDoer(address _address) public view returns (bool);
+
+	function isDoer(bytes32 _uuid) public view returns (bool);
+	
+	function isPlanning(bytes32 _intention) public view returns (uint256);
+
+
+/////////////////
+// All GETTERS
+/////////////////
+
+    function getPlan(bytes32 _plan) internal view returns (Database.Plan);
+
+    function getPlanP(bytes32 _plan) external view returns (bytes32);
+    
+    function getPlanService(bytes32 _plan, bytes32 _serviceId) internal view returns (Database.Service);
+    
+    function getPlanServiceP(bytes32 _plan, bytes32 _serviceId) internal view returns (Database.Belief);
+    
+    function getPlanServicePQualify(bytes32 _plan, bytes32 _serviceId, bytes32 _qualify) internal view returns (Database.Qualification);
+    
+    function getPlanServicePexperience(bytes32 _plan, bytes32 _serviceId) internal view returns (uint);
+    
+    function getPlanServicePreputation(bytes32 _plan, bytes32 _serviceId) internal view returns (bytes32);
+    
+    function getPlanServicePtalent(bytes32 _plan, bytes32 _serviceId) internal view returns (bytes32);
+    
+    function getPlanServicePindex(bytes32 _plan, bytes32 _serviceId) internal view returns (bytes32);
+	
+    function getPlanServicePhash(bytes32 _plan, bytes32 _serviceId) external view returns (bytes32);
+    
+    function getPlanServiceQ(bytes32 _plan, bytes32 _serviceId) internal view returns (Database.Desire);
+    
+    function getPlanServiceTime(bytes32 _plan, bytes32 _serviceId) internal view returns (uint);
+    
+    function getPlanServiceExp(bytes32 _plan, bytes32 _serviceId) internal view returns (uint);
+    
+    function getPlanServiceHash(bytes32 _plan, bytes32 _serviceId) internal view returns (bytes32);
+    
+    function getPlanServiceFul(bytes32 _plan, bytes32 _serviceId) internal view returns (Database.Fulfillment);
+        
+    function getPlanQ(bytes32 _plan) external view returns (Database.Desire);
+    
+    function getPlanIPFS(bytes32 _plan, bytes32 _ipfsId) external view returns (string);
+    
+    function getPlanState(bytes32 _plan) external view returns (Database.Project);
+    
+    function getPlanCreator(bytes32 _plan) external view returns (address);
+    
+    function getPlanCurator(bytes32 _plan) external view returns (address);
+
+    function getBDI() internal view returns (Database.BDI);
+	
+	function viewDoers() public view returns(uint);
+	
+	function getCreatorsNum() public view returns(uint);
+	
+	function getCreators(address _address) view public returns (bool,uint256);
+	
+	function getDoersAccts() view public returns (address[]);
+	
+	function getDoersUuid(bytes32 _uuid) public view returns(bool);
+
+	function getPlans() internal view returns (bytes32[]);
+
+/////////////////
+// All SETTERS
+/////////////////
+
+
+    function setPlan(Database.Plan _data, bytes32 _planId) internal returns (bool);
+
+    function setBDI(Database.BDI _data) internal returns (bool);
+	
+	function setCreator(address _address, bool _active, uint _num) internal;
+
+	function setDoersNum(uint _num) public;
+	
+	function setDoersUuid(Database.Agent _data, bytes32 _uuid) public;
+	
+	function setDoersAdd(address _addr, bool _ans) public;
+
+	function setDoersAdd(address _addr) public;
+	
+	function setDoersDec() public;
+	
+	function setDoersInc() public;
+			
+	function setMyDoers(address _address, uint _allowed) internal;
+	
+	function setDoerBDI(
+	    Database.Flag _flag, 
+	    bytes32 _var, 
+	    bool _bvar, 
+	    uint256 _cvar, uint256 _evar, bytes32 _level) public returns (bool);
+		
+	function setDoerQualify(Database.Qualification _qualification) public;
+	
+	function setDoerDesire(Database.Desire _goal, bytes32 _desire) public;
+
+	function setDoerIntent(Database.Intention _service, bool _intention) public;
 }
 
