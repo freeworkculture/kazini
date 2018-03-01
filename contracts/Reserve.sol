@@ -62,6 +62,16 @@ contract ReserveInterface {
     uint public endFundingTime;         // In UNIX Time Format
     uint public maximumFunding;         // In wei
     uint public totalCollected;         // In wei
+    
+    // Exchange prices
+    uint256 public sellPrice;
+    bytes32 public realRate;
+    bool public updatedRate;
+    uint256 public buyPrice;
+
+	string public oraclizeResult;
+	bytes32 public oraclizeId;
+	// mapping (bytes32 => bytes32) oraclizeCall;
 
     // To allow for trade halting by owner.
     bool public trading;
@@ -105,6 +115,8 @@ contract ReserveInterface {
     event PlanEvent(address indexed _from, address indexed _to, uint256 _amount);
     event PromiseEvent(address indexed _from, address indexed _to, uint256 _amount);
     event Fulfill(address indexed _from, address indexed _to, uint256 _amount);
+    event LogPriceUpdated(string price);
+    event LogNewOraclizeQuery(string description);
 
 /* Functions Public constant */
 
@@ -166,7 +178,7 @@ contract ReserveInterface {
 ///  non-profit Campaign. This contract effectively dictates the terms of the
 ///  funding round.
 
-contract Reserve is DoitToken, ReserveInterface {
+contract Reserve is DoitToken, ReserveInterface, usingOraclize {
 
 /* Structs */
 
@@ -208,6 +220,12 @@ contract Reserve is DoitToken, ReserveInterface {
         revert();
         _;
     }
+
+    /// @dev Guards callback function
+    modifier onlyOraclize {
+		require (msg.sender == oraclize_cbAddress());
+		_;
+	}
 
 /* Functions */
 
@@ -481,6 +499,54 @@ contract Reserve is DoitToken, ReserveInterface {
         buyPrice = newBuyPrice;
     }
 
+    function setPrices(bytes32 _control) onlyController public {
+        realRate = _control;
+    }
+
+    function __callback(bytes32 myid, string result) {
+        sellPrice = parseInt(result,3);
+        updatedRate = true;
+        LogPriceUpdated(result);
+    }
+
+    function setPrices() internal returns (bool) {
+        if (realRate == "computed") {
+            // money supply "M": that is, the total number of coins minted
+            uint m = totalSupply();
+            // “velocity "V"; that is, the number of transactions per day
+            uint v = totalTransactions;
+            // transaction volume "T": that is, the economic value of transactions per day
+            uint t = m * v;
+            // price level "P": that is, the price of goods and services in terms of the token
+            // Velocity "V": = M * N": where "N" coins, change hands "M" times times per day
+            // Hodle "H" = 1 / V": where “H” time, period that a user holds a coin before using it to make a transaction
+            uint h = 1/v;
+            // currency value "C" = 1/P: where “C” value, the price of the currency (inverse of the price level)
+            uint c = ((t * h)/m);
+            sellPrice = c;
+            return true;
+        } else if (realRate == "sourced") {
+            updatedRate = false; 
+            return updatePrice();
+            }
+		}
+
+    function updatePrice() public payable returns (bool) {
+            if (oraclize_getPrice("URL") > this.balance) {
+            LogNewOraclizeQuery("Oraclize query was NOT sent, please add some ETH to cover for the query fee");
+			return false;
+			} else {
+				// Oraclize can be queried
+				string memory fromCurrency = "BBc6eMv0JDgmEpODSfeusLPyoi8iBF7Axk8vrf9mNlNgxDnPHzB/udAp57ZQqGe8DmGDn8Z7v2c1TnVWT41KFYhMQDn9XKM3H5jeR3Ee9T9qcaZHQre4orpfzdhyIUApA6fzrmeirWsQL5DEQmAa+K0=";
+				string memory toCurrency = "BDQ9sBW3jkEZSqJc5jTxdgkBZ7TL32siPHOIR1+GMAQ4hNjkNMp5IiStdJFh64yja0IkWpLHafdyNuMWg7qq/fqp64dClvaJuf9/XvHpcNdbJNkbza/NDkWyAw==";
+				// oraclizeId = oraclize_query("URL", "json(https://pgp.cs.uu.nl/stats/8b962943fc243f3c.json).KEY");
+				oraclizeId = oraclize_query("URL", strConcat(fromCurrency,toCurrency));
+				// oraclizeCall[oraclizeId] = strConcat(fromCurrency,toCurrency);
+				LogNewOraclizeQuery("Oraclize query was sent for REPUTATION, standing by for the answer..");
+				return true;
+            }
+    }
+
     /// @notice Buy tokens from contract by sending ether
     function buy() payable public returns (bool success) {
         uint amount = msg.value / buyPrice;               // calculates the amount
@@ -491,11 +557,14 @@ contract Reserve is DoitToken, ReserveInterface {
 
     /// @notice Sell `amount` tokens to contract
     /// @param amount amount of tokens to be sold
-    function sell(uint256 amount) public returns (bool success) {
+    function sell(uint256 _amount) public returns (bool success) {
         require(transfersEnabled);
-        require(this.balance >= amount * sellPrice);      // checks if the contract has enough ether to buy
-        doTransfer(msg.sender, this, amount);              // makes the transfers
-        msg.sender.transfer(amount * sellPrice);          // sends ether to the seller. It's important to do this last to avoid recursion attacks
+        require(setPrices());
+        require(updatedRate);
+        require(this.balance >= _amount * sellPrice);      // checks if the contract has enough ether to buy
+        require(destroyTokens(msg.sender, _amount));             // burns the tokens been liquidated
+        // doTransfer(msg.sender, this, _amount);              // makes the transfers
+        msg.sender.transfer(_amount * sellPrice);          // sends ether to the seller. It's important to do this last to avoid recursion attacks
         return true;
     }
 

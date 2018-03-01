@@ -396,6 +396,8 @@ contract Database is BaseController {
 		mapping(bytes32 => Services) services;
 	} struct Plan {
 			bytes32 preCondition;
+			uint time;
+			uint budget;
 			Desire postCondition;
 			bytes32 projectUrl;
 			address creator;
@@ -419,22 +421,22 @@ contract Database is BaseController {
 		    uint8 V;
 		    bytes32 R;
 		    bytes32 S;
-	    } struct Procure {
+		} struct Procure {
 		    Promise promise;
 		    Fulfillment fulfillment;
 		    mapping(address => Verification) verification; // key is hash of fulfillment
-    		} struct Promise {
+	} struct Promise {
 				Intention thing;
     			// bytes32 thing;
     			uint timeHard;   // proposed timeline
     			// uint256 value;
     			bytes32 hash;
-    		} struct Fulfillment {
+	} struct Fulfillment {
     			bytes32 proof;
     			Level rubric;
     			uint timestamp;
     			bytes32 hash;
-        	} struct Verification {
+	} struct Verification {
         		bytes32 verity;
         		bool complete;
         		uint timestampV;

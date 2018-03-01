@@ -118,9 +118,9 @@ contract DoitToken is BaseController, Math {
     // Used to freeze account
     mapping (address => bool) public frozenAccount;
 
-    // Exchange prices
-    uint256 public sellPrice;
-    uint256 public buyPrice;
+    // Used to track velocity
+    uint public totalTransactions;
+
 
 ////////////////
 // Constructor
