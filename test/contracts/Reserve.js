@@ -5,7 +5,7 @@ const Web3 = require('web3');
 const chai = require('chai');
 
 const Reserve = require("Reserve");
-const Oraclize = require(".usingOraclize");
+const usingOraclize = require("Oraclize");
 const DoitToken = require("DoitToken");
 const DoitTokenFactory =  require("DoitTokenFactory");
 const DoitTokenState = require("DoitTokenState");
