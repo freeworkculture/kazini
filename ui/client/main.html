@@ -1,28 +1,16 @@
 <head>
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>FreeWorkUI</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha256-916EbMg70RQy9LHiGkXzG8hSg9EdNy97GazNG/aiY1w=" crossorigin="anonymous" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha256-ZT4HPpdCOt2lvDkXokHuhJfdOKSPFLzeAJik5U/Q+l4=" crossorigin="anonymous" />
+  <title>ui</title>
 </head>
 
 <body>
-  <!-- <h1>Welcome to Meteor!</h1> -->
+  <h1>Welcome to Meteor!</h1>
 
-  <!-- {{> hello}}
-  {{> info}} -->
-  {{> navbar}}
-  <div class="container theme-showcase" role="main">
-  {{> main}}
-  {{> overview}}
-  {{> fulfill}}
-  {{> admin}} 
-  </div><!--/.container -->
+  {{> hello}}
+  {{> info}}
 </body>
 
 <template name="hello">
-  <button class="btn btn-primary"> Click Me</button>
+  <button>Click Me</button>
   <p>You've pressed the button {{counter}} times.</p>
 </template>
 
@@ -34,74 +22,4 @@
     <li><a href="https://docs.meteor.com" target="_blank">Read the Docs</a></li>
     <li><a href="https://forums.meteor.com" target="_blank">Discussions</a></li>
   </ul>
-</template>
-
-<template name="navbar">
-  <nav class="navbar navbar-inverse">
-    <div class="container">
-      <div class="navbar-header">
-        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false">
-          <span class="sr-only">Toggle navigation</span>
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-        </button>
-        <a class="navbar-brand" href="#">Hello, Am Able!</a>
-      </div>
-      <div id="navbar" class="navbar-collapse collapse">
-        <ul class="nav navbar-nav">
-          <li><a href="#overview">Overview</a></li>
-          <li><a href="#fulfill">Fulfill promise</a></li>
-          <li><a href="#admin">Administer</a></li>
-        </ul>
-      </div>
-    </div>
-  </nav><!--/.navbar -->
-</template>
-
-<template name="main">
-    <div class="starter-template">
-      <h1>We are a FreeWork Culture.</h1>
-      <p class="lead">Doing what we must, expediently!</p>
-    </div>
-
-    <div id="alerts"></div>
-</template>
-
-<template name="overview">
-  <div id="overview" class="panel panel-primary">
-    <div class="panel-heading">
-      <h3 class="panel-title">Overview</h3>
-    </div>
-    <div class="panel-body">
-      <p>Doer count? <span id="doer-count"></span></p>
-      <p>Fulfillment count? <span id="fulfillment-count"></span></p>
-    </div>
-  </div><!--/#overview -->
-</template>
-
-<template name="fulfill">
-  <div id="fulfill" class="panel panel-primary">
-    <div class="panel-heading">
-      <h3 class="panel-title">Fulfill promise</h3>
-    </div>
-    <div class="panel-body form-inline">
-      <label for="fulfillment-proof" class="sr-only">Proof URL</label>
-      <input type="text" id="fulfillment-proof" class="form-control" placeholder="Proof URL">
-      <button type="button" class="btn btn-lg btn-primary" onclick="Dapp.fulfill()">Fulfill</button>
-    </div>
-  </div><!--/#fulfill -->
-</template>
-
-<template name="admin">
-  <div id="admin" class="panel panel-warning">
-    <div class="panel-heading">
-      <h3 class="panel-title">Administer</h3>
-    </div>
-    <div class="panel-body form-inline">
-      <label for="doer-address" class="sr-only">Doer address</label>
-      <input type="text" id="doer-address" class="form-control" placeholder="Doer address">
-      <button type="button" class="btn btn-lg btn-warning" onclick="Dapp.addDoer()">Add</button>
-    </div>
-  </div><!--/#admin -->
 </template>

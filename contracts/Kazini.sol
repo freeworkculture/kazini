@@ -2,7 +2,7 @@ pragma solidity ^0.4.19;
 // import "./DoitToken.sol";
 //import "./ControlAbstract.sol";
 import "./Reserve.sol";
-pragma experimental ABIEncoderV2;
+// pragma experimental ABIEncoderV2;
 
 ////////////////////////
 // Factor Input Contract
@@ -68,19 +68,14 @@ contract Factor is Database {
         return bytes32(msg.sender) ^ plans[_intention].plan.postCondition.goal;  // bitwise XOR builds a map of serviceIds
     }
 
-  	function verify(bytes32 _message, uint8 _v, bytes32 _r, bytes32 _s) view internal returns (address) {
-		bytes memory prefix = "\x19Ethereum Signed Message:\n32";
-		bytes32 prefixedHash = keccak256(prefix, _message);
-		return ecrecover(prefixedHash, _v, _r, _s);
-	}
 	function verify(Database.Order _lso) view internal returns (address) {
-	    return verify(_lso.Sig,_lso.V,_lso.R,_lso.S);
+	    return contrl.verify(_lso.Sig,_lso.V,_lso.R,_lso.S);
 	}	
 	function verified(bytes32 _message, uint8 _v, bytes32 _r, bytes32 _s) view internal returns (bool check) {
-	    verify(_message,_v, _r, _s) == msg.sender ? check = true : check = false;
+	    contrl.verify(_message,_v, _r, _s) == msg.sender ? check = true : check = false;
 	}
 	function verified(Database.Order _lso) view internal returns (bool check) {
-	    verify(_lso.Sig,_lso.V,_lso.R,_lso.S) == msg.sender ? check = true : check = false;
+	    contrl.verify(_lso.Sig,_lso.V,_lso.R,_lso.S) == msg.sender ? check = true : check = false;
 	}
 
 /* OLD CODE MUTED */
@@ -240,15 +235,16 @@ contract Factor is Database {
 			require(msg.value > 0);
 			require(Doers(msg.sender).getBelief("index") > Doers(plans[_intention].services[_serviceId].definition.metas.doer).getBelief("index"));
 			bytes32 eoi = keccak256(msg.sender, _intention, _serviceId);
-			Order NULL;
+			Database.IS aa;
 			bytes32 bb;
-// 			Intention memory dd = Intention(a,b,c);
-			(,bb,) = Doers(msg.sender).viewIntention(_thing);
+			uint256 cc;
+			(aa,bb,cc) = Doers(msg.sender).viewIntention(_thing);
+			// Intention memory dd = Intention(aa,bb,cc);
 			plans[_intention].services[_serviceId].procure[msg.sender].promise = Promise({
-				thing: bb,
+				thing: Intention(aa,bb,cc),
 				// thing: dd.service,
 				timeHard: _time, 
-				value: msg.value, 
+				// value: msg.value, 
 				hash: eoi});
 			allPromises[msg.sender].push(_serviceId);
 			userbase.setAgent(plans[_intention].services[_serviceId].definition.metas.doer, Userbase.IS.INACTIVE);
