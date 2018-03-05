@@ -1,4 +1,4 @@
-var Doers = artifacts.require("./Doers.sol");
+var Creators = artifacts.require("Creators");
 
 function assertThrow(err, test, msg) {
   if (err.toString().indexOf(test) != -1) {

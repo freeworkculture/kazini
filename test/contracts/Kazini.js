@@ -1,5 +1,6 @@
-var Doers = artifacts.require("./Doers.sol");
-var DoPromise = artifacts.require("./DoPromise.sol");
+var Factor = artifacts.require("Factor");
+var Database = artifacts.require("Database");
+
 const contractName = '0x4461746162617365000000000000000000000000000000000000000000000000'
 const keyId = 0x9BCB2540EBAC30FC9E9EFF3D259B64A2
 const Base = 2;

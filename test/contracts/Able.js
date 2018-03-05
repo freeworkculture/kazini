@@ -1,4 +1,4 @@
-const Able = artifacts.require("./Able.sol");
+const Able = artifacts.require("Able");
 const contractName = '0x41626c6500000000000000000000000000000000000000000000000000000000'
 
 contract('Able', function ([msgOrigin,msgSender,newOwner,newController,storedContract]) {

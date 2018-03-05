@@ -1,4 +1,4 @@
-var Able = artifacts.require("./contracts/Able.sol");
+var BaseController = artifacts.require("BaseController");
 
 function assertThrow(err, test, msg) {
   if (err.toString().indexOf(test) != -1) {
