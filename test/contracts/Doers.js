@@ -1,5 +1,5 @@
 const Doers = artifacts.require("Doers");
-const Oraclize = require("Oraclize");
+const Oraclize = require("usingOraclize");
 
 function assertThrow(err, test, msg) {
   if (err.toString().indexOf(test) != -1) {
