@@ -7,7 +7,7 @@ const chai = require('chai');
 const TokenController = artifacts.require("TokenController");
 const DoitToken = artifacts.require("DoitToken");
 const DoitTokenFactory =  artifacts.require("DoitTokenFactory");
-const DoitTokenState = artifacts.require("DoitTokenState");
+// const DoitTokenState = artifacts.require("DoitTokenState");
 
 const assert = chai.assert;
 const { utils } = Web3;

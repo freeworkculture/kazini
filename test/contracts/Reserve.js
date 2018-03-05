@@ -8,7 +8,7 @@ const Reserve = artifacts.require("Reserve");
 const usingOraclize = artifacts.require("usingOraclize");
 const DoitToken = artifacts.require("DoitToken");
 const DoitTokenFactory =  artifacts.require("DoitTokenFactory");
-const DoitTokenState = artifacts.require("DoitTokenState");
+// const DoitTokenState = artifacts.require("DoitTokenState");
 
 const assert = chai.assert;
 const { utils } = Web3;
