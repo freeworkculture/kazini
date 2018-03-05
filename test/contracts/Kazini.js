@@ -1,5 +1,19 @@
 var Doers = artifacts.require("./Doers.sol");
 var DoPromise = artifacts.require("./DoPromise.sol");
+const contractName = '0x4461746162617365000000000000000000000000000000000000000000000000'
+const keyId = 0x9BCB2540EBAC30FC9E9EFF3D259B64A2
+const Base = 2;
+const _intention = '_intention_';
+const _serviceId = '_serviceId_';
+const _preCondition = '_preCondition_';
+const _goal = '_goal_';
+const _status = true;
+const _postCondition = [_goal,_status];
+const _time =  0;
+const _budget = 1000;
+const _projectUrl = '_projectUrl_';
+const _state = 2;
+const _preQualification = '_preQualification_';
 
 function assertThrow(err, test, msg) {
   if (err.toString().indexOf(test) !== -1) {
@@ -10,6 +24,72 @@ function assertThrow(err, test, msg) {
 }
 
 contract("DoPromise", function(accounts) {
+
+  var _intention_ = 'intention_';
+  var _serviceId_ = 'serviceId_';
+  var _preCondition_ = '0x5f707265436f6e646974696f6e5f000000000000000000000000000000000000';
+  var _goal_ = '0x5f676f616c5f0000000000000000000000000000000000000000000000000000';
+  var _status_ = true;
+  var _postCondition_ = [_goal_,_status_];
+  let _time_ =  0;
+  let _budget_ = 1000;
+  var _projectUrl_ = '0x5f70726f6a65637455726c5f0000000000000000000000000000000000000000';
+  let _state_ = 2;
+  var _preQualification_ = 'preQualification_';
+
+  it("should initialise plans", function() {
+    var timestamp = Math.round(new Date().getTime()/1000);
+    var goal_;
+    var status_;
+    var preCondition_;
+    var time_;
+    var budget_;
+    var projectUrl_;
+    var creator_;
+    var curator_; 
+    return Database.deployed().then(function(instance) {
+      database = instance;
+      return database.initPlan(
+        _intention,_serviceId,_preCondition,_goal,_status,_projectUrl,creator,_preQualification,
+        {from: creator, value: 1});
+      }).then(function() {
+        return database.planState(_intention);
+      }).then(function(state_) {
+        assert.equal(state_, _state_);
+      }).then(function() {
+        return database.planGoal(_intention);
+      }).then(function(postcondition_) {
+        goal_ = postcondition_[0];
+        status_ = postcondition_[1];
+      }).then(function() {
+        assert.equal(goal_, _goal_);
+      }).then(function() {
+        assert.equal(status_, _status_);
+      }).then(function() {
+        return database.planProject(_intention);
+      }).then(function(project_) {
+        preCondition_ = project_[0];
+        time_ = project_[1].toNumber();
+        // console.log(time_.toString(10));
+        budget_ = project_[2].toNumber();
+        // console.log(budget_.toString(10));
+        projectUrl_ = project_[3];
+        creator_ = project_[4];
+        curator_ = project_[5];
+      }).then(function() {
+        assert.equal(preCondition_, _preCondition_);
+      }).then(function() {
+        assert.equal(time_, _time_);
+      }).then(function() {
+        assert.equal(budget_, _budget_);
+      }).then(function() {
+        assert.equal(projectUrl_, _projectUrl_);
+      }).then(function() {
+        assert.equal(creator_, creator);
+      }).then(function() {
+        assert.equal(curator_, 0);
+      });
+    });
   it("should set deployer and doers", function() {
     var contract;
     return DoPromise.deployed().then(function(instance) {
