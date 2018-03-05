@@ -4,9 +4,9 @@ const TestRPC = require('ethereumjs-testrpc');
 const Web3 = require('web3');
 const chai = require('chai');
 
-const DoitToken = require("DoitToken");
-const DoitTokenFactory =  require("DoitTokenFactory");
-const DoitTokenState = require("DoitTokenState");
+const DoitToken = artifacts.require("DoitToken");
+const DoitTokenFactory =  artifacts.require("DoitTokenFactory");
+const DoitTokenState = artifacts.require("DoitTokenState");
 
 const assert = chai.assert;
 const { utils } = Web3;
