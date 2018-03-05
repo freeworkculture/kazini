@@ -531,7 +531,8 @@ contract DoitTokenFactory is DataController {
         string _tokenVersion,
         uint _tokenMaturity,
         bool _transfersEnabled,
-        Able _ctrl
+        Able _ctrl,
+        bytes32 _sig
     ) public returns (DoitToken)
     {
         DoitToken newToken = new DoitToken(
@@ -546,8 +547,9 @@ contract DoitTokenFactory is DataController {
             _transfersEnabled,
             _ctrl
             );
+            
 
-        newToken.changeController(msg.sender);
+        newToken.contrl().changeController(_sig);
         return newToken;
     }
 }

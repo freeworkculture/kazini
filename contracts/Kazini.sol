@@ -1,8 +1,5 @@
 pragma solidity ^0.4.19;
-// import "./DoitToken.sol";
-//import "./ControlAbstract.sol";
 import "./Reserve.sol";
-// pragma experimental ABIEncoderV2;
 
 ////////////////////////
 // Factor Input Contract
@@ -71,72 +68,30 @@ contract Factor is Database {
 	function verify(Database.Order _lso) view internal returns (address) {
 	    return contrl.verify(_lso.Sig,_lso.V,_lso.R,_lso.S);
 	}	
-	function verified(bytes32 _message, uint8 _v, bytes32 _r, bytes32 _s) view internal returns (bool check) {
-	    contrl.verify(_message,_v, _r, _s) == msg.sender ? check = true : check = false;
-	}
+
 	function verified(Database.Order _lso) view internal returns (bool check) {
 	    contrl.verify(_lso.Sig,_lso.V,_lso.R,_lso.S) == msg.sender ? check = true : check = false;
 	}
 
-/* OLD CODE MUTED */
-	/// @notice `plan` compile a plan can step down and assign some other address to this role
-    /// @param intention_ desire_ preConditions_ projectUrl_ preQualification_ The address of the new owner. 0x0 can be used to create
-	// Add a new contract to the controller. This will not overwrite an existing contract.
-    // function createPlan(
-	// 	bytes32 intention_, 
-	// 	bytes32 desire_, 
-	// 	bytes32 preConditions_, 
-	// 	string projectUrl_,
-	// 	bytes32 preQualification_) external payable onlyCreator returns (bool) 
-	// 	{
-	// 		address tmpAddress;
-	// 		Database.Plan memory a;
-	// 		(a, ) = database.plans(intention_);
-	// 		require(uint(a.state) < 0);
-	// 		database.initPlan({
-	// 			_intention: intention_,
-	// 			_serviceId: a.postCondition.goal ^ bytes32(msg.sender),
-	// 			_preCondition: preConditions_,
-	// 			_postCondition: Doers(msg.sender).getDesire(desire_), // Creator and project share a goal // Get this from Doers direct. // !!! MAYBE THIS COULD BE TX.ORIGIN
-	// 			_projectUrl: keccak256(projectUrl_),
-	// 			_state: Database.Project.INITIATED,
-	// 			_creator: msg.sender,  // !!! MAYBE THIS COULD BE TX.ORIGIN
-	// 			_curator: tmpAddress,
-	// 			_preQualification: preQualification_}); // pCondition of the curate that will define the concept.																
-	// 		  // bitwise XOR builds a map of serviceIds !!! CONFIRM CORRECT SOURCE ADDRESS, MAY NEED A DELEGATE CALL FUNC
-	// 		// push event for new plan, include serviceId,Url,
-	// 		return true;
-    // }
-
-    // function serviceId(bytes32 _intention) internal view onlyCreator returns (bytes32) {
-	// 	// !!! CONFIRM CORRECT SOURCE ADDRESS, MAY NEED A DELEGATE CALL FUNC
-	// 	Database.Plan memory a;
-	// 	(a, ) = database.plans(_intention);
-    //     return a.postCondition.goal ^ bytes32(msg.sender);  // bitwise XOR builds a map of serviceIds
-// }
-
 	/// @notice `plan` compile a plan can step down and assign some other address to this role
     /// @param _intention _desire _preConditions _projectUrl _preQualification The address of the new owner. 0x0 can be used to create
 	// Add a new contract to the controller. This will not overwrite an existing contract.
-	function createPlan(
+	function initPlan(
 		bytes32 _intention, 
 		bytes1 _desire, 
 		bytes32 _preConditions, 
 		bytes32 _projectUrl,
 		bytes32 _preQualification) external payable onlyCreator returns (bool) 
 		{
-			require((plans[_intention].state != Project.STARTED) || // This is 
-			(plans[_intention].state != Project.CLOSED)); // a new plan?
+			require(plans[_intention].state == Project.NULL); // This is a new plan?
 			bytes32 a;
 			bool b;
-			Desire memory d = Desire(a,b);
+			Desire memory cc = Desire(a,b);
 			(a,b) = Doers(tx.origin).viewDesire(_desire);
-			
-			plans[_intention].plan.postCondition = d; // Creator and project share a goal // Get this from Doers direct.																	
-// 			plans[_intention].plan.postCondition = Doers(tx.origin).getDesire(_desire); // Creator and project share a goal // Get this from Doers direct.																	
-// 			bytes32 serviceId = plans[_intention].plan.postCondition.goal ^ bytes32(msg.sender);  // bitwise XOR builds a map of serviceIds
+			plans[_intention].plan.postCondition = cc; // Creator and project share a goal // Get this from Doers Contract direct.																	
 			plans[_intention].plan.preCondition = _preConditions; // pCondition of the curate that will define the concept.
 			plans[_intention].state = Project.INITIATED;
+			// bitwise XOR builds a map of serviceIds
 			plans[_intention].services[serviceId(_intention)].definition.preCondition.merits.hash = _preQualification;
 			bytes32 url = keccak256(_projectUrl);
 			plans[_intention].plan.projectUrl = _projectUrl; // Store the prefeasibility at the main project repo.
@@ -223,9 +178,9 @@ contract Factor is Database {
 		uint _time, 
 		bool _thing) public payable onlyDoer returns (bool) 
 		{
-			Userbase.IS b;
+			UserDefined.IS b;
 			(,b,,) = userbase.agents(msg.sender);
-			require(b != Userbase.IS.ACTIVE);
+			require(b != UserDefined.IS.ACTIVE);
 			require(Doers(msg.sender).getBelief("index") >= plans[_intention].services[_serviceId].definition.preCondition.merits.index);
             bytes32 a;
             (a,) = Doers(msg.sender).viewDesire(_desire);
@@ -246,77 +201,23 @@ contract Factor is Database {
 				timeHard: _time, 
 				// value: msg.value, 
 				hash: eoi});
-			allPromises[msg.sender].push(_serviceId);
-			userbase.setAgent(plans[_intention].services[_serviceId].definition.metas.doer, Userbase.IS.INACTIVE);
+			userbase.setAllPromises(_serviceId);
+			userbase.setAgent(plans[_intention].services[_serviceId].definition.metas.doer, UserDefined.IS.INACTIVE);
 			plans[_intention].services[_serviceId].definition.metas.doer = msg.sender;
-			userbase.setAgent(msg.sender,Userbase.IS.RESERVED);
+			userbase.setAgent(msg.sender,UserDefined.IS.RESERVED);
 			promiseCount++;
 			return true;
 	}    
-    
-    
-/* OLD CODE MUTED */
-	//     function promise(
-	// 		bytes32 _intention, 
-	// 		bytes1 _desire, 
-	// 		bytes32 _serviceId) public payable onlyDoer returns (bool) 
-	// 		{
-	// 			require(userbase.agents[msg.sender].state != IS.ACTIVE);
-	// 			require(Doers(msg.sender).getBelief("index") >= plans[_intention].services[_serviceId].definition.preCondition.merits.index);
-	// 			bytes32 a;
-	// 			bool b;
-	// 			Desire memory c = Desire(a,b);
-	// 			(a,b) = Doers(tx.origin).viewDesire(_desire);
-				
-	// 			require(c.goal == plans[_intention].services[_serviceId].definition.postCondition.goal);
-	// 			require(msg.value > 0);
-	// 			require(Doers(msg.sender).getBelief("index") > Doers(plans[_intention].services[_serviceId].definition.metas.doer).getBelief("index"));
-	// 			bytes32 eoi = keccak256(msg.sender, _intention, _serviceId);
-
-	// 			allPromises[msg.sender].push(_serviceId);
-	// 			userbase.userbase.agents[plans[_intention].services[_serviceId].definition.metas.doer].state = IS.INACTIVE;
-	// 			plans[_intention].services[_serviceId].definition.metas.doer = msg.sender;
-	// 			userbase.agents[msg.sender].state = IS.RESERVED;
-	// 			promiseCount++;
-	// 			return true;
-	// 	}   
-
-	//     function promise(
-	// 		bytes32 _intention, 
-	// 		bytes1 _desire, 
-	// 		bytes32 _serviceId, 
-	// 		uint _time, 
-	// 		bool _thing) public payable onlyDoer returns (bool) 
-	// 		{
-				
-	// 			Database.IS a;
-	// 			bytes32 b;
-	// 			uint c;
-	// 			Intention memory dd = Intention(a,b,c);
-	// 			(a,b,c) = Doers(msg.sender).viewIntention(_thing);
-				
-	// 			require((_time > block.timestamp) || (_time < plans[_intention].services[_serviceId].definition.metas.expire));
-	// 			require(msg.value > 0);
-	// 			require(Doers(msg.sender).getBelief("index") > Doers(plans[_intention].services[_serviceId].definition.metas.doer).getBelief("index"));
-	// 			bytes32 eoi = keccak256(msg.sender, _intention, _serviceId);
-	// 			Order NULL;
-	// 			plans[_intention].services[_serviceId].procure[msg.sender].promise = Promise({
-	// 				thing: dd.service,
-	// 				timeHard: _time, 
-	// 				value: msg.value, 
-	// 				hash: eoi});
-	// 			return true;
-// 	}    
 
     function order(bytes32 _intention, bytes32 _serviceId, bool _check, string _thing, string _proof, uint8 _v, bytes32 _r, bytes32 _s) public payable onlyDoer {
 		require(plans[_intention].state == Project.APPROVED);
 		require(plans[_intention].services[_serviceId].definition.metas.doer == msg.sender);
-		Userbase.IS b;
+		UserDefined.IS b;
 		(,b,,) = userbase.agents(msg.sender);
-		require(uint8(b) > uint8(Userbase.IS.ACTIVE));
-		require(verified(plans[_intention].services[_serviceId].procure[msg.sender].promise.hash,_v,_r,_s));
+		require(uint8(b) > uint8(UserDefined.IS.ACTIVE));
+		require(contrl.verified(plans[_intention].services[_serviceId].procure[msg.sender].promise.hash,_v,_r,_s));
 		plans[_intention].services[_serviceId].order = Order(plans[_intention].services[_serviceId].procure[msg.sender].promise.hash,_v,_r,_s);
-		userbase.setAgent(msg.sender,Userbase.IS.ACTIVE);
+		userbase.setAgent(msg.sender,UserDefined.IS.ACTIVE);
 		orderCount++;
         }
 

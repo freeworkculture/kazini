@@ -1,5 +1,5 @@
 pragma solidity ^0.4.19;
-// import "./ControlAbstract.sol";
+import "./ControlAbstract.sol";
 import "./Oraclize.sol";
 pragma experimental ABIEncoderV2;
 
@@ -8,7 +8,7 @@ pragma experimental ABIEncoderV2;
 //////////////////////
 /// @dev `BaseController` is a base level contract that assigns an `controller` that can be
 ///  later changed
-contract BaseController {
+contract BaseController is UserDefined {
 
 /* Constants */
 
@@ -147,13 +147,13 @@ contract BaseController {
 		ChangedController(msg.sender, owner);
     }
 
-  	function verify(bytes32 _message, uint8 _v, bytes32 _r, bytes32 _s) view internal returns (address) {
+  	function verify(bytes32 _message, uint8 _v, bytes32 _r, bytes32 _s) view public returns (address) {
 		bytes memory prefix = "\x19Ethereum Signed Message:\n32";
 		bytes32 prefixedHash = keccak256(prefix, _message);
 		return ecrecover(prefixedHash, _v, _r, _s);
 	}
 
-	function verified(bytes32 _message, uint8 _v, bytes32 _r, bytes32 _s) view internal returns (bool success) {
+	function verified(bytes32 _message, uint8 _v, bytes32 _r, bytes32 _s) view external returns (bool success) {
 		verify(_message,_v,_r,_s) == msg.sender ? success = true : success = false;
 	}
 
@@ -256,36 +256,36 @@ contract Able is DataController {
 	///////////////////
 	// Controller Logic
 
-		// Change the owner of a contract
-		/// @notice `owner` can step down and assign some other address to this role
-		/// @param _newOwner _sig The address of the new owner. 0x0 can be used to create
-		///  an unowned neutral vault, however that cannot be undone
-		function changeOwner(address _newOwner, bytes32 _sig) public onlyOwner returns (bool) {
-			require(_sig == 0x0);
-			// require(verify(_sig,_v,_r,_s) == controller);
-			setOwner(_newOwner);
-		}
+	// Change the owner of a contract
+	/// @notice `owner` can step down and assign some other address to this role
+	/// @param _newOwner _sig The address of the new owner. 0x0 can be used to create
+	///  an unowned neutral vault, however that cannot be undone
+	function changeOwner(address _newOwner, bytes32 _sig) public onlyOwner returns (bool) {
+		require(_sig == 0x0);
+		// require(verify(_sig,_v,_r,_s) == controller);
+		setOwner(_newOwner);
+	}
 
-		/// @notice `contrl` can step down and assign some other address to this role
-		/// @param _newCtrl _sig The address of the new owner. 0x0 can be used to create
-		///  an unowned neutral vault, however that cannot be undone
-		function changeContrl(Able _newCtrl, bytes32 _sig) public onlyOwner returns (bool) {
-			require(_sig == 0x0);
-			// require(verify(_sig,_v,_r,_s) == controller);
-			setContrl(_newCtrl);
-			// _e.delegatecall(bytes4(sha3("setN(uint256)")), _n); // D's storage is set, E is not modified
-			// contrl.delegatecall(bytes4(sha3("setContrl(address)")),_newCtrl);
-			
-		}
+	/// @notice `contrl` can step down and assign some other address to this role
+	/// @param _newCtrl _sig The address of the new owner. 0x0 can be used to create
+	///  an unowned neutral vault, however that cannot be undone
+	function changeContrl(Able _newCtrl, bytes32 _sig) public onlyOwner returns (bool) {
+		require(_sig == 0x0);
+		// require(verify(_sig,_v,_r,_s) == controller);
+		setContrl(_newCtrl);
+		// _e.delegatecall(bytes4(sha3("setN(uint256)")), _n); // D's storage is set, E is not modified
+		// contrl.delegatecall(bytes4(sha3("setContrl(address)")),_newCtrl);
+		
+	}
 
-		/// @notice `controller` can step down and assign some other address to this role
-		/// @param _sig The address of the new controller is the address of the contrl. 
-		///  0x0 can be used to create an unowned neutral vault, however that cannot be undone
-		function changeController(bytes32 _sig) public onlyOwner returns (bool) {
-			require(_sig == 0x0);
-			// require(verify(_sig,_v,_r,_s) == controller);
-			setController();
-		}
+	/// @notice `controller` can step down and assign some other address to this role
+	/// @param _sig The address of the new controller is the address of the contrl. 
+	///  0x0 can be used to create an unowned neutral vault, however that cannot be undone
+	function changeController(bytes32 _sig) public onlyOwner returns (bool) {
+		require(_sig == 0x0);
+		// require(verify(_sig,_v,_r,_s) == controller);
+		setController();
+	}
 	///////////////////
 
 
@@ -362,89 +362,8 @@ contract Database is BaseController {
 
 /* Enums*/
 
-	enum KBase {PRIMARY,SECONDARY,TERTIARY,CERTIFICATION,DIPLOMA,LICENSE,BACHELOR,MASTER,DOCTORATE}
-    // Weights	   1,		2,		 4,		    8,		   16,	    32,		64,	    128    256
-	enum IS { CLOSED, CREATOR, CURATOR, ACTIVE, INACTIVE, RESERVED, PROVER }
-	enum Project { NULL, PENDING, INITIATED, APPROVED, STARTED, CLOSED }
-	enum Level { POOR,SATISFACTORY,GOOD,EXCELLENT }
-	enum Flag {
-		experience,e,
-		reputation,r,
-		talent,t,
-		index,i,
-		hashB,HB,
-		country,c,
-		cAuthority,CA,
-		score,s,
-		hashQ,HQ,
-		goal,g,
-		statusD,SD,
-		statusI,SI,
-		service,S,
-		payout,p
-	}
 
 /* Structs*/
-
-	/// @notice `Plan_Service_Promise_Fulfillment_Verification` is the type that defines a strategy model of an actual agent
-	// @dev Interp. myBelief {Qualification, Experience, Reputation, Talent} is an agent with
-	// Qualification is (<ISO 3166-1 numeric-3>,<Conferring Authority>,<Score>)
-	// experience is period from qualification in seconds
-	// reputaion is PGP trust level flag !!! CITE RFC PART
-	// talent is user declared string of talents
-
-    struct Plans {
-		Project state;
-		Plan plan;
-		mapping(bytes32 => Services) services;
-	} struct Plan {
-			bytes32 preCondition;
-			uint time;
-			uint budget;
-			Userbase.Desire postCondition;
-			bytes32 projectUrl;
-			address creator;
-			address curator;
-	} struct Services {
-		Service definition;
-		Order order;
-		mapping(address => Procure) procure;
-		} struct Service {
-			Userbase.Belief preCondition;
-			Userbase.Desire postCondition;
-			Metas metas;
-			} struct Metas {
-				uint timeSoft;  // preferred timeline
-				uint expire;
-				bytes32 hash;
-				bytes32 serviceUrl;
-				address doer;
-		} struct Order {
-		    bytes32 Sig;
-		    uint8 V;
-		    bytes32 R;
-		    bytes32 S;
-		} struct Procure {
-		    Promise promise;
-		    Fulfillment fulfillment;
-		    mapping(address => Verification) verification; // key is hash of fulfillment
-	} struct Promise {
-				Userbase.Intention thing;
-    			// bytes32 thing;
-    			uint timeHard;   // proposed timeline
-    			// uint256 value;
-    			bytes32 hash;
-	} struct Fulfillment {
-    			bytes32 proof;
-    			Level rubric;
-    			uint timestamp;
-    			bytes32 hash;
-	} struct Verification {
-        		bytes32 verity;
-        		bool complete;
-        		uint timestampV;
-        		bytes32 hash;
-	}
 
 
 /* State Variables */
@@ -552,21 +471,21 @@ contract Database is BaseController {
 
     function getServiceCondP(
 		bytes32 _intention, bytes32 _serviceId) 
-		view external returns (Userbase.Merits) 
+		view external returns (Merits) 
 		{
         return plans[_intention].services[_serviceId].definition.preCondition.merits;
     }
 
     function getServiceCondP(
 		bytes32 _intention, bytes32 _serviceId, KBase _index) 
-		view external returns (Userbase.Qualification) 
+		view external returns (Qualification) 
 		{
         return plans[_intention].services[_serviceId].definition.preCondition.qualification[BASE^uint8(_index)];
     }
 
     function getServiceCondQ(
 		bytes32 _intention, bytes32 _serviceId) 
-		view external returns (Userbase.Desire) 
+		view external returns (Desire) 
 		{
         return plans[_intention].services[_serviceId].definition.postCondition;
     }
@@ -635,56 +554,6 @@ contract Database is BaseController {
 					plans[_intention].plan.curator);
 	}
 
-
-
-    // function getServiceCondP(
-	// 	bytes32 _intention, bytes32 _serviceId) 
-	// 	view external returns (Userbase.Merits) 
-	// 	{
-    //     return plans[_intention].services[_serviceId].definition.preCondition.merits;
-    // }
-
-    // function getServiceCondP(
-	// 	bytes32 _intention, bytes32 _serviceId, KBase _index) 
-	// 	view external returns (Userbase.Qualification) 
-	// 	{
-    //     return plans[_intention].services[_serviceId].definition.preCondition.qualification[BASE^uint8(_index)];
-    // }
-
-    // function getServiceCondQ(
-	// 	bytes32 _intention, bytes32 _serviceId) 
-	// 	view external returns (Userbase.Desire) 
-	// 	{
-    //     return plans[_intention].services[_serviceId].definition.postCondition;
-    // }
-
-    // function getServiceMetas(
-	// 	bytes32 _intention, bytes32 _serviceId) 
-	// 	view external returns (Metas) 
-	// 	{
-    //     return plans[_intention].services[_serviceId].definition.metas;
-    // }
-
-    // function getPromise(
-	// 	bytes32 _intention, bytes32 _serviceId, address _address) 
-	// 	view external returns (Promise) 
-	// 	{
-    //     return plans[_intention].services[_serviceId].procure[_address].promise;
-    // }
-	
-	// function getFulfillment(
-	// 	bytes32 _intention, bytes32 _serviceId, address _doer) 
-	// 	view external returns (Fulfillment) 
-	// 	{
-	// 	return plans[_intention].services[_serviceId].procure[_doer].fulfillment;
-	// }
-
-	// function getVerification(
-	// 	bytes32 _intention, bytes32 _serviceId, address _doer,address _prover) 
-	// 	view external returns (Verification) 
-	// 	{
-	// 	return plans[_intention].services[_serviceId].procure[_doer].verification[_prover];
-	// }
 /////////////////
 // All SETTERS
 /////////////////
@@ -692,29 +561,7 @@ contract Database is BaseController {
 	/// @notice Get the initialisation data of a plan created by a Creator. 
     /// @param _intention The query condition of the contract
 	//  @dev `anybody` can retrive the plan data in the contract Plan has five levels
-   	function initPlan(
-		bytes32 _intention,
-		bytes32 _serviceId,
-		bytes32 _preCondition,
-		bytes32 _goal,
-        bool _status,
-		bytes32 _projectUrl,
-		address _creator,
-		bytes32 _preQualification) public payable {
-			require(uint(plans[_intention].state) == 0); // This is a new plan? // Cannot overwrite incomplete Plan // succesful plan??
-			plans[_intention].state = Project.INITIATED;
-			plans[_intention].plan.preCondition = _preCondition;
-			plans[_intention].plan.budget = GEN;
-			plans[_intention].plan.postCondition.goal = _goal;
-			plans[_intention].plan.postCondition.status = _status;
-			plans[_intention].plan.projectUrl = _projectUrl;
-			plans[_intention].plan.creator = _creator;
-			plans[_intention].services[_serviceId].definition.preCondition.merits.hash = _preQualification;
-			NewPlan(tx.origin,msg.sender,_creator,_intention,_preQualification);
-			
-	}
-
-	function initPlanx(
+	function initPlan(
 		bytes32 _intention,
 		bytes32 _serviceId,
 		Plan _planData,
@@ -732,8 +579,8 @@ contract Database is BaseController {
     function setService(
 		bytes32 _intention, 
 		bytes32 _serviceId,
-		Userbase.Merits _merits,
-		Userbase.Qualification _qualification,
+		Merits _merits,
+		Qualification _qualification,
 		KBase _index
 		) public onlyCurator {
 			plans[_intention].services[_serviceId].definition.preCondition.merits = _merits;
@@ -743,7 +590,7 @@ contract Database is BaseController {
     function setService(
 		bytes32 _intention, 
 		bytes32 _serviceId,
-		Userbase.Desire _postCondition
+		Desire _postCondition
 		) public onlyCurator {
 			plans[_intention].services[_serviceId].definition.postCondition = _postCondition;			
 	}
@@ -780,7 +627,7 @@ contract Database is BaseController {
 		bytes32 _intention, 
 		bytes32 _serviceId, 
 		address _doer,
-		Userbase.Intention _thing,
+		Intention _thing,
 		uint _timeHard,   // proposed timeline
 		bytes32 hash
 		) public onlyDoer
@@ -830,12 +677,12 @@ contract Database is BaseController {
 		plans[_intention].plan = _data;
     }
 
-    function adminService(bytes32 _intention, bytes32 _serviceId, Userbase.Merits _merits, Userbase.Qualification _qualification, KBase _index) public onlyController {
+    function adminService(bytes32 _intention, bytes32 _serviceId, Merits _merits, Qualification _qualification, KBase _index) public onlyController {
 		plans[_intention].services[_serviceId].definition.preCondition.merits = _merits;
 		plans[_intention].services[_serviceId].definition.preCondition.qualification[BASE^uint8(_index)] = _qualification;
     }
 
-    function adminService(bytes32 _intention, bytes32 _serviceId, Userbase.Desire _desire) public onlyController {
+    function adminService(bytes32 _intention, bytes32 _serviceId, Desire _desire) public onlyController {
 			plans[_intention].services[_serviceId].definition.postCondition = _desire;
     }
 
@@ -871,104 +718,9 @@ contract Userbase is BaseController {
 
 /* Enums */
 
-	enum KBase {PRIMARY,SECONDARY,TERTIARY,CERTIFICATION,DIPLOMA,LICENSE,BACHELOR,MASTER,DOCTORATE}
-    // Weights	   1,		2,		 4,		    8,		   16,	    32,		64,	    128    256
-	enum IS { CREATOR, CURATOR, ACTIVE, INACTIVE, RESERVED, PROVER }
-	enum Project { PENDING, INITIATED, APPROVED, STARTED, CLOSED }
-	enum Level { POOR,SATISFACTORY,GOOD,EXCELLENT }
-	enum Flag {
-		experience,e,
-		reputation,r,
-		talent,t,
-		index,i,
-		hashB,HB,
-		country,c,
-		cAuthority,CA,
-		score,s,
-		hashQ,HQ,
-		goal,g,
-		statusD,SD,
-		statusI,SI,
-		service,S,
-		payout,p
-	}
+
 /* Structs */
-
-	/// @notice `SomeDoer` defines the basic universal structure of an agent
-	// @dev Interp. aDoer {fPrint, email, birth, fName, lName, active, lastUpdate} is an agent with
-	// fPrint is PGP Key fingerprint
-	// email is PGP key email
-	// birth is date of birth in seconds from 1970
-	// fName is first name in identity document MRZ
-	// lName is last name in identity document MRZ
-	// state is deliberative state of agent
-	// lastUpdate is timestamp of last record entry
-	struct SomeDoer {
-        bytes32 fPrint;
-        bytes32 idNumber;
-		bytes32 email;
-		bytes32 fName;
-		bytes32 lName;
-        bytes32 hash;
-		bytes32 tag;
-        bytes32 data;
-        uint age;
-		bool active;
-	}
-
-	/// @notice `Belief_Desire_Intention` is the type that defines a strategy model of an actual agent
-	// @dev Interp. myBelief {Qualification, Experience, Reputation, Talent} is an agent with
-	// Qualification is (<ISO 3166-1 numeric-3>,<Conferring Authority>,<Score>)
-	// experience is period from qualification in seconds
-	// reputaion is PGP trust level flag !!! CITE RFC PART
-	// talent is user declared string of talents
-	struct BDI {
-        Belief beliefs;
-        mapping(bytes1 => Desire) desires;
-	    mapping(bool => Intention) intentions;
-	} struct Belief {
-		Merits merits;
-		mapping(uint8 => Qualification) qualification; // Key is the keccak256 hash of the struct contents
-		} struct Merits {
-			uint experience;
-			bytes32 reputation;
-			bytes32 talent;
-			uint8 index;
-			bytes32 hash;
-			} struct Qualification {
-			bytes32 country; //ISO3166-2:KE-XX;
-			bytes32 cAuthority;
-			bytes32 score;
-	} struct Desire {
-        bytes32 goal;
-        bool status;
-	} struct Intention {
-        IS state;
-        bytes32 service;
-        uint256 payout;
-	}
-
-	/// @notice `Creator && Doer lookup` is the type that defines a strategy model of an actual agent
-	// @dev Interp. myBelief {Qualification, Experience, Reputation, Talent} is an agent with
-	// Qualification is (<ISO 3166-1 numeric-3>,<Conferring Authority>,<Score>)
-	// experience is period from qualification in seconds
-	// reputaion is PGP trust level flag !!! CITE RFC PART
-	// talent is user declared string of talents
-
-    struct Agent {
-        bytes32 keyId;
-		IS state;
-        bool active;
-		uint myDoers;
-	}
-
-	/// @dev `Initialised data structures
-	/// @notice `Creator && Doer lookup` is the type that defines a strategy model of an actual agent
-	// @dev Interp. myBelief {Qualification, Experience, Reputation, Talent} is an agent with
-	// Qualification is (<ISO 3166-1 numeric-3>,<Conferring Authority>,<Score>)
-	// experience is period from qualification in seconds
-	// reputaion is PGP trust level flag !!! CITE RFC PART
-	// talent is user declared string of talents
+	
 
 /* State Variables */
     
@@ -1133,7 +885,7 @@ contract Userbase is BaseController {
 		allPlans.push(_planId);
 	}
 
-	function setPromise(bytes32 _serviceId) external onlyController {
+	function setAllPromises(bytes32 _serviceId) external onlyController {
 		require(promiseCount++ < 2^256);
 		allPromises[tx.origin].push(_serviceId);
 	}
@@ -1237,7 +989,7 @@ contract Creators is DataController {
 				userbase,
 				ownUuid, 
 				setDoer(_fPrint,_idNumber,_lName,_hash,_tag,_data,_birth,_active));
-			userbase.initDoer(Userbase.Agent(ownUuid, Userbase.IS.INACTIVE, true, 0), uuidCheck, newDoer);
+			userbase.initDoer(Agent(ownUuid, IS.INACTIVE, true, 0), uuidCheck, newDoer);
 			userbase.decMyDoers();
 			userbase.incAllDoers();
 			return (true,newDoer);
@@ -1294,7 +1046,7 @@ contract Creators is DataController {
 
 	function initCreator(bytes32 _keyId, bool _active, uint _num) external {
 		userbase.setAgent(
-			Userbase.Agent({keyId: _keyId, state: Userbase.IS.CREATOR, active:_active, myDoers: _num}), msg.sender, _keyId);
+			Agent({keyId: _keyId, state: IS.CREATOR, active:_active, myDoers: _num}), msg.sender, _keyId);
 	}
 
 	function setDoer(
@@ -1306,10 +1058,10 @@ contract Creators is DataController {
 		bytes32 _data,
 		uint _birth,
 		bool _active
-		) internal pure returns (Userbase.SomeDoer) 
+		) internal pure returns (SomeDoer) 
 		{
 			bytes32 reset;
-			return Userbase.SomeDoer({
+			return SomeDoer({
 				fPrint:_fPrint, 
 				idNumber:_idNumber, 
 				email: reset, 
@@ -1339,7 +1091,7 @@ contract Creators is DataController {
 // Beginning of Contract
 ///////////////////
 
-contract Doers is usingOraclize {
+contract Doers is usingOraclize, UserDefined {
 
 	modifier onlyCreator {
 		require(msg.sender == creatorAdd);
@@ -1365,20 +1117,20 @@ contract Doers is usingOraclize {
 	bytes32 public ownUuid = Me.fPrint;
 	
 
-	Userbase.SomeDoer public Me;// = SomeDoer(0x4fc6c65443d1b988, "whoiamnottelling", 346896000, "Iam", "Not", false);		
+	SomeDoer public Me;// = SomeDoer(0x4fc6c65443d1b988, "whoiamnottelling", 346896000, "Iam", "Not", false);		
 			
-	Userbase.BDI internal myBDI;
+	BDI internal myBDI;
 
-	Userbase.Belief public myBelief = myBDI.beliefs;
-	Userbase.Merits public myMerits = myBDI.beliefs.merits;
-	// Database.Qualification public myQualification = myBDI.beliefs.qualification;
-	// Database.Desire public myDesire = myBDI.desires;
-	// Database.Intention public myIntention = myBDI.intentions;
+	Belief public myBelief = myBDI.beliefs;
+	Merits public myMerits = myBDI.beliefs.merits;
+	// Qualification public myQualification = myBDI.beliefs.qualification;
+	// Desire public myDesire = myBDI.desires;
+	// Intention public myIntention = myBDI.intentions;
 	
-	Database.Promise public myPromises;
+	Promise public myPromises;
 	uint256 promiseCount;
 
-	Database.Fulfillment[] myOrders;
+	Fulfillment[] myOrders;
 	uint256 orderCount;
 
 	uint8 base; // !!! GET THIS DATA FROM DATABASE
@@ -1395,12 +1147,12 @@ contract Doers is usingOraclize {
 	string[6][] public oraclizeResult;
 	bytes32 public oraclizeId;
 
-	mapping (bytes32 => Belief) oraclizeCall;
-	enum Belief {QUALIFICATION, EXPERIENCE, REPUTATION, TALENT}
+	mapping (bytes32 => BE) oraclizeCall;
+	enum BE {QUALIFICATION, EXPERIENCE, REPUTATION, TALENT}
 	
 	//Creators.Flag aflag;
 	
-	function Doers(Userbase _data, bytes32 _creatorUuid, Userbase.SomeDoer _adoer) public {
+	function Doers(Userbase _data, bytes32 _creatorUuid, SomeDoer _adoer) public {
 		dbs = _data;
 		creatorAdd = msg.sender;
 		creatorUuid = _creatorUuid;
@@ -1413,14 +1165,14 @@ contract Doers is usingOraclize {
 
 	function bdiIndex() public payable onlyDoer returns (bool,bool,bool,bool) {
 		return(
-			updateBelief(Belief.QUALIFICATION),
+			updateBelief(BE.QUALIFICATION),
 			bdiExperience(),
-			updateBelief(Belief.REPUTATION),
+			updateBelief(BE.REPUTATION),
 			bdiTalent());
 	}
 
-	function updateBelief(Belief _data) public payable onlyDoer returns (bool) {
-		if (_data == Belief.QUALIFICATION) {
+	function updateBelief(BE _data) public payable onlyDoer returns (bool) {
+		if (_data == BE.QUALIFICATION) {
 			if (oraclize_getPrice("URL") > this.balance) {
             LogNewOraclizeQuery("Oraclize query was NOT sent, please add some ETH to cover for the query fee");
 			return false;
@@ -1432,13 +1184,13 @@ contract Doers is usingOraclize {
 				string memory str3 = "BP1VdQXD/Toz4lMdKC11Ot/AhhJPAznk6Lt/mfWuFF2bBeKastnqGoIyw0DL+vKS+w8xM0qIBcv8uqx4cK5rMQFBSrzrDVU0fuYKSEK3+J8X6HRahPse+ntbJcrGYbhs";
 				// oraclizeId = oraclize_query("URL", "json(https://pgp.cs.uu.nl/paths/dc80f2a6d5327cb9/to/8b962943fc243f3c.json).xpaths.0");
 				oraclizeId = oraclize_query("URL", strConcat(str1,bytesToString(dbs.isAble()),str2,bytesToString(ownUuid),str3));
-				oraclizeCall[oraclizeId] = Belief.QUALIFICATION;
+				oraclizeCall[oraclizeId] = BE.QUALIFICATION;
 				LogNewOraclizeQuery("Oraclize query was sent for QUALIFICATION, standing by for the answer..");
 				return true;
 				}
 		}
 
-		if (_data == Belief.REPUTATION) {
+		if (_data == BE.REPUTATION) {
 			if (oraclize_getPrice("URL") > this.balance) {
             LogNewOraclizeQuery("Oraclize query was NOT sent, please add some ETH to cover for the query fee");
 			return false;
@@ -1448,7 +1200,7 @@ contract Doers is usingOraclize {
 				string memory strn2 = "BDQ9sBW3jkEZSqJc5jTxdgkBZ7TL32siPHOIR1+GMAQ4hNjkNMp5IiStdJFh64yja0IkWpLHafdyNuMWg7qq/fqp64dClvaJuf9/XvHpcNdbJNkbza/NDkWyAw==";
 				// oraclizeId = oraclize_query("URL", "json(https://pgp.cs.uu.nl/stats/8b962943fc243f3c.json).KEY");
 				oraclizeId = oraclize_query("URL", strConcat(strn1,bytesToString(ownUuid),strn2));
-				oraclizeCall[oraclizeId] = Belief.REPUTATION;
+				oraclizeCall[oraclizeId] = BE.REPUTATION;
 				LogNewOraclizeQuery("Oraclize query was sent for REPUTATION, standing by for the answer..");
 				return true;
 				}
@@ -1459,18 +1211,18 @@ contract Doers is usingOraclize {
 		oraclizeResult = result;
 		LogNewResult(result, proof);
 		ContractCallEvent(this,msg.sender,tx.origin,myid);
-		if (oraclizeCall[myid] == Belief.QUALIFICATION) {
+		if (oraclizeCall[myid] == BE.QUALIFICATION) {
 			bdiQualification(result);
 		}
 
-		if (oraclizeCall[myid] == Belief.REPUTATION) {
+		if (oraclizeCall[myid] == BE.REPUTATION) {
 			bdiReputation(result);
 		}
 
 	}		
 	
 	function bdiQualification(string[6][] _wotPath) internal returns (bool) {
-		uint8 merit = uint8(Database.KBase.DOCTORATE);
+		uint8 merit = uint8(KBase.DOCTORATE);
 		while (myBDI.beliefs.qualification[merit].cAuthority == 0x0) {
 			// merit == 0 ? myBDI.beliefs.index = merit : merit --;
 			if (merit == 0) {
@@ -1576,7 +1328,7 @@ function bytesToString(bytes32 _bytes) public constant returns (string) {
         	    myBDI.beliefs.merits.hash);
 	}
 	
-	function viewBelief(Database.KBase _kbase) view external returns (bytes32,bytes32,bytes32) {
+	function viewBelief(KBase _kbase) view external returns (bytes32,bytes32,bytes32) {
 		return (myBDI.beliefs.qualification[uint8(_kbase)].country,
 		        myBDI.beliefs.qualification[uint8(_kbase)].cAuthority,
 		        myBDI.beliefs.qualification[uint8(_kbase)].score);
@@ -1588,7 +1340,7 @@ function bytesToString(bytes32 _bytes) public constant returns (string) {
 			myBDI.desires[_desire].status);
 	}
 
-	function viewIntention(bool _check) view public returns (Userbase.IS,bytes32,uint256) {
+	function viewIntention(bool _check) view public returns (IS,bytes32,uint256) {
 		return (
 			myBDI.intentions[_check].state,
 			myBDI.intentions[_check].service,
@@ -1622,21 +1374,21 @@ function bytesToString(bytes32 _bytes) public constant returns (string) {
 			}
 	}
 
-	function getQualification(Database.KBase _kbase) view external returns (Userbase.Qualification) {
+	function getQualification(KBase _kbase) view external returns (Qualification) {
 		return (myBDI.beliefs.qualification[uint8(_kbase)]);
 	}
 
 	///@dev In use
 	// @param _desire
-	function getDesire(bytes1 _desire) view public returns (Userbase.Desire) {
+	function getDesire(bytes1 _desire) view public returns (Desire) {
 		return myBDI.desires[_desire];
 	}
 	
-	function getIntention(bool _check) view external returns (Userbase.Intention) {
+	function getIntention(bool _check) view external returns (Intention) {
 		return myBDI.intentions[_check];
 	}
 	
-	function getPromise() internal view onlyDoer returns (Userbase.Intention,uint,bytes32) {
+	function getPromise() internal view onlyDoer returns (Intention,uint,bytes32) {
 		return (myPromises.thing, myPromises.timeHard, myPromises.hash);
 	}
 
@@ -1645,34 +1397,34 @@ function bytesToString(bytes32 _bytes) public constant returns (string) {
 /////////////////
 
 	function setBDI(
-		Database.Flag _flag, bytes1 _goal, 
+		Flag _flag, bytes1 _goal, 
 		bool _intent, 
 		bytes32 _var, 
 		bool _status,
-		Database.KBase _kbase, 
-		Userbase.IS _avar) internal onlyDoer returns (bool) 
+		KBase _kbase, 
+		IS _avar) internal onlyDoer returns (bool) 
 		{
-			if ((_flag == Database.Flag.talent) || (_flag == Database.Flag.t)) {
+			if ((_flag == Flag.talent) || (_flag == Flag.t)) {
 				return true;
-				} else if ((_flag == Database.Flag.country) || (_flag == Database.Flag.c)) {
+				} else if ((_flag == Flag.country) || (_flag == Flag.c)) {
 					myBDI.beliefs.qualification[uint8(_kbase)].country = _var;
 					return true;
-				} else if ((_flag == Database.Flag.cAuthority) || (_flag == Database.Flag.CA)) {
+				} else if ((_flag == Flag.cAuthority) || (_flag == Flag.CA)) {
 					myBDI.beliefs.qualification[uint8(_kbase)].cAuthority = _var;
 					return true;
-				} else if ((_flag == Database.Flag.score) || (_flag == Database.Flag.s)) {
+				} else if ((_flag == Flag.score) || (_flag == Flag.s)) {
 					myBDI.beliefs.qualification[uint8(_kbase)].score = _var;
 					return true;
-				} else if ((_flag == Database.Flag.goal) || (_flag == Database.Flag.g)) {
+				} else if ((_flag == Flag.goal) || (_flag == Flag.g)) {
 					myBDI.desires[_goal].goal = _var;
 					return true;
-				} else if ((_flag == Database.Flag.statusD) || (_flag == Database.Flag.SD)) {
+				} else if ((_flag == Flag.statusD) || (_flag == Flag.SD)) {
 					myBDI.desires[_goal].status = _status;
 					return true;
-				} else if ((_flag == Database.Flag.statusI) || (_flag == Database.Flag.SI)) {
+				} else if ((_flag == Flag.statusI) || (_flag == Flag.SI)) {
 					myBDI.intentions[_intent].state = _avar;
 					return true;
-				} else if ((_flag == Database.Flag.service) || (_flag == Database.Flag.S)) {
+				} else if ((_flag == Flag.service) || (_flag == Flag.S)) {
 					myBDI.intentions[_intent].service = _var;
 					return true;
 					} else {
@@ -1680,7 +1432,7 @@ function bytesToString(bytes32 _bytes) public constant returns (string) {
 						}
 	}
 	
-	function setDoer(Userbase.SomeDoer _aDoer) public onlyCreator {
+	function setDoer(SomeDoer _aDoer) public onlyCreator {
 		Me = _aDoer;
 	}
 
@@ -1697,28 +1449,28 @@ function bytesToString(bytes32 _bytes) public constant returns (string) {
 	}
 
 	function setQualification(
-		Database.KBase _kbase, 
+		KBase _kbase, 
 		bytes32 _country, 
 		bytes32 _cAuthority, 
 		bytes32 _score, 
 		uint _year
 		) internal onlyDoer
 		{
-			if (_kbase != Database.KBase.LICENSE) { // exclude Bachelors from prerequisite of having a License
+			if (_kbase != KBase.LICENSE) { // exclude Bachelors from prerequisite of having a License
 				require(myBDI.beliefs.qualification[uint8(_kbase) - 1].cAuthority != 0x0);
 			}			
-			myBDI.beliefs.qualification[uint8(_kbase)] = Userbase.Qualification({
+			myBDI.beliefs.qualification[uint8(_kbase)] = Qualification({
 				country: _country, 
 				cAuthority: _cAuthority, 
 				score: _score});
 			myBDI.beliefs.merits.experience = _year;
 	}
 	
-	function setDesire(Userbase.Desire _goal, bytes1 _desire) internal onlyDoer {
+	function setDesire(Desire _goal, bytes1 _desire) internal onlyDoer {
 		myBDI.desires[_desire] = _goal;
 	}
 
-	function setIntention(Userbase.Intention _service, bool _intention) internal onlyDoer {
+	function setIntention(Intention _service, bool _intention) internal onlyDoer {
 		myBDI.intentions[_intention] = _service;
 	}
 

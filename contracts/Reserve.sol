@@ -1,5 +1,6 @@
 pragma solidity ^0.4.19;
 
+
 /*
 file:   Reserve.sol
 ver:    0.3.8
@@ -346,7 +347,8 @@ contract Reserve is DoitToken, ReserveInterface, usingOraclize {
         uint _cloneMaturity,
         uint _snapshotBlock,
         bool _transfersEnabled,
-        Able _ctrl
+        Able _ctrl,
+        bytes32 _sig
         ) public returns(address)
         {
             if (_snapshotBlock == 0)
@@ -360,10 +362,11 @@ contract Reserve is DoitToken, ReserveInterface, usingOraclize {
                 _cloneVersion,
                 _cloneMaturity,
                 _transfersEnabled,
-                _ctrl
+                _ctrl,
+                _sig
             );
 
-        cloneToken.changeController(msg.sender);
+        cloneToken.contrl().changeController(_sig);
 
         // An event to make the token easy to find on the blockchain
         NewCloneToken(address(cloneToken), _snapshotBlock);
@@ -475,9 +478,9 @@ contract Reserve is DoitToken, ReserveInterface, usingOraclize {
     //  controller to 0, thereby ending the issuance of new tokens and stopping the
     //  Campaign from receiving more ether
     // @dev `finalizeFunding()` can only be called after the end of the funding period.
-    function finalizeFunding() {
+    function finalizeFunding(bytes32 _sig) {
         require(now >= endFundingTime);
-        changeController(0);
+        contrl.changeContrl(Able(0),_sig);
     }
 
 /////////////////
