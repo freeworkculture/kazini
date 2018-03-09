@@ -1,20 +1,60 @@
-var Factor = artifacts.require("Factor");
-var Database = artifacts.require("Database");
+const Kazini = artifacts.require("Kazini");
+const Database = artifacts.require("Database");
+const Userbase = artifacts.require("Userbase");
 
-const contractName = '0x4461746162617365000000000000000000000000000000000000000000000000'
+const contractName = 'KAZINI 0.0118'
 const keyId = 0x9BCB2540EBAC30FC9E9EFF3D259B64A2
 const Base = 2;
 const _intention = '_intention_';
 const _serviceId = '_serviceId_';
+const _preQualification = '_preQualification_';
+
+const _state = 2;
 const _preCondition = '_preCondition_';
+const _time =  0;
+const _budget = 1000;
 const _goal = '_goal_';
 const _status = true;
 const _postCondition = [_goal,_status];
-const _time =  0;
-const _budget = 1000;
 const _projectUrl = '_projectUrl_';
-const _state = 2;
-const _preQualification = '_preQualification_';
+const _services = [_preCondition, _time, _budget, _projectUrl]; // key is XOR map of doer
+var _experience;
+var	_reputation;
+var _talent;
+var _index;
+var _hash;
+var _merit = [_experience, _reputation, _talent, _index, _hash];
+var _country; //ISO3166-2:KE-XX;
+var _cAuthority;
+var _score;
+var _qualification = [_country, _cAuthority, _score];
+var _timeSoft;  // preferred timeline
+var _expire;
+var _hash;
+var _serviceUrl;
+var _metas = [_timeSoft, _expire, _hash, _serviceUrl];
+var _Sig;
+var _V;
+var _R;
+var _S;
+var _order = [_Sig, _V, _R, _S];
+var _procure; // key is address of doer
+var _stateI;
+var _service;
+var _payout;
+var _timeHard;   // proposed timeline
+var _hash;
+var _promise = [_stateI, _service, _payout, _timeHard, _hash];
+var _proof;
+var _rubric;
+var _timestamp;
+var _hash;
+var _fulfillment = [_proof, _rubric, _timestamp, _hash];
+var _verity;
+var _complete;
+var _timestamp;
+var _hash;
+var _verification = [_verity, _complete, _timestamp, _hash]; // key is hash of fulfillment
 
 function assertThrow(err, test, msg) {
   if (err.toString().indexOf(test) !== -1) {
@@ -24,41 +64,86 @@ function assertThrow(err, test, msg) {
   }
 }
 
-contract("DoPromise", function(accounts) {
+contract("Kazini", function([msgOrigin,msgSender,newOwner,newController,storedContract,creator,curator,doer]) {
+  var kazini;
 
   var _intention_ = 'intention_';
   var _serviceId_ = 'serviceId_';
-  var _preCondition_ = '0x5f707265436f6e646974696f6e5f000000000000000000000000000000000000';
-  var _goal_ = '0x5f676f616c5f0000000000000000000000000000000000000000000000000000';
-  var _status_ = true;
-  var _postCondition_ = [_goal_,_status_];
-  let _time_ =  0;
-  let _budget_ = 1000;
-  var _projectUrl_ = '0x5f70726f6a65637455726c5f0000000000000000000000000000000000000000';
-  let _state_ = 2;
   var _preQualification_ = 'preQualification_';
 
+  let _state_ = 2;
+  var _preCondition_ = '0x5f707265436f6e646974696f6e5f000000000000000000000000000000000000';
+  let _time_ =  0;
+  let _budget_ = 1000;
+  var _goal_ = '0x5f676f616c5f0000000000000000000000000000000000000000000000000000';
+  var _status_ = true;
+  var _postCondition_ = [_goal,_status];
+  var _projectUrl_ = '0x5f70726f6a65637455726c5f0000000000000000000000000000000000000000';
+  var _services_ = [_preCondition, _time, _budget, _projectUrl]; // key is XOR map of doer
+  let _experience_;
+  var	_reputation_;
+  var _talent_;
+  let _index_;
+  var _hash_;
+  var _merit_ = [_experience, _reputation, _talent, _index, _hash];
+  var _country_; //ISO3166-2:KE-XX;
+  var _cAuthority_;
+  var _score_;
+  var _qualification_ = [_country, _cAuthority, _score];
+  let _timeSoft_;  // preferred timeline
+  let _expire_;
+  var _hash_;
+  var _serviceUrl_;
+  var _metas_ = [_timeSoft, _expire, _hash, _serviceUrl];
+  var _Sig_;
+  let _V_;
+  var _R_;
+  var _S_;
+  var _order_ = [_Sig, _V, _R, _S];
+  var _procure_; // key is address of doer
+  let _stateI_;
+  var _service_;
+  let _payout_;
+  let _timeHard_;   // proposed timeline
+  var _hash_;
+  var _promise_ = [_stateI, _service, _payout, _timeHard, _hash];
+  var _proof_;
+  var _rubric_;
+  let _timestamp_;
+  var _hash_;
+  var _fulfillment_ = [_proof, _rubric, _timestamp, _hash];
+  var _verity_;
+  var _complete_;
+  var _timestampV_;
+  var _hash_;
+  var _verification_ = [_verity, _complete, _timestamp, _hash]; // key is hash of fulfillment
+
+  it("should get the contract'S constants: 'contractname' and 'BASE'", function() {
+    return Kazini.deployed().then(function(instance) {
+      kazini = instance;
+      return kazini.cName.call();
+    }).then(function(cname) {
+      assert.equal(cname, contractName);
+    }).then(function() {
+      return kazini.getBase.call();
+    }).then(function(base) {
+      assert.equal(base, Base);
+    })
+  });
+  
   it("should initialise plans", function() {
     var timestamp = Math.round(new Date().getTime()/1000);
-    var goal_;
-    var status_;
-    var preCondition_;
-    var time_;
-    var budget_;
-    var projectUrl_;
-    var creator_;
-    var curator_; 
-    return Database.deployed().then(function(instance) {
-      database = instance;
-      return database.initPlan(
+    return Kazini.deployed().then(function(instance) {
+      kazini = instance;
+      return kazini.initPlan(
         _intention,_serviceId,_preCondition,_goal,_status,_projectUrl,creator,_preQualification,
         {from: creator, value: 1});
       }).then(function() {
-        return database.planState(_intention);
+        return kazini.planState(_intention);
       }).then(function(state_) {
         assert.equal(state_, _state_);
       }).then(function() {
-        return database.planGoal(_intention);
+        return kazini.planGoal(_intention);
       }).then(function(postcondition_) {
         goal_ = postcondition_[0];
         status_ = postcondition_[1];
@@ -67,7 +152,7 @@ contract("DoPromise", function(accounts) {
       }).then(function() {
         assert.equal(status_, _status_);
       }).then(function() {
-        return database.planProject(_intention);
+        return kazini.planProject(_intention);
       }).then(function(project_) {
         preCondition_ = project_[0];
         time_ = project_[1].toNumber();

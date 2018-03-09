@@ -117,7 +117,7 @@ contract UserDefined {
 	// talent is user declared string of talents
 
     struct Agent {
-        bytes32 keyId;
+        bytes32 uuid;
 		IS state;
         bool active;
 		uint myDoers;
@@ -175,9 +175,7 @@ contract UserDefined {
 		    mapping(address => Verification) verification; // key is hash of fulfillment
 	} struct Promise {
 				Intention thing;
-    			// bytes32 thing;
     			uint timeHard;   // proposed timeline
-    			// uint256 value;
     			bytes32 hash;
 	} struct Fulfillment {
     			bytes32 proof;
@@ -187,7 +185,7 @@ contract UserDefined {
 	} struct Verification {
         		bytes32 verity;
         		bool complete;
-        		uint timestampV;
+        		uint timestamp;
         		bytes32 hash;
 	}
 

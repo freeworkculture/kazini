@@ -72,7 +72,7 @@ contract ReserveInterface {
 
 	string public oraclizeResult;
 	bytes32 public oraclizeId;
-	// mapping (bytes32 => bytes32) oraclizeCall;
+	mapping (bytes32 => bytes32) oraclizeCall;
 
     // To allow for trade halting by owner.
     bool public trading;
@@ -118,6 +118,10 @@ contract ReserveInterface {
     event Fulfill(address indexed _from, address indexed _to, uint256 _amount);
     event LogPriceUpdated(string price);
     event LogNewOraclizeQuery(string description);
+    event ClaimedTokens(address indexed _token, address indexed _controller, uint _amount);
+    event NewCloneToken(address indexed _cloneToken, uint _snapshotBlock);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _amount);
+   
 
 /* Functions Public constant */
 
@@ -179,7 +183,7 @@ contract ReserveInterface {
 ///  non-profit Campaign. This contract effectively dictates the terms of the
 ///  funding round.
 
-contract Reserve is DoitToken, ReserveInterface, usingOraclize {
+contract Reserve is ReserveInterface, BaseController, Math, usingOraclize {
 
 /* Structs */
 
@@ -194,7 +198,7 @@ contract Reserve is DoitToken, ReserveInterface, usingOraclize {
     /// @dev Validate buy parameters
     modifier isValidBuy(uint _bidPrice, uint _amount) {
         if ((etherBalance[msg.sender] + msg.value) < (_amount * _bidPrice) || 
-        _amount == 0 || _amount > totalSupply() ||
+        _amount == 0 || _amount > doit.totalSupply() ||
             _bidPrice <= MINPRICE || _bidPrice >= MAXNUM) 
             revert(); // has insufficient ether.
         _;
@@ -202,7 +206,7 @@ contract Reserve is DoitToken, ReserveInterface, usingOraclize {
 
     /// @dev Validates sell parameters. Price must be larger than 1.
     modifier isValidSell(uint _askPrice, uint _amount) {
-        if (_amount > balanceOf(msg.sender) || _amount == 0 || 
+        if (_amount > doit.balanceOf(msg.sender) || _amount == 0 || 
         _askPrice < MINPRICE || _askPrice > MAXNUM) 
             revert();
         _;
@@ -217,7 +221,7 @@ contract Reserve is DoitToken, ReserveInterface, usingOraclize {
 
     /// @dev Validates token balance
     modifier hasBalance(address _member, uint _amount) {
-        if (balanceOf(_member) < _amount) 
+        if (doit.balanceOf(_member) < _amount) 
         revert();
         _;
     }
@@ -231,29 +235,29 @@ contract Reserve is DoitToken, ReserveInterface, usingOraclize {
 /* Functions */
 
     function Reserve(
-        address _tokenFactory,
-        address _parentToken,
-        uint _parentSnapShotBlock,
-        string _tokenName,
-        string _tokenSymbol,
-        uint8 _decimalUnits,
-        string _tokenVersion,
-        uint _tokenMaturity,
-        bool _transfersEnabled,
-        Able _ctrl
+        // address _tokenFactory,
+        // address _parentToken,
+        // uint _parentSnapShotBlock,
+        // string _tokenName,
+        // string _tokenSymbol,
+        // uint8 _decimalUnits,
+        // string _tokenVersion,
+        // uint _tokenMaturity,
+        // bool _transfersEnabled
+        // Able _ctrl
         ) 
-            DoitToken(
-            _tokenFactory,
-            _parentToken,
-            _parentSnapShotBlock,
-            _tokenName,
-            _tokenSymbol,
-            _decimalUnits,
-            _tokenVersion,
-            _tokenMaturity,
-            _transfersEnabled,
-            _ctrl
-            )
+            // DoitToken(
+            // _tokenFactory,
+            // _parentToken,
+            // _parentSnapShotBlock,
+            // _tokenName,
+            // _tokenSymbol,
+            // _decimalUnits,
+            // _tokenVersion,
+            // _tokenMaturity,
+            // _transfersEnabled
+            // _ctrl
+            // )
             {
         // setup pricebook and maximum spread.
         priceBook.cll[HEAD][PREV] = MINPRICE;
@@ -261,17 +265,17 @@ contract Reserve is DoitToken, ReserveInterface, usingOraclize {
         priceBook.cll[HEAD][NEXT] = MAXNUM;
         priceBook.cll[MAXNUM][NEXT] = MINPRICE;
         trading = true;
-        transfer(owner, totalSupply()); //!!! WHAT IS THE RESERVE BALANCE?
+        // doit.transfer(owner, doit.totalSupply()); //!!! WHAT IS THE RESERVE BALANCE?
     }
 
 ////////////////
 // Enable tokens transfers
 ////////////////
 
-    /// @notice Enables token holders to transfer their tokens freely if true
+    /// @notice Enables token holders to doit.transfer their tokens freely if true
     // @param _transfersEnabled True if transfers are allowed in the clone
     function enableTransfers(bool _transfersEnabled) public onlyController {
-        transfersEnabled = _transfersEnabled;
+        doit.enableTransfers(_transfersEnabled);
     }
 
 ////////////////
@@ -282,48 +286,48 @@ contract Reserve is DoitToken, ReserveInterface, usingOraclize {
     // @param target Address to be frozen
     // @param freeze either to freeze it or not
     function freezeAccount(address target, bool freeze) onlyController public {
-        frozenAccount[target] = freeze;
-        FrozenFunds(target, freeze);/// @notice Enables token holders to transfer their tokens freely if true
+        doit.freezeAccount(target, freeze);
+        FrozenFunds(target, freeze);/// @notice Enables token holders to doit.transfer their tokens freely if true
     }
 
 
-////////////////
-// Generate and destroy tokens
-////////////////
+// ////////////////
+// // Generate and destroy tokens
+// ////////////////
 
-    /// @notice Generates `_amount` tokens that are assigned to `_owner`
-    // @param _owner The address that will be assigned the new tokens
-    // @param _amount The quantity of tokens generated
-    // @return True if the tokens are generated correctly
-    function generateTokens(address _owner, uint _amount
-    ) public onlyController returns (bool)
-    {
-        uint curTotalSupply = totalSupply();
-        require(curTotalSupply + _amount >= curTotalSupply); // Check for overflow
-        uint previousBalanceTo = balanceOf(_owner);
-        require(previousBalanceTo + _amount >= previousBalanceTo); // Check for overflow
-        updateValueAtNow(totalSupplyHistory, curTotalSupply + _amount);
-        updateValueAtNow(balances[_owner], previousBalanceTo + _amount);
-        Transfer(0, _owner, _amount);
-        return true;
-    }
+//     /// @notice Generates `_amount` tokens that are assigned to `_owner`
+//     // @param _owner The address that will be assigned the new tokens
+//     // @param _amount The quantity of tokens generated
+//     // @return True if the tokens are generated correctly
+//     function generateTokens(address _owner, uint _amount
+//     ) public onlyController returns (bool)
+//     {
+//         uint curTotalSupply = doit.totalSupply();
+//         require(curTotalSupply + _amount >= curTotalSupply); // Check for overflow
+//         uint previousBalanceTo = doit.balanceOf(_owner);
+//         require(previousBalanceTo + _amount >= previousBalanceTo); // Check for overflow
+//         doit.updateValueAtNow(doit.getTotalSupplyHistory(), curTotalSupply + _amount);
+//         doit.updateValueAtNow(doit.getBalances(_owner), previousBalanceTo + _amount);
+//         Transfer(0, _owner, _amount);
+//         return true;
+//     }
 
-    /// @notice Burns `_amount` tokens from `_owner`
-    // @param _owner The address that will lose the tokens
-    // @param _amount The quantity of tokens to burn
-    // @return True if the tokens are burned correctly
-    function destroyTokens(address _owner, uint _amount
-    ) onlyController public returns (bool)
-    {
-        uint curTotalSupply = totalSupply();
-        require(curTotalSupply >= _amount);
-        uint previousBalanceFrom = balanceOf(_owner);
-        require(previousBalanceFrom >= _amount);
-        updateValueAtNow(totalSupplyHistory, curTotalSupply - _amount);
-        updateValueAtNow(balances[_owner], previousBalanceFrom - _amount);
-        Transfer(_owner, 0, _amount);
-        return true;
-    }
+//     /// @notice Burns `_amount` tokens from `_owner`
+//     // @param _owner The address that will lose the tokens
+//     // @param _amount The quantity of tokens to burn
+//     // @return True if the tokens are burned correctly
+//     function destroyTokens(address _owner, uint _amount
+//     ) onlyController public returns (bool)
+//     {
+//         uint curTotalSupply = doit.totalSupply();
+//         require(curTotalSupply >= _amount);
+//         uint previousBalanceFrom = doit.balanceOf(_owner);
+//         require(previousBalanceFrom >= _amount);
+//         doit.updateValueAtNow(doit.getTotalSupplyHistory(), curTotalSupply - _amount);
+//         doit.updateValueAtNow(doit.getBalances(_owner), previousBalanceFrom - _amount);
+//         Transfer(_owner, 0, _amount);
+//         return true;
+//     }
 
 ////////////////////
 // Clone Token Logic
@@ -347,13 +351,13 @@ contract Reserve is DoitToken, ReserveInterface, usingOraclize {
         uint _cloneMaturity,
         uint _snapshotBlock,
         bool _transfersEnabled,
-        Able _ctrl,
+        // Able _ctrl,
         bytes32 _sig
         ) public returns(address)
         {
             if (_snapshotBlock == 0)
             _snapshotBlock = block.number;
-            DoitToken cloneToken = tokenFactory.createCloneToken(
+            DoitToken cloneToken = doit.tokenFactory().createCloneToken(
                 this,
                 _snapshotBlock,
                 _cloneTokenName,
@@ -362,11 +366,11 @@ contract Reserve is DoitToken, ReserveInterface, usingOraclize {
                 _cloneVersion,
                 _cloneMaturity,
                 _transfersEnabled,
-                _ctrl,
+                // _ctrl,
                 _sig
             );
 
-        cloneToken.contrl().changeController(_sig);
+        cloneToken.changeOwner(msg.sender,_sig);
 
         // An event to make the token easy to find on the blockchain
         NewCloneToken(address(cloneToken), _snapshotBlock);
@@ -394,7 +398,7 @@ contract Reserve is DoitToken, ReserveInterface, usingOraclize {
         uint _maximumFunding,
         address _vaultAddress,
         address _tokenAddress
-        ) {
+        ) public {
             // Cannot end in the past
             require((_endFundingTime >= now) && 
             (_endFundingTime > _startFundingTime) && 
@@ -425,12 +429,12 @@ contract Reserve is DoitToken, ReserveInterface, usingOraclize {
         return true;
     }
 
-    /// @notice Notifies the controller about a transfer, for this Campaign all
+    /// @notice Notifies the controller about a doit.transfer, for this Campaign all
     //  transfers are allowed by default and no extra notifications are needed
-    // @param _from The origin of the transfer
-    // @param _to The destination of the transfer
-    // @param _amount The amount of the transfer
-    // @return False if the controller does not authorize the transfer
+    // @param _from The origin of the doit.transfer
+    // @param _to The destination of the doit.transfer
+    // @param _amount The amount of the doit.transfer
+    // @return False if the controller does not authorize the doit.transfer
     function onTransfer(address _from, address _to, uint _amount) returns(bool) {
         return true;
     }
@@ -469,7 +473,7 @@ contract Reserve is DoitToken, ReserveInterface, usingOraclize {
 
     // Creates an equal amount of tokens as ether sent. The new tokens are created
     //  in the `_owner` address
-        require (generateTokens(_owner, msg.value));
+        require (doit.generateTokens(_owner, msg.value));
 
         return;
     }
@@ -506,18 +510,18 @@ contract Reserve is DoitToken, ReserveInterface, usingOraclize {
         realRate = _control;
     }
 
-    function __callback(bytes32 myid, string result) {
-        sellPrice = parseInt(result,3);
-        updatedRate = true;
-        LogPriceUpdated(result);
-    }
+    // function __callback(bytes32 myid, string result) {
+    //     sellPrice = parseInt(result,3);
+    //     updatedRate = true;
+    //     LogPriceUpdated(result);
+    // }
 
     function setPrices() internal returns (bool) {
         if (realRate == "computed") {
             // money supply "M": that is, the total number of coins minted
-            uint m = totalSupply();
+            uint m = doit.totalSupply();
             // “velocity "V"; that is, the number of transactions per day
-            uint v = totalTransactions;
+            uint v = doit.totalTransactions();
             // transaction volume "T": that is, the economic value of transactions per day
             uint t = m * v;
             // price level "P": that is, the price of goods and services in terms of the token
@@ -530,7 +534,7 @@ contract Reserve is DoitToken, ReserveInterface, usingOraclize {
             return true;
         } else if (realRate == "sourced") {
             updatedRate = false; 
-            return updatePrice();
+            // return updatePrice();
             }
 		}
 
@@ -553,19 +557,19 @@ contract Reserve is DoitToken, ReserveInterface, usingOraclize {
     /// @notice Buy tokens from contract by sending ether
     function buy() payable public returns (bool success) {
         uint amount = msg.value / buyPrice;               // calculates the amount
-        require(transfersEnabled);
-        doTransfer(this, msg.sender, amount);              // makes the transfers
+        require(doit.transfersEnabled());
+        doit.transferFrom(this, msg.sender, amount);              // makes the transfers
         return true;
     }
 
     /// @notice Sell `amount` tokens to contract
     /// @param _amount amount of tokens to be sold
     function sell(uint256 _amount) public returns (bool success) {
-        require(transfersEnabled);
+        require(doit.transfersEnabled());
         require(setPrices());
         require(updatedRate);
         require(this.balance >= _amount * sellPrice);      // checks if the contract has enough ether to buy
-        require(destroyTokens(msg.sender, _amount));             // burns the tokens been liquidated
+        require(doit.destroyTokens(msg.sender, _amount));             // burns the tokens been liquidated
         // doTransfer(msg.sender, this, _amount);              // makes the transfers
         msg.sender.transfer(_amount * sellPrice);          // sends ether to the seller. It's important to do this last to avoid recursion attacks
         return true;
@@ -698,10 +702,10 @@ contract Reserve is DoitToken, ReserveInterface, usingOraclize {
     {
         TradeMessage memory tmsg;
         tmsg.price = _price;
-        tmsg.balance = balanceOf(msg.sender);
+        tmsg.balance = doit.balanceOf(msg.sender);
         tmsg.etherBalance = etherBalance[msg.sender];
         cancelIntl(tmsg);
-        transfer(msg.sender, tmsg.balance);
+        doit.transfer(msg.sender, tmsg.balance);
         etherBalance[msg.sender] = tmsg.etherBalance;
         return true;
     }
@@ -739,13 +743,13 @@ contract Reserve is DoitToken, ReserveInterface, usingOraclize {
         tmsg.make = _make;
         
         // Cache state balances to memory and commit to storage only once after trade.
-        tmsg.balance = balanceOf(msg.sender);
+        tmsg.balance = doit.balanceOf(msg.sender);
         tmsg.etherBalance = etherBalance[msg.sender] + msg.value;
 
         take(tmsg);
         make(tmsg);
         
-        transfer(msg.sender, tmsg.balance);
+        doit.transfer(msg.sender, tmsg.balance);
         etherBalance[msg.sender] = tmsg.etherBalance;
     }
     
@@ -789,8 +793,8 @@ contract Reserve is DoitToken, ReserveInterface, usingOraclize {
                     // bidder is self
                     tmsg.balance += takeAmount;
                 } else {
-                    takeAmount += balanceOf(maker);
-                    transfer(maker,takeAmount);
+                    takeAmount += doit.balanceOf(maker);
+                    doit.transfer(maker,takeAmount);
                 }
             } else {
                 // Buy from asker;

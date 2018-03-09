@@ -6,11 +6,11 @@ import "./Reserve.sol";
 ////////////////////////
 
 
-contract Factor is Database {
+contract Kazini is Database {
 
 /* Constants */
 
-	bytes32 constant public CONTRACTNAME = "Input Factor 0.0118";
+	bytes32 constant public CONTRACTNAME = "KAZINI 0.0118";
 
 /* State Variables */
 
@@ -36,19 +36,26 @@ contract Factor is Database {
         }
     
 	modifier onlyCreator {
-		require(userbase.isCreator());
+		IS createstate;
+		bool createactive;
+		(,createstate, createactive,) = userbase.viewAgent(msg.sender);
+		require(createactive);
+		require(createstate == IS.CREATOR);
 		_;
 	}
 
 	modifier onlyDoer {
-		require (userbase.isDoer()); 
+		IS createstate;
+		bool createactive;
+		(,createstate, createactive,) = userbase.viewAgent(msg.sender);
+		require(createactive);
+		require(createstate != IS.CREATOR);
 		_;
 	}
 
 /* Functions */
-
     
-    function Factor(
+    function Kazini(
         Able _ctrl, 
         Userbase _ubs,
 		DoitToken _diy,
@@ -115,13 +122,15 @@ contract Factor is Database {
         bytes32 _score) public payable onlyDoer returns (bool)
 		{
 			require(plans[_intention].state == Project.PENDING); // Project is not pending or closed
-// 			address curator_ = ;
-			require(Doers(tx.origin).getBelief("index") >= Doers(plans[_intention].plan.curator).getBelief("index")); // Curate // meets or exceeds the current Curator
-			// require(doers[tx.origin].beliefs.index >= plans[_intention].services[_intention ^ bytes32(plans[_intention].curator)].preCondition.index); // Curate // meets or exceeds the pCondition
+			uint8 index;
+			uint8 indexk;
+			(,,,index,) = Doers(tx.origin).myMerits();
+			(,,,indexk,) = Doers(plans[_intention].plan.curator).myMerits();
+			require(index >= indexk); // Curate // meets or exceeds the current Curator
 			require(hash == keccak256(_experience,_reputation,_talent,_country,_cAuthority,_score));
-			plans[_intention].services[serviceId(_intention)].definition.preCondition.merits.index = uint8(Doers(tx.origin).getBelief("index")); // Creates the curators microservice
-			// bytes32 nServiceId = _serviceId ^ bytes32(msg.sender);
-			plans[_intention].services[serviceId(_intention)].definition.postCondition = Desire(_theCondQ, _theGoalG);
+			(,,,index,) = Doers(tx.origin).myMerits();
+			plans[_intention].services[serviceId(_intention)].definition.preCondition.merits.index = index; // Creates the curators microservice
+			plans[_intention].services[serviceId(_intention)].definition.postCondition = Desire(_theCondQ, _theGoalG);	// bytes32 nServiceId = _serviceId ^ bytes32(msg.sender);
 			plans[_intention].services[serviceId(_intention)].definition.metas.hash = keccak256(_theCondQ, hash);
 			planAdv(_intention, _experience, _reputation, _talent, hash, _kbase, _country, _cAuthority, _score);
 			plans[_intention].plan.curator = tx.origin;
@@ -165,8 +174,7 @@ contract Factor is Database {
 			require(plans[_intention].plan.curator == tx.origin); // curate meets the pCondition
 			plans[_intention].plan.projectUrl = keccak256(_projectUrl); // additional urls of project repo.
 			plans[_intention].plan.preCondition = keccak256(_prerequisites, plans[_intention].plan.preCondition); // Use a merkle tree // function and base the design pCondition to the merkle tree
-			//plans[_intention].postCondition = keccak256(_verity, plans[_intention].postCondition);
-			allPlans.push(_intention);
+			// allPlans.push(_intention);
 			plans[_intention].state == Project.STARTED;
 			return true;
     }  
@@ -181,25 +189,25 @@ contract Factor is Database {
 			UserDefined.IS b;
 			(,b,,) = userbase.agents(msg.sender);
 			require(b != UserDefined.IS.ACTIVE);
-			require(Doers(msg.sender).getBelief("index") >= plans[_intention].services[_serviceId].definition.preCondition.merits.index);
+			uint8 index;
+			(,,,index,) = Doers(msg.sender).myMerits();
+			require(index >= plans[_intention].services[_serviceId].definition.preCondition.merits.index);
             bytes32 a;
             (a,) = Doers(msg.sender).viewDesire(_desire);
-// 			require(Doers(msg.sender).getDesire(_desire).goal == plans[_intention].service[_serviceId].postCondition.goal);
 			require(a == plans[_intention].services[_serviceId].definition.postCondition.goal);
 			require((_time > block.timestamp) || (_time < plans[_intention].services[_serviceId].definition.metas.expire));
 			require(msg.value > 0);
-			require(Doers(msg.sender).getBelief("index") > Doers(plans[_intention].services[_serviceId].definition.metas.doer).getBelief("index"));
+			uint8 indexk;
+			(,,,indexk,) = Doers(plans[_intention].services[_serviceId].definition.metas.doer).myMerits();
+			require(index > indexk);
 			bytes32 eoi = keccak256(msg.sender, _intention, _serviceId);
 			Database.IS aa;
 			bytes32 bb;
 			uint256 cc;
 			(aa,bb,cc) = Doers(msg.sender).viewIntention(_thing);
-			// Intention memory dd = Intention(aa,bb,cc);
 			plans[_intention].services[_serviceId].procure[msg.sender].promise = Promise({
 				thing: Intention(aa,bb,cc),
-				// thing: dd.service,
-				timeHard: _time, 
-				// value: msg.value, 
+				timeHard: _time,
 				hash: eoi});
 			userbase.setAllPromises(_serviceId);
 			userbase.setAgent(plans[_intention].services[_serviceId].definition.metas.doer, UserDefined.IS.INACTIVE);
@@ -256,19 +264,23 @@ contract Factor is Database {
 		bytes32 _intention, 
 		bytes32 _serviceId, 
 		bytes32 _verity, 
-		bytes32 _message_, uint8 _v, bytes32 _r, bytes32 _s,
+		bytes32 _message_,
 		bytes32 _thing) public payable onlyDoer returns(bool) 
 		{
 			// Validate existing promise.
 			require(plans[_intention].services[_serviceId].definition.metas.doer != msg.sender);
-			require(verify(_message_,_v,_r,_s) == verify(plans[_intention].services[_serviceId].order));
-			require(_verity == plans[_intention].services[_serviceId].procure[verify(_message_,_v,_r,_s)].fulfillment.hash);
+			address doers = verify(
+					_message_,
+					plans[_intention].services[_serviceId].order.V,
+					plans[_intention].services[_serviceId].order.R,
+					plans[_intention].services[_serviceId].order.S);
+			require(_message_ == plans[_intention].services[_serviceId].procure[doers].promise.hash);
+			require(_verity == plans[_intention].services[_serviceId].procure[doers].fulfillment.hash);
 			// Use merkle tree function to build as-built tree, change/configuration management
-			plans[_intention].services[_serviceId].procure[
-			    verify(_message_,_v,_r,_s)].verification[msg.sender] = Verification({
+			plans[_intention].services[_serviceId].procure[doers].verification[msg.sender] = Verification({
 					verity: _verity,
 					complete: true, 
-					timestampV: block.timestamp, 
+					timestamp: block.timestamp, 
 					hash: _verity
 					});
 					fulfillmentCount++;
@@ -288,9 +300,7 @@ contract Factor is Database {
 	    require(n >= bytes8(difficulty));                   // Check if it's under the difficulty
 	    uint timeSinceLastProof = (now - timeOfLastProof);  // Calculate time since last reward was given
 	    require(timeSinceLastProof >= 5 seconds);         // Rewards cannot be given too quickly
-	    // require(database.plans[_intention].service[_serviceId].fulfillment.timestamp < 
-	    // database.plans[_intention].service[_serviceId].expire);
-	    require(plans[_intention].services[_serviceId].procure[msg.sender].verification[verify(sig,uint8(nonce),r,s)].timestampV < 
+	    require(plans[_intention].services[_serviceId].procure[msg.sender].verification[verify(sig,uint8(nonce),r,s)].timestamp < 
 		plans[_intention].services[_serviceId].definition.metas.expire);
 	    uint totalTime;
 	    uint payableTime;

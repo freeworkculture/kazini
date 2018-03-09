@@ -1,7 +1,7 @@
 const Able = artifacts.require("Able");
 const Database = artifacts.require("Database");
 
-const contractName = '0x4461746162617365000000000000000000000000000000000000000000000000'
+const contractName = 'DATABASE 0.0118'
 const keyId = 0x9BCB2540EBAC30FC9E9EFF3D259B64A2
 const Base = 2;
 const _intention = '_intention_';
@@ -28,12 +28,14 @@ contract("Database", function([msgOrigin,msgSender,newOwner,newController,stored
 
   var database;
 
+  var _contractName_ = '0x4461746162617365000000000000000000000000000000000000000000000000'
+
   it("should get the contract'S constants: 'contractname' and 'BASE'", function() {
     return Database.deployed().then(function(instance) {
       database = instance;
       return database.cName.call();
     }).then(function(cname) {
-      assert.equal(cname, contractName);
+      assert.equal(cname, _contractName_);
     }).then(function() {
       return database.getBase.call();
     }).then(function(base) {
