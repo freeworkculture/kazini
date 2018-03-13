@@ -1031,25 +1031,25 @@ contract Doers is UserDefined {
 		ContractEvent(this,msg.sender,tx.origin);
 	}
 
-	function callBack(bytes32 _callid, WOT _result, bytes proof) public onlyCreator {
-		callBackResults = _result;
-		LogNewResult(_callid, proof);
-		ContractCallEvent(this,msg.sender,tx.origin,_callid);
-		///!!! Insert sNARK Proof function HERE
-		if (callBackFunc[_callid] == BE.QUALIFICATION) {
-			toUpdate = true;
-			setQualification(newKBase,newQualification,newExperience);
-			setReputation(bytes32(_result.refRank));
-			updateIndex();
-		}
+	// function callBack(bytes32 _callid, WOT _result, bytes proof) public onlyCreator {
+	// 	callBackResults = _result;
+	// 	LogNewResult(_callid, proof);
+	// 	ContractCallEvent(this,msg.sender,tx.origin,_callid);
+	// 	///!!! Insert sNARK Proof function HERE
+	// 	if (callBackFunc[_callid] == BE.QUALIFICATION) {
+	// 		toUpdate = true;
+	// 		setQualification(newKBase,newQualification,newExperience);
+	// 		setReputation(bytes32(_result.refRank));
+	// 		updateIndex();
+	// 	}
 
-		if (callBackFunc[_callid] == BE.TALENT) {
-			setTalent(bytes32(_result.refRank));
-			updateIndex();
-		}
-	// !!! THE CALLBACK FUNC SHOULD COMPUTE AND UPDATE THE INDEX FIELD
-	// !!! THE CALLBACK FUNC SHOULD HASH THE BDI AND UPDATE HASH FIELD
-	}		
+	// 	if (callBackFunc[_callid] == BE.TALENT) {
+	// 		setTalent(bytes32(_result.refRank));
+	// 		updateIndex();
+	// 	}
+	// // !!! THE CALLBACK FUNC SHOULD COMPUTE AND UPDATE THE INDEX FIELD
+	// // !!! THE CALLBACK FUNC SHOULD HASH THE BDI AND UPDATE HASH FIELD
+	// }		
 	
 	function updateIndex() internal returns (bool) {
 		uint8 merit = uint8(KBase.DOCTORATE);
@@ -1177,7 +1177,7 @@ function bytesToString(bytes32 _bytes) public constant returns (string) {
 	bytes32 _country, 
 	bytes32 _cAuthority, 
 	bytes32 _score, 
-	uint _year) public onlyDoer {
+	uint _year) external onlyDoer {
 		toUpdate = false;
 		// bytes memory _data;
 		Doers(creator).setQualification(_kbase,Qualification({country: _country, cAuthority: _cAuthority, score: _score}),_year);
@@ -1188,7 +1188,7 @@ function bytesToString(bytes32 _bytes) public constant returns (string) {
 
 	function setQualification(
 		KBase _kbase, Qualification _qualification, uint _year) 
-	external {
+	public {
 		if (_kbase == KBase.BACHELOR) {		// exclude Bachelors from prerequisite of having a License
 			require(bdi.beliefs.qualification[uint8(KBase.SECONDARY)].cAuthority != 0x0);
 			} else {
@@ -1202,6 +1202,7 @@ function bytesToString(bytes32 _bytes) public constant returns (string) {
 			uint ZERO;
 			newQualification = NULL;
 			newExperience = ZERO;
+			updateIndex();
 			} else {	// !!! USE CREATORS CALLBACK FUNC AND GET VERIFICATION OF CAUTHORITY
 				toUpdate = false;
 				bytes32 country = newQualification.country;
@@ -1304,6 +1305,7 @@ contract Creators is DataController {
 
 	function execute(address _address) external onlyController returns (bool) {
 		require (callData[_address][true].length == 0 && callData[_address][false].length != 0);
+		///!!! INSERT SNARK PROOF FUNCTION HERE
 		bytes memory _data = callData[msg.sender][false];
 		callData[msg.sender][true] = bytes32ToBytes(keccak256(_data));
 		callData[msg.sender][true].length = 32;
