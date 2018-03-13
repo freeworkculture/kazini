@@ -1,4 +1,4 @@
-var TestRPC = require("ethereumjs-testrpc");
+var TestRPC = require("ganache-cli");
 // Allows us to use ES6 in our migrations and tests.
 require('babel-register')
 require('babel-polyfill')
@@ -20,7 +20,14 @@ module.exports = {
     // add a new network definition that will self host TestRPC
     localtest: {
       provider: TestRPC.provider(),
-      network_id:"*"
+      network_id:"*",
+      // optional config values:
+      gas: 7984452,
+      gasPrice: 200000000000,
+      // from - default address to use for any transaction Truffle makes during migrations
+      // provider - web3 provider instance Truffle should use to talk to the Ethereum network.
+      //          - function that returns a web3 provider instance (see below.)
+      //          - if specified, host and port are ignored.
     }
   },
   // add a section for mocha defaults
