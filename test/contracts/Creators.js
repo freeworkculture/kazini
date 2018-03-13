@@ -2,13 +2,13 @@ const Able = artifacts.require("Able");
 const Userbase = artifacts.require("Userbase");
 const Creators = artifacts.require("Creators");
 
-function assertThrow(err, test, msg) {
-  if (err.toString().indexOf(test) !== -1) {
-    assert(true, msg);
-  } else {
-    assert(false, err.toString())
-  }
-}
+// function assertThrow(err, test, msg) {
+//   if (err.toString().indexOf(test) !== -1) {
+//     assert(true, msg);
+//   } else {
+//     assert(false, err.toString())
+//   }
+// }
 
 const ERROR_REVERT = "VM Exception while processing transaction: revert";
 const ERROR_INVALID = 'VM Exception while processing transaction: invalid opcode';
@@ -413,8 +413,8 @@ it("constructor should set cName 'bytes32', 'owner', 'controller' and contrl add
 
 //     return Userbase.deployed().then(function(instance) {
 //       userbase = instance;
-//       // Unit Test: initDoer()
-//       return userbase.initDoer(_doersKeyId,_doersUuId,doer)
+//       // Unit Test: initAgent()
+//       return userbase.initAgent(_doersKeyId,_doersUuId,doer)
 //         // {from: creator, value: 1});
 //       }).then(function() {
 //         return userbase.isAgent(doer);
@@ -436,8 +436,8 @@ it("constructor should set cName 'bytes32', 'owner', 'controller' and contrl add
 
 //     return Userbase.deployed().then(function(instance) {
 //       userbase = instance;
-//       // Unit Test: initDoer()
-//       return userbase.initDoer(_doersKeyId,_doersUuId,doer)
+//       // Unit Test: initAgent()
+//       return userbase.initAgent(_doersKeyId,_doersUuId,doer)
 
 //       // Unit Test: isAgent(keyid)
 //       }).then(function() {
@@ -477,7 +477,7 @@ it("constructor should set cName 'bytes32', 'owner', 'controller' and contrl add
 //       });
 //     });
 
-//   it("should flip from Doers to Creators", function() {
+//   it("should flipTo from Doers to Creators", function() {
 //     var timestamp = Math.round(new Date().getTime()/1000);
 //     var _doersKeyId = 0x9B0EB2530FC9E9ACBEFF3D254C9B64A2;  
 //     var _doersUuId = 0x9B2530FC40EB20EB2530EB2530FC4A2;
@@ -485,7 +485,7 @@ it("constructor should set cName 'bytes32', 'owner', 'controller' and contrl add
 
 //     return Userbase.deployed().then(function(instance) {
 //       userbase = instance;
-//       return userbase.initDoer(_doersKeyId,_doersUuId,doer)
+//       return userbase.initAgent(_doersKeyId,_doersUuId,doer)
 
 //         // Unit Test: getDoer()
 //       }).then(function() {
@@ -515,8 +515,8 @@ it("constructor should set cName 'bytes32', 'owner', 'controller' and contrl add
 //     return Userbase.deployed().then(function(instance) {
 //       userbase = instance;
 
-//         // Unit Test: initDoer()
-//       return userbase.initDoer(_doersKeyId,_doersUuId,doer)
+//         // Unit Test: initAgent()
+//       return userbase.initAgent(_doersKeyId,_doersUuId,doer)
 //       }).then(function() {
 //         return userbase.nsetAgent(doer, _doersnum, {from: doer});
 //       })
@@ -524,9 +524,9 @@ it("constructor should set cName 'bytes32', 'owner', 'controller' and contrl add
 //       .catch(function(error) {
 //         assert.include(error.message, ERROR_REVERT);
 
-//         // Unit Test: initDoer(bytes32,bytes32,address)
+//         // Unit Test: initAgent(bytes32,bytes32,address)
 //       }).then(function() {
-//         return userbase.initDoer(_doersKeyId,_doersUuId,creator)
+//         return userbase.initAgent(_doersKeyId,_doersUuId,creator)
 
 //         // Unit Test: setAgent(address, IS)
 //       }).then(function() {
@@ -549,9 +549,9 @@ it("constructor should set cName 'bytes32', 'owner', 'controller' and contrl add
 //         var _doersnum_ = isdoer[3].toNumber();
 //         assert.equal(_doersnum_, _doersnum);
 
-//         // Unit Test: decMyDoers()
+//         // Unit Test: decDoers()
 //       }).then(function() {
-//         return userbase.decMyDoers({from: creator})
+//         return userbase.decDoers({from: creator})
 
 //         // Unit Test: getDoer(address)
 //       }).then(function() {

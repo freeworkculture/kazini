@@ -200,30 +200,30 @@ contract("Userbase", function([msgOrigin,msgSender,newOwner,newController,stored
   it("should initially not have any 'uint public' plansCount, promiseCount, orderCount, fulfillmentCount, verificationCount", function() {
     return Userbase.deployed().then(function(instance) {
       userbase = instance;
-      // Unit Test: plansCount
-      return userbase.plansCount.call();
-    }).then(function(count) {
-      assert.equal(count, _plansCount_);
+    //   // Unit Test: plansCount
+    //   return userbase.plansCount.call();
+    // }).then(function(count) {
+    //   assert.equal(count, _plansCount_);
       // Unit Test: promiseCount
     }).then(function() {
       return userbase.promiseCount.call();
     }).then(function(count) {
       assert.equal(count, _promiseCount_);
-      // Unit Test: orderCount
-    }).then(function() {
-      return userbase.orderCount.call();
-    }).then(function(count) {
-      assert.equal(count, _orderCount_);
-      // Unit Test: fulfillmentCount
-    }).then(function() {
-      return userbase.fulfillmentCount.call();
-    }).then(function(count) {
-      assert.equal(count, _fulfillmentCount_);
-      // Unit Test: verificationCount
-    }).then(function() {
-      return userbase.verificationCount.call();
-    }).then(function(count) {
-      assert.equal(count, _verificationCount_);
+    //   // Unit Test: orderCount
+    // }).then(function() {
+    //   return userbase.orderCount.call();
+    // }).then(function(count) {
+    //   assert.equal(count, _orderCount_);
+    //   // Unit Test: fulfillmentCount
+    // }).then(function() {
+    //   return userbase.fulfillmentCount.call();
+    // }).then(function(count) {
+    //   assert.equal(count, _fulfillmentCount_);
+    //   // Unit Test: verificationCount
+    // }).then(function() {
+    //   return userbase.verificationCount.call();
+    // }).then(function(count) {
+    //   assert.equal(count, _verificationCount_);
       // Unit Test: doerCount
     }).then(function() {
       return userbase.doerCount.call();
@@ -266,18 +266,18 @@ contract("Userbase", function([msgOrigin,msgSender,newOwner,newController,stored
 
     return Userbase.deployed().then(function(instance) {
       userbase = instance;
-      // Unit Test: initDoer()
-      return userbase.initDoer(_doersKeyId,_doersUuId,doer)
+      // Unit Test: initAgent()
+      return userbase.initAgent(doer)
         // {from: creator, value: 1});
       }).then(function() {
-        return userbase.pviewAgent(doer);
-      }).then(function(success) {
-        assert.equal(success[2], true);
+        return userbase.getAgent(doer);
+      }).then(function(active) {
+        assert.equal(active[2], true);
         // Unit Test: isAgent()
       }).then(function() {
-        return userbase.viewAgent(_doersKeyId);
-      }).then(function(success) { // Unable to test overloaded function isAgent(bytes32 _keyid)
-        assert.equal(success[2], true);
+        return userbase.getAgent(_doersUuId);
+      }).then(function(active) { // Unable to test overloaded function isAgent(bytes32 _keyid)
+        assert.equal(active[2], true);
       })
     })
 
@@ -289,48 +289,48 @@ contract("Userbase", function([msgOrigin,msgSender,newOwner,newController,stored
 
     return Userbase.deployed().then(function(instance) {
       userbase = instance;
-      // Unit Test: initDoer()
-      return userbase.initDoer(_doersKeyId,_doersUuId,doer)
+      // Unit Test: initAgent()
+      return userbase.initAgent(doer)
 
-      // Unit Test: isAgent(keyid)
+      // Unit Test: getAgent(keyid)
       }).then(function() {
-        return userbase.viewAgent(_doersKeyId);
-      }).then(function(istrue) { // Unable to test overloaded function isAgent(bytes32 _keyid)
-        assert.equal(istrue[2], true);
+        return userbase.getAgent(_doersKeyId);
+      }).then(function(active) { // Unable to test overloaded function isAgent(bytes32 _keyid)
+        assert.equal(active[2], true);
 
-        // Unit Test: setAgent()
+        // Unit Test: setAgent(active)
       }).then(function() {
-        return userbase.asetAgent(doer, false);
+        return userbase.setAgent(doer, false);
 
-        // Unit Test isAgent(address)
+        // Unit Test getAgent(address)
       }).then(function() {
-        return userbase.viewAgent(doer);
-      }).then(function(isfalse) {
-        assert.equal(isfalse[2], false);
+        return userbase.getAgent(doer);
+      }).then(function(active) {
+        assert.equal(active[2], false);
 
-        // Unit Test: isAgent(keyid)
+        // Unit Test: getAgent(keyid)
       }).then(function() {
-        return userbase.viewAgent(_doersKeyId);
-      }).then(function(isfalse) { // Unable to test overloaded function isAgent(bytes32 _keyid)
-        assert.equal(isfalse[2], false);
+        return userbase.getAgent(_doersKeyId);
+      }).then(function(active) { // Unable to test overloaded function isAgent(bytes32 _keyid)
+        assert.equal(active[2], false);
 
         // Unit Test: setAgent(address,true)
       }).then(function() {
-        return userbase.asetAgent(doer, true);
+        return userbase.setAgent(doer, true);
 
         // Unit Test: setAgent(address,keyid)
       }).then(function() {
-        return userbase.ksetAgent(doer, _newkey);
+        return userbase.setAgent(doer, _newkey);
 
-        // Unit Test: isAgent(keyid)
+        // Unit Test: getAgent(keyid)
       }).then(function() {
-        return userbase.viewAgent(_newkey);
-      }).then(function(istrue) { // Unable to test overloaded function isAgent(bytes32 _keyid)
-        assert.equal(istrue[2], true);
+        return userbase.getAgent(_newkey);
+      }).then(function(keyid) { // Unable to test overloaded function isAgent(bytes32 _keyid)
+        assert.equal(keyid[0], true);
       });
     });
 
-  it("should flip from Doers to Creators", function() {
+  it("should flipTo from Doers to Creators", function() {
     var timestamp = Math.round(new Date().getTime()/1000);
     var _doersKeyId = 0x9B0EB2530FC9E9ACBEFF3D254C9B64A2;  
     var _doersUuId = 0x9B2530FC40EB20EB2530EB2530FC4A2;
@@ -338,21 +338,21 @@ contract("Userbase", function([msgOrigin,msgSender,newOwner,newController,stored
 
     return Userbase.deployed().then(function(instance) {
       userbase = instance;
-      return userbase.initDoer(_doersKeyId,_doersUuId,doer)
+      return userbase.initAgent(doer)
 
-        // Unit Test: viewAgent()
+        // Unit Test: getAgent(state)
       }).then(function() {
-        return userbase.pviewAgent(doer, {from: doer});
+        return userbase.getAgent(doer, {from: doer});
       }).then(function(state) {
         assert.notEqual(state[1].toNumber(), 1);
 
-        // Unit Test: setAgent(address,uint)
+        // Unit Test: setAgent(address,state)
       }).then(function() {
-        return userbase.ssetAgent(doer, 1)
+        return userbase.setAgent(doer, 1)
 
-        // Unit Test: viewAgent()
+        // Unit Test: getAgent(state)
       }).then(function() {
-        return userbase.pviewAgent(doer, {from: doer});
+        return userbase.getAgent(doer, {from: doer});
       }).then(function(state) {
         assert.equal(state[1].toNumber(), 1);
       });
@@ -368,47 +368,47 @@ contract("Userbase", function([msgOrigin,msgSender,newOwner,newController,stored
     return Userbase.deployed().then(function(instance) {
       userbase = instance;
 
-        // Unit Test: initDoer()
-      return userbase.initDoer(_doersKeyId,_doersUuId,doer)
+        // Unit Test: initAgent()
+      return userbase.initAgent(doer)
       }).then(function() {
-        return userbase.nsetAgent(doer, _doersnum, {from: doer});
+        return userbase.setAgent(doer, {from: doer});
       })
       .then(assert.fail)
       .catch(function(error) {
         assert.include(error.message, ERROR_REVERT);
 
-        // Unit Test: initDoer(bytes32,bytes32,address)
+        // Unit Test: initAgent()
       }).then(function() {
-        return userbase.initDoer(_doersKeyId,_doersUuId,creator)
+        return userbase.initAgent(creator)
 
         // Unit Test: setAgent(address, IS)
       }).then(function() {
-        return userbase.ssetAgent(creator, 1)
+        return userbase.setAgent(creator, 1)
 
         // Unit Test: setAgent(address,uint)
       }).then(function() {
-        return userbase.nsetAgent(creator, _doersnum, {from: creator});
+        return userbase.setAgent(creator, _doersnum, {from: creator});
 
-        // Unit Test viewAgent()
+        // Unit Test getAgent()
       }).then(function() {
-        return userbase.pviewAgent(creator, {from: creator});
+        return userbase.getAgent(creator, {from: creator});
       }).then(function(state) {
         assert.equal(state[1].toNumber(), 1);
         
-        // Unit Test: viewAgent(address)
+        // Unit Test: getAgent(address)
       }).then(function() {
-        return userbase.pviewAgent(creator, {from: creator});
+        return userbase.getAgent(creator, {from: creator});
       }).then(function(isdoer) {
         var _doersnum_ = isdoer[3].toNumber();
         assert.equal(_doersnum_, _doersnum);
 
-        // Unit Test: decMyDoers()
+        // Unit Test: decDoers()
       }).then(function() {
-        return userbase.decMyDoers({from: creator})
+        return userbase.decDoers({from: creator})
 
-        // Unit Test: viewAgent(address)
+        // Unit Test: getAgent(address)
       }).then(function() {
-        return userbase.pviewAgent(creator, {from: creator});
+        return userbase.getAgent(creator, {from: creator});
       }).then(function(isdoer) {
         _doersnum--;
         assert.equal(isdoer[3].toNumber(), _doersnum);
@@ -447,7 +447,7 @@ contract("Userbase", function([msgOrigin,msgSender,newOwner,newController,stored
 
           // Unit Test setAllPromises(bytes32)
         }).then(function() {
-        return userbase.tsetAllPromises(_apromise, {from: doer});
+        return userbase.setAllPromises(_apromise, {from: doer});
         }).then(function() {
 
           // Unit Test: allPromises

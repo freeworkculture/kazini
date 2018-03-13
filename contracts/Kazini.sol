@@ -15,6 +15,7 @@ contract Kazini is Database {
 /* State Variables */
 
 	Userbase internal userbase;
+	Creators internal creators;
 	DoitToken internal doit;
 	Reserve internal reserve;
     uint public promiseCount;
@@ -38,7 +39,7 @@ contract Kazini is Database {
 	modifier onlyCreator {
 		IS createstate;
 		bool createactive;
-		(,createstate, createactive,) = userbase.viewAgent(msg.sender);
+		(,createstate, createactive,) = userbase.getAgent(msg.sender);
 		require(createactive);
 		require(createstate == IS.CREATOR);
 		_;
@@ -47,7 +48,7 @@ contract Kazini is Database {
 	modifier onlyDoer {
 		IS createstate;
 		bool createactive;
-		(,createstate, createactive,) = userbase.viewAgent(msg.sender);
+		(,createstate, createactive,) = userbase.getAgent(msg.sender);
 		require(createactive);
 		require(createstate != IS.CREATOR);
 		_;
@@ -94,7 +95,7 @@ contract Kazini is Database {
 			bytes32 a;
 			bool b;
 			Desire memory cc = Desire(a,b);
-			(a,b) = Doers(tx.origin).viewDesire(_desire);
+			(a,b) = Doers(tx.origin).getDesire(_desire);
 			plans[_intention].plan.postCondition = cc; // Creator and project share a goal // Get this from Doers Contract direct.																	
 			plans[_intention].plan.preCondition = _preConditions; // pCondition of the curate that will define the concept.
 			plans[_intention].state = Project.INITIATED;
@@ -124,11 +125,11 @@ contract Kazini is Database {
 			require(plans[_intention].state == Project.PENDING); // Project is not pending or closed
 			uint8 index;
 			uint8 indexk;
-			(,,,index,) = Doers(tx.origin).myMerits();
-			(,,,indexk,) = Doers(plans[_intention].plan.curator).myMerits();
+			(,,,index,) = Doers(tx.origin).merits();
+			(,,,indexk,) = Doers(plans[_intention].plan.curator).merits();
 			require(index >= indexk); // Curate // meets or exceeds the current Curator
 			require(hash == keccak256(_experience,_reputation,_talent,_country,_cAuthority,_score));
-			(,,,index,) = Doers(tx.origin).myMerits();
+			(,,,index,) = Doers(tx.origin).merits();
 			plans[_intention].services[serviceId(_intention)].definition.preCondition.merits.index = index; // Creates the curators microservice
 			plans[_intention].services[serviceId(_intention)].definition.postCondition = Desire(_theCondQ, _theGoalG);	// bytes32 nServiceId = _serviceId ^ bytes32(msg.sender);
 			plans[_intention].services[serviceId(_intention)].definition.metas.hash = keccak256(_theCondQ, hash);
@@ -190,21 +191,21 @@ contract Kazini is Database {
 			(,b,,) = userbase.agents(msg.sender);
 			require(b != UserDefined.IS.ACTIVE);
 			uint8 index;
-			(,,,index,) = Doers(msg.sender).myMerits();
+			(,,,index,) = Doers(msg.sender).merits();
 			require(index >= plans[_intention].services[_serviceId].definition.preCondition.merits.index);
             bytes32 a;
-            (a,) = Doers(msg.sender).viewDesire(_desire);
+            (a,) = Doers(msg.sender).getDesire(_desire);
 			require(a == plans[_intention].services[_serviceId].definition.postCondition.goal);
 			require((_time > block.timestamp) || (_time < plans[_intention].services[_serviceId].definition.metas.expire));
 			require(msg.value > 0);
 			uint8 indexk;
-			(,,,indexk,) = Doers(plans[_intention].services[_serviceId].definition.metas.doer).myMerits();
+			(,,,indexk,) = Doers(plans[_intention].services[_serviceId].definition.metas.doer).merits();
 			require(index > indexk);
 			bytes32 eoi = keccak256(msg.sender, _intention, _serviceId);
 			Database.IS aa;
 			bytes32 bb;
 			uint256 cc;
-			(aa,bb,cc) = Doers(msg.sender).viewIntention(_thing);
+			(aa,bb,cc) = Doers(msg.sender).getIntention(_thing);
 			plans[_intention].services[_serviceId].procure[msg.sender].promise = Promise({
 				thing: Intention(aa,bb,cc),
 				timeHard: _time,
@@ -240,7 +241,7 @@ contract Kazini is Database {
 			bytes32 b;
 			uint c;
 			Intention memory dd = Intention(a,b,c);
-			(a,b,c) = Doers(plans[_intention].services[_serviceId].definition.metas.doer).viewIntention(_check);
+			(a,b,c) = Doers(plans[_intention].services[_serviceId].definition.metas.doer).getIntention(_check);
 			require(verified(plans[_intention].services[_serviceId].order));
 			if (dd.state != IS.ACTIVE) {
 				address reset;

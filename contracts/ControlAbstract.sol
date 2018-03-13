@@ -70,11 +70,10 @@ contract UserDefined {
 		bytes32 email;
 		bytes32 fName;
 		bytes32 lName;
-        bytes32 hash;
-		bytes32 tag;
+        bytes32 uuid;
+		bytes32 keyid;
         bytes32 data;
         uint age;
-		bool active;
 	}
 
 	/// @notice `Belief_Desire_Intention` is the type that defines a strategy model of an actual agent
@@ -117,7 +116,7 @@ contract UserDefined {
 	// talent is user declared string of talents
 
     struct Agent {
-        bytes32 uuid;
+        bytes32 keyId;
 		IS state;
         bool active;
 		uint myDoers;
