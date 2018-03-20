@@ -9,6 +9,7 @@ var Able = artifacts.require("Able");
 var Database = artifacts.require("Database");
 var Userbase = artifacts.require("Userbase");
 var Creators = artifacts.require("Creators");
+var DoersFactory = artifacts.require("DoersFactory");
 var Doers = artifacts.require("Doers");
 var DoitTokenFactory = artifacts.require("DoitTokenFactory");
 var DoitToken = artifacts.require("DoitToken");
@@ -37,10 +38,13 @@ module.exports = function(deployer, network, [owner,controller,doer,creator,cura
     return deployer.deploy(Creators, Able.address, Userbase.address, {from: owner});
 
     }).then(function() {
-    return deployer.link(Creators, Doers);
+    return deployer.deploy(DoersFactory, Userbase.address, Creators.address, {from: owner});
+
+    // }).then(function() {
+    // return deployer.link(Creators, Doers);
 
     }).then(function() {
-    return deployer.deploy(Doers, Creators.address, {from: owner});
+    return deployer.deploy(Doers, DoersFactory, owner, "_fPrint", "_idNumber", "_email", "_fName", "_lName", "_keyId", "_data", 10, {from: owner});
 
     }).then(function() {
     return deployer.deploy(DoitTokenFactory, Able.address, {from: owner});

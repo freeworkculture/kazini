@@ -1,6 +1,7 @@
 const Able = artifacts.require("Able");
 const Userbase = artifacts.require("Userbase");
 const Creators = artifacts.require("Creators");
+const Doers = artifacts.require("DoersFactory");
 const Doers = artifacts.require("Doers");
 
 function assertThrow(err, test, msg) {
@@ -28,12 +29,11 @@ const _idNumber = 'IDNUMBER';
 const _email = 'EMAIL';
 const _fName = 'FNAME';
 const _lName = 'LNAME';
-const _hash = 'HASH';
-const _tag = 'TAG';
+const _keyid = 'KEYID';
+const _uuid = 'UUID';
 const _data = 'DATA';
 const _age = 10;
-const _active = 'ACTIVE';
-const _Me = [_fPrint, _idNumber, _email, _fName, _lName, _hash, _tag, _data, _age, _active];
+const _Me = [_fPrint, _idNumber, _email, _fName, _lName, _keyid, _uuid, _data, _age];
 
 
 const _promises = 'PROMISES';
@@ -78,6 +78,7 @@ var _experience;
 var	_reputation;
 const _talent = "DEFAULT TALENT";
 var _index;
+var _hash;
 var _merit = [_experience, _reputation, _talent, _index, _hash];
 var _country; //ISO3166-2:KE-XX;
 var _cAuthority;
@@ -119,6 +120,7 @@ const userName = "DEFAULT CREATOR";
 const ownUuid = "fordefaultcreator";
 
 contract("Doers", function([owner,controller,doer,creator,curator,msgOrigin,msgSender]) {
+  var creators;
   var doers;
   var _CONTRACTNAME_ = "0x444f455220302e30313138000000000000000000000000000000000000000000";
   var _KEYID_ = 0x9BCB2540EBAC30FC9E9EFF3D259B64A2
@@ -230,11 +232,19 @@ contract("Doers", function([owner,controller,doer,creator,curator,msgOrigin,msgS
     }
   }
 
-  it("should get the contract's 'CONTRACTNAME', 'KEYID', 'UUID'", function() {
-    return Doers.deployed().then(function(instance) {
+  it("should deploy the Doers Factory contract and get it's 'CONTRACTNAME'", function() {
+    return Creators.deployed().then(function(instance) {
+      creators = instance;
+      console.log(creators.address.toString(10));
+
+      }).then(function() {
+      return creators.makeDoer(_fPrint, _idNumber, _lName, _keyid, _data, _age);
+      }).then(function(instance) {
       doers = instance;
+      console.log(doers.address.toString(10));
 
         // Unit Test: CONTRACTNAME
+      }).then(function() {
       return doers.CONTRACTNAME.call();
       }).then(function(cname) {
         assert.equal(cname, _CONTRACTNAME_);
@@ -253,163 +263,194 @@ contract("Doers", function([owner,controller,doer,creator,curator,msgOrigin,msgS
       });
     });
 
-  it("constructor should set KEYID, UUID, creator, owner, Me ", function() {
-    return Doers.deployed().then(function(instance) {
-      doers = instance;
-
-        // Unit Test: CONTRACTNAME
-        return doers.CONTRACTNAME.call();
-      }).then(function(cname) {
-        assert.equal(cname, _CONTRACTNAME_);
-
-        // Unit Test: KEYID
-      }).then(function() {
-        return doers.KEYID.call();
-      }).then(function(keyid) {
-        assert.equal(keyid, _KEYID_);
-
-        // Unit Test: UUID
-      }).then(function() {
-        return doers.UUID.call();
-      }).then(function(keyid) {
-        assert.equal(keyid, _UUID_);
-
-        //  Unit Test: creator
-      }).then(function() {
-        return doers.creator.call();
-      }).then(function(creator_) {
-        assert.equal(creator_, Creators.address);
-
-        //  Unit Test: owner
-      }).then(function() {
-        return doers.creator.call();
-      }).then(function(owner) {
-        assert.equal(owner_, owner);
-
-        //  Unit Test: Iam
-      }).then(function() {
-        return doers.getDoer();
-      }).then(function(iam) {
-        assert.equal(iam[0], _fPrint_);
-        assert.equal(iam[1], _idNumber_);
-        assert.equal(iam[2], _email_);
-        assert.equal(iam[3], _fName_);
-        assert.equal(iam[4], _lName_);
-        assert.equal(iam[5], _hash_);
-        assert.equal(iam[6], _tag_);
-        assert.equal(iam[7], _data_);
-        assert.equal(iam[8], _age_);
-        assert.equal(iam[9], _active_);
-
-        //  Unit Test: myMerits
-      }).then(function() {
-        return doers.merits.call();
-      }).then(function(merits_) {
-        assert.equal(merits_[0], _experience_);
-        assert.equal(merits_[1], _reputation_);
-        assert.equal(merits_[2], _talent_);
-        assert.equal(merits_[3], _index_);
-        assert.equal(merits_[3], _hash_);
-      });
-  });
-
-  it("should have MERITS ", function() {
-    return Doers.deployed().then(function(instance) {
-      doers = instance;
-    
-          //  Unit Test: merits
+    it("should get the contract's 'CONTRACTNAME', 'KEYID', 'UUID'", function() {
+      return Creators.deployed().then(function(instance) {
+        creators = instance;
+        console.log(creators.address.toString(10));
+  
         }).then(function() {
-          return doers.merits.call();
-        }).then(function(merits_) {
-          assert.equal(merits_[0].toNumber(), _experience_);
-          assert.equal(merits_[1], _reputation_);
-          assert.equal(merits_[2], _talent_);
-          assert.equal(merits_[3].toNumber(), _index_);
-          assert.equal(merits_[3], _hash_);
-        });
-      });
-
-  it("should have a doers promiseCount, orderCount and fulfillmentCount", function() {
-    return Doers.deployed().then(function(instance) {
-      doers = instance;
-    
-        //  Unit Test: promiseCount
-      }).then(function() {
-        return doers.promiseCount.call();
-      }).then(function(count) {
-        assert.equal(count.toNumber(), _promiseCount_);
-
-        //  Unit Test: promiseCount
-      }).then(function() {
-        return doers.orderCount.call();
-      }).then(function(count) {
-        assert.equal(count.toNumber(), _orderCount_);
-
-        //  Unit Test: promiseCount
-      }).then(function() {
-        return doers.fulfillmentCount.call();
-      }).then(function(count) {
-        assert.equal(count.toNumber(), _fulfillmentCount_);
-      });
-    });
-
-    it("should get a Doer heartbeat", function() {
-      return Doers.deployed().then(function(instance) {
+        return creators.makeDoer(_fPrint, _idNumber, _lName, _keyid, _data, _age);
+        }).then(function(instance) {
         doers = instance;
-      
-          //  Unit Test: iam
-        }).then(function() {
-          return doers.iam();
-        }).then(function(iam_) {
-          assert.equal(iam_, true);
+        console.log(doers.address.toString(10));
   
-          //  Unit Test: promiseCount
+          // Unit Test: CONTRACTNAME
         }).then(function() {
-          return doers.orderCount.call();
-        }).then(function(count) {
-          assert.equal(count.toNumber(), _orderCount_);
+        return doers.CONTRACTNAME.call();
+        }).then(function(cname) {
+          assert.equal(cname, _CONTRACTNAME_);
   
-          //  Unit Test: promiseCount
+          // Unit Test: KEYID
         }).then(function() {
-          return doers.fulfillmentCount.call();
-        }).then(function(count) {
-          assert.equal(count.toNumber(), _fulfillmentCount_);
+          return doers.KEYID.call();
+        }).then(function(keyid) {
+          assert.equal(keyid, _KEYID_);
+  
+          // Unit Test: UUID
+        }).then(function() {
+          return doers.UUID.call();
+        }).then(function(uuid) {
+          assert.equal(uuid, _UUID_);
         });
       });
 
+  // it("constructor should set KEYID, UUID, creator, owner, Me ", function() {
+  //   return Doers.deployed().then(function(instance) {
+  //     doers = instance;
 
-  it("should validate doers", function() {
-    var contract;
-    return Doers.deployed().then(function(instance) {
-      contract = instance;
-      return contract.iam({from: doer});
-    }).then(function(bool) {
-      assert.equal(bool, true);
-    }).then(function() {
-      return contract.iam({from: owner});
-    }).then(function(bool) {
-      assert.equal(bool, false);
-    });
-  });
+  //       // Unit Test: CONTRACTNAME
+  //       return doers.CONTRACTNAME.call();
+  //     }).then(function(cname) {
+  //       assert.equal(cname, _CONTRACTNAME_);
 
-  it("should only let the trustee add doers", function() {
-    var contract;
-    return Doers.deployed().then(function(instance) {
-      contract = instance;
-      return contract.addDoer(accounts[1], {from: accounts[0]});
-    }).then(function() {
-      return contract.getDoerCount.call();
-    }).then(function(count) {
-      assert.equal(count, 2);
-    }).then(function() {
-      return contract.addDoer(accounts[2], {from: accounts[1]});
-    }).catch(function(err) {
-      assertThrow(err, "invalid opcode");
-    }).then(function() {
-      return contract.getDoerCount.call();
-    }).then(function(count) {
-      assert.equal(count, 2);
-    });
-  });
+  //       // Unit Test: KEYID
+  //     }).then(function() {
+  //       return doers.KEYID.call();
+  //     }).then(function(keyid) {
+  //       assert.equal(keyid, _KEYID_);
+
+  //       // Unit Test: UUID
+  //     }).then(function() {
+  //       return doers.UUID.call();
+  //     }).then(function(keyid) {
+  //       assert.equal(keyid, _UUID_);
+
+  //       //  Unit Test: creator
+  //     }).then(function() {
+  //       return doers.creator.call();
+  //     }).then(function(creator_) {
+  //       assert.equal(creator_, Creators.address);
+
+  //       //  Unit Test: owner
+  //     }).then(function() {
+  //       return doers.creator.call();
+  //     }).then(function(owner) {
+  //       assert.equal(owner_, owner);
+
+  //       //  Unit Test: Iam
+  //     }).then(function() {
+  //       return doers.getDoer();
+  //     }).then(function(iam) {
+  //       assert.equal(iam[0], _fPrint_);
+  //       assert.equal(iam[1], _idNumber_);
+  //       assert.equal(iam[2], _email_);
+  //       assert.equal(iam[3], _fName_);
+  //       assert.equal(iam[4], _lName_);
+  //       assert.equal(iam[5], _hash_);
+  //       assert.equal(iam[6], _tag_);
+  //       assert.equal(iam[7], _data_);
+  //       assert.equal(iam[8], _age_);
+  //       assert.equal(iam[9], _active_);
+
+  //       //  Unit Test: myMerits
+  //     }).then(function() {
+  //       return doers.merits.call();
+  //     }).then(function(merits_) {
+  //       assert.equal(merits_[0], _experience_);
+  //       assert.equal(merits_[1], _reputation_);
+  //       assert.equal(merits_[2], _talent_);
+  //       assert.equal(merits_[3], _index_);
+  //       assert.equal(merits_[3], _hash_);
+  //     });
+  // });
+
+  // it("should have MERITS ", function() {
+  //   return Doers.deployed().then(function(instance) {
+  //     doers = instance;
+    
+  //         //  Unit Test: merits
+  //       }).then(function() {
+  //         return doers.merits.call();
+  //       }).then(function(merits_) {
+  //         assert.equal(merits_[0].toNumber(), _experience_);
+  //         assert.equal(merits_[1], _reputation_);
+  //         assert.equal(merits_[2], _talent_);
+  //         assert.equal(merits_[3].toNumber(), _index_);
+  //         assert.equal(merits_[3], _hash_);
+  //       });
+  //     });
+
+  // it("should have a doers promiseCount, orderCount and fulfillmentCount", function() {
+  //   return Doers.deployed().then(function(instance) {
+  //     doers = instance;
+    
+  //       //  Unit Test: promiseCount
+  //     }).then(function() {
+  //       return doers.promiseCount.call();
+  //     }).then(function(count) {
+  //       assert.equal(count.toNumber(), _promiseCount_);
+
+  //       //  Unit Test: promiseCount
+  //     }).then(function() {
+  //       return doers.orderCount.call();
+  //     }).then(function(count) {
+  //       assert.equal(count.toNumber(), _orderCount_);
+
+  //       //  Unit Test: promiseCount
+  //     }).then(function() {
+  //       return doers.fulfillmentCount.call();
+  //     }).then(function(count) {
+  //       assert.equal(count.toNumber(), _fulfillmentCount_);
+  //     });
+  //   });
+
+  //   it("should get a Doer heartbeat", function() {
+  //     return Doers.deployed().then(function(instance) {
+  //       doers = instance;
+      
+  //         //  Unit Test: iam
+  //       }).then(function() {
+  //         return doers.iam();
+  //       }).then(function(iam_) {
+  //         assert.equal(iam_, true);
+  
+  //         //  Unit Test: promiseCount
+  //       }).then(function() {
+  //         return doers.orderCount.call();
+  //       }).then(function(count) {
+  //         assert.equal(count.toNumber(), _orderCount_);
+  
+  //         //  Unit Test: promiseCount
+  //       }).then(function() {
+  //         return doers.fulfillmentCount.call();
+  //       }).then(function(count) {
+  //         assert.equal(count.toNumber(), _fulfillmentCount_);
+  //       });
+  //     });
+
+
+  // it("should validate doers", function() {
+  //   var contract;
+  //   return Doers.deployed().then(function(instance) {
+  //     contract = instance;
+  //     return contract.iam({from: doer});
+  //   }).then(function(bool) {
+  //     assert.equal(bool, true);
+  //   }).then(function() {
+  //     return contract.iam({from: owner});
+  //   }).then(function(bool) {
+  //     assert.equal(bool, false);
+  //   });
+  // });
+
+  // it("should only let the trustee add doers", function() {
+  //   var contract;
+  //   return Doers.deployed().then(function(instance) {
+  //     contract = instance;
+  //     return contract.addDoer(accounts[1], {from: accounts[0]});
+  //   }).then(function() {
+  //     return contract.getDoerCount.call();
+  //   }).then(function(count) {
+  //     assert.equal(count, 2);
+  //   }).then(function() {
+  //     return contract.addDoer(accounts[2], {from: accounts[1]});
+  //   }).catch(function(err) {
+  //     assertThrow(err, "invalid opcode");
+  //   }).then(function() {
+  //     return contract.getDoerCount.call();
+  //   }).then(function(count) {
+  //     assert.equal(count, 2);
+  //   });
+  // });
 
 });

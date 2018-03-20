@@ -1382,7 +1382,6 @@ contract Doers is UserDefined {
 				callBackState[callid][true] = callBackState[callid][false];
 				delete callBackState[callid][false];
 				updateIndex();
-
 		}
 		
 	}
@@ -1409,77 +1408,6 @@ contract Doers is UserDefined {
 			}
 		
 	}
-
-	// mapping (bytes32 => mapping (BE => bool)) callBackState;
-	// callBackState[callid][BE.QUALIFICATION] = true;
-	// function setQualification(
-	// KBase _kbase, 
-	// bytes32 _country, 
-	// bytes32 _cAuthority, 
-	// bytes32 _score, 
-	// uint _year) external ProxyBDI {
-	// 	bytes32 callid = keccak256(msg.data);
-	// 	require(callBackState[callid][false] == BE.QUALIFICATION);
-	// 	if (_kbase == KBase.BACHELOR) {		// exclude Bachelors from prerequisite of having a License
-	// 		require(bdi.beliefs.qualification[uint8(KBase.SECONDARY)].cAuthority != 0x0);
-	// 		} else {
-	// 			require(bdi.beliefs.qualification[uint8(_kbase) - 1].cAuthority != 0x0);
-	// 		}
-	// 	// IF (TO UPDATE)
-	// 	bdi.beliefs.qualification[uint8(_kbase)] = Qualification({country: _country, cAuthority: _cAuthority, score: _score});
-	// 	bdi.beliefs.merits.experience = _year;
-	// 	callBackState[callid][true] = callBackState[callid][false];
-	// 	delete callBackState[callid][false];
-	// 	updateIndex();
-	// }
-
-	// function setReputation(
-	// uint _refMSD, 
-	// uint _refRank, 
-	// uint _refSigned, 
-	// uint _refSigs, 
-	// uint _refTrust) external ProxyBDI {
-	// 	bytes32 callid = keccak256(msg.data);
-	// 	require(callBackState[callid][false] == BE.REPUTATION);
-	// 	reputation.refMSD = _refMSD;
-	// 	reputation.refRank = _refRank;
-	// 	reputation.refTrust = _refTrust;
-	// 	bdi.beliefs.merits.reputation = _refTrust;
-	// 	// bytes32 callid = keccak256(msg.data); //  keccak256(_reputation);
-	// 	callBackState[callid][true] = callBackState[callid][false];
-	// 	delete callBackState[callid][false];
-	// 	updateIndex();
-	// }
-
-	// function setTalent(bytes32 _talent) external ProxyBDI {
-	// 	bytes32 callid = keccak256(msg.data);
-	// 	require(callBackState[callid][false] == BE.TALENT);
-	// 	if (bdi.beliefs.merits.talent.length == 0x0) {
-	// 		bdi.beliefs.merits.talent = _talent;
-	// 		Userbase(userbase).incTalent();
-	// 	} else {
-	// 		assert(_talent.length <= bdi.beliefs.merits.talent.length);
-	// 		Userbase(userbase).decTalent();
-	// 		bdi.beliefs.merits.talent = _talent;
-	// 		Userbase(userbase).incTalent();
-	// 	}
-	// 	callBackState[callid][true] = callBackState[callid][false];
-	// 	delete callBackState[callid][false];
-	// 	updateIndex();
-	// }
-
-	// function setbdi(KBase _kbase, Qualification _qualification, uint _year) public ProxyBDI {
-	// 	bdi.beliefs.qualification[_kbase] = _qualification;
-	// 	bdi.beliefs.merits.experience = _year;
-	// }
-
-	// function setbdi(Reputation _reputation) public onlyDoer {
-	// 	reputation = _reputation;
-	// }
-
-	// function setbdi(bytes32 _talent) public onlyDoer {
-	// 	bdi.beliefs.merits.talent = _talent;
-	// }
 
 	function setbdi(bytes1 _desire, Desire _goal) public onlyDoer {
 		bdi.desires[_desire] = _goal;
@@ -1556,6 +1484,7 @@ contract ProxyKey is BaseController {
 contract ProxyBDI is BaseController {
 
 /* Constant */
+bytes32 constant internal CONTRACTNAME = "DOERSFACTORY 0.0118";
 /* State Variables */
 /* Events */
 
@@ -1635,6 +1564,8 @@ contract ProxyBDI is BaseController {
 contract DoersFactory {
 
 /* Constant */
+bytes32 constant public CONTRACTNAME = "DOERSFACTORY 0.0118";
+
 /* State Variables */
 
 Userbase internal userbase;
