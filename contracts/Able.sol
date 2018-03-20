@@ -1,7 +1,7 @@
 pragma solidity ^0.4.19;
-import "./ControlAbstract.sol";
-// import "./Oraclize.sol";
 pragma experimental ABIEncoderV2;
+import "./ControlAbstract.sol";
+
 
 //////////////////////
 // BaseController
@@ -219,8 +219,8 @@ contract DataController is BaseController {
 /* Functions */ 
 
 	/// @notice `anybody` can Get the address of an existing contract frrom the controller.
-    function getDatabase() view public returns (Database) {
-        return database;   
+    function getDatabase() view public returns (Database,Userbase) {
+        return (database, userbase);   
     }
 }
 /* End of Data */
@@ -320,8 +320,8 @@ contract Able is DataController {
 		// require(verify(_sig,_v,_r,_s) == controller);
         require(contracts[_address] != 0x0);
         // Kill any contracts we remove, for now.
-		bytes32 reset;
-		contracts[_address] = reset;
+		// bytes32 reset;
+		delete contracts[_address];
 		ContractCallEvent(this,msg.sender,tx.origin,CONTRACTNAME);
 		return true;
     }
@@ -551,7 +551,7 @@ contract Database is BaseController {
 		bytes32 _intention, bytes32 _serviceId) 
 	view public returns (
 	uint experience,
-	bytes32 reputation,
+	uint reputation,
 	bytes32 talent,
 	uint8 index) {
 		return (
@@ -885,14 +885,28 @@ contract Userbase is BaseController {
 			}
 		require(talentI-- > 0);
 	}
-
-	function initAgent(address _address) public returns (bool) {
+	
+	function initCreator(address _address) public returns (bool) {
 		require(doerCount++ < 2^256);
 		bytes32 keyid_;
 		bytes32 uuid_;
-		(,,,,,uuid_,keyid_,,) = Doers(_address).getDoer(); 
-		agents[_address] = 
-		Agent({
+		agents[_address] = Agent({
+			keyId: keyid_, 
+			state: IS.CREATOR, 
+			active: true, 
+			myDoers: 1
+			});
+		uuids[uuid_] = _address;
+		return agents[_address].active;
+	}
+
+	function initAgent(address _address) external onlyControlled returns (bool) {
+		require(doerCount++ < 2^256 &&
+		Doers(_address).keyring(0) == 0x0);
+		bytes32 uuid_ = Doers(_address).UUID();
+		bytes32 keyid_ = Doers(_address).KEYID();
+		require(keyid_ != 0x0 && uuid_ != 0x0 && this.getAgent(uuid_) == 0x0);
+		agents[_address] = Agent({
 			keyId: keyid_, 
 			state: IS.INACTIVE, 
 			active: true, 
@@ -910,26 +924,26 @@ contract Userbase is BaseController {
 	}
 
 	function setAgent(address _address, bytes32 _keyId) 
-	external onlyController returns (bytes32) {
+	external onlyControlled returns (bytes32) {
 		return agents[_address].keyId = _keyId;
 	}
 
 	function setAgent(address _address, IS _state) 
-	external onlyController returns (IS) {
+	external onlyControlled returns (IS) {
 		return agents[_address].state = _state;
 	}
 
 	function setAgent(address _address, bool _active) 
-	external onlyController returns (bool) {
+	external onlyControlled returns (bool) {
 		return agents[_address].active = _active;
 	}
 
 	function setAgent(address _address, uint _myDoers) 
-	external onlyController returns (uint) {
+	external onlyControlled returns (uint) {
 		return agents[_address].myDoers = _myDoers;
 	}
 
-	function setAllPromises(bytes32 _serviceId) external onlyController {
+	function setAllPromises(bytes32 _serviceId) external onlyControlled {
 		require(promiseCount++ < 2^256);
 		allPromises[tx.origin].push(_serviceId);
 	}
@@ -960,110 +974,126 @@ contract Userbase is BaseController {
 // A capability model
 // 
 
+// 5.2.3.13.  Trust Signature
+
+//    (1 octet "level" (depth), 1 octet of trust amount)
+
+//    Signer asserts that the key is not only valid but also trustworthy at
+//    the specified level.  Level 0 has the same meaning as an ordinary
+//    validity signature.  Level 1 means that the signed key is asserted to
+//    be a valid trusted introducer, with the 2nd octet of the body
+//    specifying the degree of trust.  Level 2 means that the signed key is
+//    asserted to be trusted to issue level 1 trust signatures, i.e., that
+//    it is a "meta introducer".  Generally, a level n trust signature
+//    asserts that a key is trusted to issue level n-1 trust signatures.
+//    The trust amount is in a range from 0-255, interpreted such that
+//    values less than 120 indicate partial trust and values of 120 or
+//    greater indicate complete trust.  Implementations SHOULD emit values
+//    of 60 for partial trust and 120 for complete trust.
+
 ///////////////////
 // Beginning of Contract
 ///////////////////
 
 contract Doers is UserDefined {
 
-	bytes32 constant public CONTRACTNAME = "DOER 0.0118";
-	bytes32 public KEYID;
-	bytes32 public UUID;
+/* Constant */
+/* State Variables */
+/* Events */
+/* Modifiers */
+/* Functions */
+/* End of Contract */
 
-	enum BE {QUALIFICATION, EXPERIENCE, REPUTATION, TALENT}
+	bytes32 constant public CONTRACTNAME = "DOER 0.0118";
+	bytes32 public MASK = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
+
+	enum BE {NULL, QUALIFICATION, EXPERIENCE, REPUTATION, TALENT}
 
 	modifier onlyCreator {
-		require(msg.sender == address(creator));
+		require(creator.isCreator(msg.sender));
 		_;
 	}
 
 	modifier onlyDoer {
+		require (creator.isDoer(msg.sender)); 
+		_;
+	}
+
+	modifier onlyOwner {
 		require(iam() && msg.sender == owner);
 		_;
 	}
 
+	modifier ProxyKey {
+		require(msg.sender == proxyKey);
+		_;
+	}
+
+	modifier ProxyBDI {
+		require(msg.sender == proxyKey || msg.sender == owner);
+		_;
+	}
+
+	bytes32 public KEYID;
+	bytes32 public UUID;
+	Merits public merits = bdi.beliefs.merits;
+	uint public promiseCount;
+	uint public orderCount;
+	uint public fulfillmentCount;
+
 	Creators internal creator;
 	Userbase internal userbase;
-	address internal owner;	
+	address public owner;	
+	address internal proxyKey;
+	address internal proxyBDI;
 
 	SomeDoer internal Iam;// = SomeDoer(0x4fc6c65443d1b988, "whoiamnottelling", 346896000, "Iam", "Not", false);		
 			
 	BDI internal bdi;
-
-	Merits public merits = bdi.beliefs.merits;
-	
-	mapping (bytes32 => bytes32) promises;
-	uint public promiseCount;
-	uint public orderCount;
-	uint public fulfillmentCount;
+// 	mapping (bytes32 => bytes32) promises;
 
 	uint8 BASE; // !!! GET THIS DATA FROM DATABASE
 	uint8 rate = 10; // !!! GET THIS DATA FROM DATABASE
 	uint year = 31536000; // !!! GET THIS DATA FROM DATABASE
 	uint period = 31536000; // !!! GET THIS DATA FROM DATABASE
 
-	struct WOT {
-		uint refMSD; // !!! GET THIS DATA FROM DATABASE  **** MAYBE WE SHOULD JUST MEASURE THIS RELATIVE TO THE INDIVIDUAL ****
-		uint refRank;  //!!! GET THIS DATA FROM DATABASE
-		uint refSigned; //!!! GET THIS DATA FROM DATABASE
-		uint refSigs; //!!! GET THIS DATA FROM DATABASE
-		uint refTrust; //!!! GET THIS DATA FROM DATABASE
-	}
+	// mapping (bool => BE) callBackState;
+	// mapping (bytes32 => bool) callBackData;
+	mapping (bytes32 => mapping (bool => BE)) callBackState;
+	
+	bytes32[] public keyring;
+	uint public lentemp;
+	Reputation reputation;
 
-	WOT callBackResults;
-
-	mapping (bytes32 => mapping (bool => BE)) callBackData;
-	mapping (bytes32 => BE) callBackFunc;
-	bool toUpdate;
-	bool toFlip;
-
-	Qualification newQualification;
-	uint newExperience;
-	KBase newKBase;
+	mapping (bytes32 => uint) keyIndex;
 	
 	//Creators.Flag aflag;
 	
-	function Doers(Creators _creator) public {
+	function Doers(Creators _creator, SomeDoer _adoer) public {
 		creator = _creator;
 		owner = tx.origin;
-		// oraclize_setCustomGasPrice(4000000000 wei);
-        // oraclize_setProof(proofType_TLSNotary | proofStorage_IPFS); // !!! UNCOMMENT BEFORE DEPLOYING
+		MASK = _creator.DOER();
+		proxyKey = _creator.proxyKey();
+		proxyBDI = _creator.proxyBDI();
+		Iam = _adoer;
+		KEYID = Iam.keyid;
+		UUID = Iam.uuid;
 		ContractEvent(this,msg.sender,tx.origin);
 	}
 
-	// function callBack(bytes32 _callid, WOT _result, bytes proof) public onlyCreator {
-	// 	callBackResults = _result;
-	// 	LogNewResult(_callid, proof);
-	// 	ContractCallEvent(this,msg.sender,tx.origin,_callid);
-	// 	///!!! Insert sNARK Proof function HERE
-	// 	if (callBackFunc[_callid] == BE.QUALIFICATION) {
-	// 		toUpdate = true;
-	// 		setQualification(newKBase,newQualification,newExperience);
-	// 		setReputation(bytes32(_result.refRank));
-	// 		updateIndex();
-	// 	}
-
-	// 	if (callBackFunc[_callid] == BE.TALENT) {
-	// 		setTalent(bytes32(_result.refRank));
-	// 		updateIndex();
-	// 	}
-	// // !!! THE CALLBACK FUNC SHOULD COMPUTE AND UPDATE THE INDEX FIELD
-	// // !!! THE CALLBACK FUNC SHOULD HASH THE BDI AND UPDATE HASH FIELD
-	// }		
-	
 	function updateIndex() internal returns (bool) {
-		uint8 merit = uint8(KBase.DOCTORATE);
-		while (bdi.beliefs.qualification[merit].cAuthority == 0x0) {
+		uint8 kbase = uint8(KBase.DOCTORATE);
+		while (bdi.beliefs.qualification[kbase].cAuthority == 0x0) {
 			// merit == 0 ? bdi.beliefs.index = merit : merit --;
-			if (merit == 0) {
+			if (kbase == 0) {
 				bdi.beliefs.merits.index = 1;
 				return false;}
-			merit--;
+			kbase--;
 		}
 
 		uint8 T = uint8(bdi.beliefs.merits.talent);
 		uint8 R = uint8(bdi.beliefs.merits.reputation);
-		uint8 Q = merit; 
+		uint8 Q = kbase; 
 		uint8 q;
 		if ((block.timestamp - bdi.beliefs.merits.experience) > year) {
 			// !!! Maybe subtract Reputation and Talent first here before proceeding
@@ -1078,27 +1108,27 @@ contract Doers is UserDefined {
 /////////////////
 // All HELPERS
 /////////////////
-function bytesToString(bytes32 _bytes) public constant returns (string) {
+// function bytesToString(bytes32 _bytes) public constant returns (string) {
 
-    // string memory str = string(_bytes);
-    // TypeError: Explicit type conversion not allowed from "bytes32" to "string storage pointer"
-    // thus we should fist convert bytes32 to bytes (to dynamically-sized byte array)
+//     // string memory str = string(_bytes);
+//     // TypeError: Explicit type conversion not allowed from "bytes32" to "string storage pointer"
+//     // thus we should fist convert bytes32 to bytes (to dynamically-sized byte array)
 
-    bytes memory bytesArray = new bytes(_bytes.length);
-    for (uint256 i; i < _bytes.length; i++) {
-        bytesArray[i] = _bytes[i];
-        }
-    return string(bytesArray);
-    }
+//     bytes memory bytesArray = new bytes(_bytes.length);
+//     for (uint256 i; i < _bytes.length; i++) {
+//         bytesArray[i] = _bytes[i];
+//         }
+//     return string(bytesArray);
+//     }
 
 /////////////////
 // All ASSERTERS
 /////////////////
 
-	function iam() view public returns (bool iam_) {
+	function iam() view public returns (bool iam) {
 		userbase.isDoer(this) != IS.CREATOR ? 
-		iam_ = true : 
-		iam_ = userbase.isDoer(this) == IS.CREATOR;
+		iam = true : 
+		iam = userbase.isDoer(this) == IS.CREATOR;
 	}
 
 /////////////////
@@ -1108,43 +1138,25 @@ function bytesToString(bytes32 _bytes) public constant returns (string) {
 	function getDoer() 
 	view external returns (
 	bytes32 fPrint,
-	bytes32 idNumber,
 	bytes32 email,
 	bytes32 fName,
-	bytes32 lName,
-	bytes32 keyid,
-	bytes32 uuid,
-	bytes32 data,
-	uint age) {
+	bytes32 data) {
 			return(
 				Iam.fPrint,
-				Iam.idNumber,
 				Iam.email,
 				Iam.fName,
-				Iam.lName,
-				Iam.uuid,
-				Iam.keyid,
-				Iam.data,
-				Iam.age);
+				Iam.data);
 	}
 	
 	function getBelief(KBase _kbase) 
 	view external returns (
 	bytes32 country_,
 	bytes32 cAuthority_,
-	bytes32 score_,
-	uint experience_,
-	bytes32 reputation_,
-	bytes32 talent_,
-	uint8 index_) {
+	bytes32 score_) {
 		return (
 			bdi.beliefs.qualification[uint8(_kbase)].country,
 			bdi.beliefs.qualification[uint8(_kbase)].cAuthority,
-			bdi.beliefs.qualification[uint8(_kbase)].score,
-			bdi.beliefs.merits.experience,
-			bdi.beliefs.merits.reputation,
-			bdi.beliefs.merits.talent,
-			bdi.beliefs.merits.index);
+			bdi.beliefs.qualification[uint8(_kbase)].score);
 	}
 	
 	function getDesire(bytes1 _desire) 
@@ -1166,83 +1178,308 @@ function bytesToString(bytes32 _bytes) public constant returns (string) {
 // All SETTERS
 /////////////////
 
-	function init(SomeDoer _adoer) public {
-		Iam = _adoer;
-		KEYID = _adoer.uuid;
-		UUID = _adoer.keyid;
+// 	function init(SomeDoer _adoer) public {
+// 		Iam = _adoer;
+// 		KEYID = _adoer.uuid;
+// 		UUID = _adoer.keyid;
+// 	}
+	// mapping (bool => BE) callBackState;
+	// mapping (bytes32 => bool) callBackData;
+
+	// bytes32[] public keyring;
+	// Reputation reputation;
+
+	// mapping (address => mapping (bytes32 => address)) keyIndex;
+
+	// mapping (bytes32 => uint) keyIndex;
+	// function sign(Doers _address) onlyOwner returns (uint, bool) {
+	// 	return _address.sign();
+	// }
+	function sign(Doers _address) onlyOwner {
+	    _address.sign();
+	}
+	
+	function revoke(Doers _address) onlyOwner {
+	    _address.revoke();
+	}
+	
+	function sign() external onlyDoer returns (uint len, bool signed) { // padd left before using bytes32(uint256(this) << 96)
+		bytes32 keyXOR = bytes32(uint256(this)) ^ bytes32(uint256(msg.sender));
+		bytes memory callData = msg.data;
+		emit LogSigning(this, msg.sender, tx.origin, callData, keyXOR);
+		
+		if (msg.sender != owner) {
+		    
+			require(keyring.length > 0 && keyring.length < 2^256);
+		    keyIndex[(keyXOR << 96)] = keyring.push(MASK & keyXOR);
+		    len = keyring.length;
+            reputation.signee = len;
+            Doers(msg.sender).incSigns(keyXOR);
+            emit LogKeyRing(len,keyring[0],keyIndex[keyXOR]);
+            return (len,signed);
+		    
+		} else {
+		    if (keyring.length == 0) {
+		        len = keyring.push(MASK & keyXOR);
+		        keyIndex[keyXOR] = 0;
+			    require(reputation.signer++ < 2^256);
+		    } else {
+		        keyring[0] = (MASK ^ keyXOR);
+		        len = keyring.length;
+		    }
+		}
+		lentemp = keyring.length;
+		emit LogKeyRing(len,keyring[0],keyIndex[keyXOR]);
+		return (len,signed);
+	}
+     //"0xa9c40ddcb43ebbc83add97b8f9f361f12b19bceff2f76b68f66b5bb1812365a9"
+  //use this as remix command
+
+    function cut(bytes32 sha) constant returns (bytes16 half1, bytes16 half2) {
+        assembly {
+          let freemem_pointer := mload(0x40)
+          mstore(add(freemem_pointer,0x00), sha)
+          half1 := mload(add(freemem_pointer,0x00))
+          half2 := mload(add(freemem_pointer,0x10))
+        }
+    }
+	function revoke() external onlyDoer returns (uint len, bool revoked) { // pad left bytes32(uint256(this) << 96) before using
+		require(keyring.length > 0);
+		bytes32 keyXOR = bytes32(uint256(this)) ^ bytes32(uint256(msg.sender));
+		require (address(keyXOR) == address(keyring[keyIndex[keyXOR]]));
+		bytes memory callData = msg.data;
+		emit LogRevoking(this, msg.sender, tx.origin, callData, keyXOR);
+
+		if (keyring.length == 1) {	//	a ^ b; == key; //	key ^ a == b
+			keyIndex[keyXOR] = 2^256;	
+			delete keyring;
+			delete reputation.signee;
+			require(reputation.signer-- > 0);
+			len = 0;
+			lentemp = len;
+    		return (len,revoked);
+		}
+		keyring[keyIndex[keyXOR]] = keyring[keyring.length--];
+		keyIndex[(keyring[keyring.length--] << 96)] = keyIndex[keyXOR];
+		delete keyring[keyring.length--];
+		len = keyring.length;
+		delete keyIndex[keyXOR];
+		reputation.signee = len;
+		Doers(proxyKey).decSigns(keyXOR);
+		lentemp = len;
+		return (len,revoked);
 	}
 
-	function setQualification(
+	function trust(KFlag _level) external returns (bool) {
+		require((keyring.length > 0) && (keyring.length < 2^256));
+		bytes32 keyXOR = bytes32(uint256(this)) ^ bytes32(uint256(msg.sender));
+		require (address(keyXOR) == address(keyring[keyIndex[keyXOR]]));
+		// 0x01	“C”	Key Certification
+		// 0x02	“S”	Sign Data
+		// 0x04	“E”	Encrypt Communications
+		// 0x08	“E”	Encrypt Storage
+		// 0x10	 	Split key
+		// 0x20	“A”	Authentication
+		// 0x80	 	Held by more than one person
+		// enum KFlag {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x80}
+	// enum KFlag {REVOCATION, TIMESTAMP, BINARY, CANONICAL, GENERIC, PERSONA, CASUAL, POSITIVE}
+		if (_level == KFlag.REVOCATION) {
+			keyring[keyIndex[keyXOR]] = keyring[keyIndex[keyXOR]] ^ 
+			0xffffffff02ffffffffffffffffffffffffffffffffffffffffffffffffffffff;
+		} else if (_level == KFlag.TIMESTAMP ) {
+			keyring[keyIndex[keyXOR]] = keyring[keyIndex[keyXOR]] ^ 
+			0xffffffff04ffffffffffffffffffffffffffffffffffffffffffffffffffffff;
+		} else if (_level == KFlag.BINARY ) {
+			keyring[keyIndex[keyXOR]] = keyring[keyIndex[keyXOR]] ^ 
+			0xffffffff08ffffffffffffffffffffffffffffffffffffffffffffffffffffff;
+		} else if (_level == KFlag.CANONICAL ) {
+			keyring[keyIndex[keyXOR]] = keyring[keyIndex[keyXOR]] ^ 
+			0xffffffff10ffffffffffffffffffffffffffffffffffffffffffffffffffffff;
+		} else if (_level == KFlag.GENERIC ) {
+			keyring[keyIndex[keyXOR]] = keyring[keyIndex[keyXOR]] ^ 
+			0xffffffff20ffffffffffffffffffffffffffffffffffffffffffffffffffffff;
+		} else if (_level == KFlag.PERSONA ) {
+			keyring[keyIndex[keyXOR]] = keyring[keyIndex[keyXOR]] ^ 
+			0xffffffff40ffffffffffffffffffffffffffffffffffffffffffffffffffffff;
+		} else if (_level == KFlag.CASUAL ) {
+			keyring[keyIndex[keyXOR]] = keyring[keyIndex[keyXOR]] ^ 
+			0xffffffff80ffffffffffffffffffffffffffffffffffffffffffffffffffffff;
+		} else if (_level == KFlag.POSITIVE ) {
+			keyring[keyIndex[keyXOR]] = keyring[keyIndex[keyXOR]] ^ 
+			0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
+		}
+		return true;
+
+	}
+
+	function incSigns(bytes32 _keyd) external ProxyKey returns (uint) {
+		require(reputation.signer++ < 2^256);
+		return reputation.signer;
+	}
+	function decSigns(bytes32 _keyd) external ProxyKey returns (uint) {
+		require(reputation.signer-- > 0);
+		return reputation.signer;
+	}
+
+	/// Callback function for returning from ProxyBDI Contract
+	
+	// function callBack(bytes32 callid) external onlyCreator returns (BE) {
+	// 	require (callBackState[callid][false] != BE.NULL && callBackState[callid][true] == BE.NULL);
+	// 	callBackState[callid][true] = callBackState[callid][false];
+	// 	return callBackState[callid][true];
+	// }
+	// mapping (bool => BE) callBackState;
+	// mapping (bytes32 => bool) callBackData;
+	// mapping (bytes32 => mapping (BE => bool)) callBackState;
+	// callBackState[callid][BE.QUALIFICATION] = true;
+
+	function setbdi(
 	KBase _kbase, 
 	bytes32 _country, 
 	bytes32 _cAuthority, 
 	bytes32 _score, 
-	uint _year) external onlyDoer {
-		toUpdate = false;
-		// bytes memory _data;
-		Doers(creator).setQualification(_kbase,Qualification({country: _country, cAuthority: _cAuthority, score: _score}),_year);
-		// mapping (bytes32 => mapping (bool => bytes)) callBackData;
-		callBackData[keccak256(msg.data)][false] = BE.QUALIFICATION;
-		LogSetQualification(this,msg.sender,tx.origin,keccak256(msg.data),Iam.uuid,Iam.keyid,_kbase,msg.data);
-	}
-
-	function setQualification(
-		KBase _kbase, Qualification _qualification, uint _year) 
-	public {
-		if (_kbase == KBase.BACHELOR) {		// exclude Bachelors from prerequisite of having a License
-			require(bdi.beliefs.qualification[uint8(KBase.SECONDARY)].cAuthority != 0x0);
+	uint _year) external ProxyBDI {
+		bytes32 callid = keccak256(msg.data);
+		if(msg.sender == owner) {
+			Doers(proxyBDI).setbdi(_kbase,_country,_cAuthority,_score,_year);
+			callBackState[callid][false] = BE.QUALIFICATION;
+			LogSetbdi(this,msg.sender,tx.origin,Iam.keyid,Iam.uuid,callid);
 			} else {
-				require(bdi.beliefs.qualification[uint8(_kbase) - 1].cAuthority != 0x0);
-			}
-		if (toUpdate) {	
-			bdi.beliefs.qualification[uint8(_kbase)] = _qualification;
-			bdi.beliefs.merits.experience = _year;
-			toUpdate = false;
-			Qualification memory NULL;
-			uint ZERO;
-			newQualification = NULL;
-			newExperience = ZERO;
-			updateIndex();
-			} else {	// !!! USE CREATORS CALLBACK FUNC AND GET VERIFICATION OF CAUTHORITY
-				toUpdate = false;
-				bytes32 country = newQualification.country;
-				bytes32 cAuthority = newQualification.cAuthority;
-				bytes32 score = newQualification.score;
-				require (country == 0x0 && cAuthority == 0x0 && score == 0x0 && _year == 0);
-				bytes32 callid = keccak256(country,cAuthority,score);
-				callBackFunc[callid] = BE.QUALIFICATION;
-				newKBase = _kbase;
-				newQualification = _qualification;
-				newExperience = _year;
-				LogSetQualification(this,msg.sender,tx.origin,callid,Iam.uuid,Iam.keyid,_kbase,msg.data);
-			}
-	}
-
-	function setReputation(bytes32 _reputation) internal {
-		bdi.beliefs.merits.reputation = _reputation;
-	// !!! USE CREATORS CALLBACK FUNC AND GET COMPUTE OF WOT
-		bytes32 callid = keccak256(_reputation);
-		callBackFunc[callid] = BE.REPUTATION;
-		LogSetReputation(this,msg.sender,tx.origin,callid,Iam.uuid,Iam.keyid);
-
-
-	}
-
-	function setTalent(bytes32 _talent) public onlyDoer {
-		if (bdi.beliefs.merits.talent.length == 0x0) {
-			bdi.beliefs.merits.talent = _talent;
-			Userbase(userbase).incTalent();
-		} else {
-			assert(_talent.length <= bdi.beliefs.merits.talent.length);
-			Userbase(userbase).decTalent();
-			bdi.beliefs.merits.talent = _talent;
-			Userbase(userbase).incTalent();
+				require(callBackState[callid][false] == BE.QUALIFICATION);
+				if (_kbase == KBase.BACHELOR) {		// exclude Bachelors from prerequisite of having a License
+					require(bdi.beliefs.qualification[uint8(KBase.SECONDARY)].cAuthority != 0x0);
+					} else {
+						require(bdi.beliefs.qualification[uint8(_kbase) - 1].cAuthority != 0x0);
+					}
+				// IF (TO UPDATE)
+				bdi.beliefs.qualification[uint8(_kbase)] = Qualification({country: _country, cAuthority: _cAuthority, score: _score});
+				bdi.beliefs.merits.experience = _year;
+				callBackState[callid][true] = callBackState[callid][false];
+				delete callBackState[callid][false];
+				updateIndex();
 		}
-	// !!! USE CREATORS CALLBACK FUNC AND GET COMPUTE OF TALENT INDEX
-		bytes32 callid = keccak256(_talent);
-		callBackFunc[callid] = BE.TALENT;
-		LogSetTalent(this,msg.sender,tx.origin,callid,Iam.uuid,Iam.keyid,keccak256(_talent));
+		
 	}
+	
+	function setbdi(
+	uint _refMSD, 
+	uint _refRank, 
+	uint _refSigned, 
+	uint _refSigs, 
+	uint _refTrust)
+	external ProxyBDI {
+		bytes32 callid = keccak256(msg.data);
+		if(msg.sender == owner) {
+			Doers(proxyBDI).setbdi(_refMSD,_refRank,_refSigs,_refSigned,_refTrust);
+			callBackState[callid][false] = BE.REPUTATION;
+			LogSetbdi(this,msg.sender,tx.origin,Iam.keyid,Iam.uuid,callid);
+			} else {
+				require(callBackState[callid][false] == BE.REPUTATION);
+				reputation.refMSD = _refMSD;
+				reputation.refRank = _refRank;
+				reputation.refTrust = _refTrust;
+				bdi.beliefs.merits.reputation = _refTrust;
+				callBackState[callid][true] = callBackState[callid][false];
+				delete callBackState[callid][false];
+				updateIndex();
+
+		}
+		
+	}
+
+	function setbdi(bytes32 _talent) external ProxyBDI {
+		bytes32 callid = keccak256(msg.data);
+		if(msg.sender == owner) {
+			Doers(proxyBDI).setbdi(_talent);
+			callBackState[callid][false] = BE.TALENT;
+			LogSetbdi(this,msg.sender,tx.origin,Iam.keyid,Iam.uuid,callid);
+			} else {
+				require(callBackState[callid][false] == BE.TALENT);
+				if (bdi.beliefs.merits.talent == 0x0) {
+					bdi.beliefs.merits.talent = _talent;
+					Userbase(userbase).incTalent();
+				} else {
+					Userbase(userbase).decTalent();
+					bdi.beliefs.merits.talent = _talent;
+					Userbase(userbase).incTalent();
+				}
+				callBackState[callid][true] = callBackState[callid][false];
+				delete callBackState[callid][false];
+				updateIndex();
+			}
+		
+	}
+
+	// mapping (bytes32 => mapping (BE => bool)) callBackState;
+	// callBackState[callid][BE.QUALIFICATION] = true;
+	// function setQualification(
+	// KBase _kbase, 
+	// bytes32 _country, 
+	// bytes32 _cAuthority, 
+	// bytes32 _score, 
+	// uint _year) external ProxyBDI {
+	// 	bytes32 callid = keccak256(msg.data);
+	// 	require(callBackState[callid][false] == BE.QUALIFICATION);
+	// 	if (_kbase == KBase.BACHELOR) {		// exclude Bachelors from prerequisite of having a License
+	// 		require(bdi.beliefs.qualification[uint8(KBase.SECONDARY)].cAuthority != 0x0);
+	// 		} else {
+	// 			require(bdi.beliefs.qualification[uint8(_kbase) - 1].cAuthority != 0x0);
+	// 		}
+	// 	// IF (TO UPDATE)
+	// 	bdi.beliefs.qualification[uint8(_kbase)] = Qualification({country: _country, cAuthority: _cAuthority, score: _score});
+	// 	bdi.beliefs.merits.experience = _year;
+	// 	callBackState[callid][true] = callBackState[callid][false];
+	// 	delete callBackState[callid][false];
+	// 	updateIndex();
+	// }
+
+	// function setReputation(
+	// uint _refMSD, 
+	// uint _refRank, 
+	// uint _refSigned, 
+	// uint _refSigs, 
+	// uint _refTrust) external ProxyBDI {
+	// 	bytes32 callid = keccak256(msg.data);
+	// 	require(callBackState[callid][false] == BE.REPUTATION);
+	// 	reputation.refMSD = _refMSD;
+	// 	reputation.refRank = _refRank;
+	// 	reputation.refTrust = _refTrust;
+	// 	bdi.beliefs.merits.reputation = _refTrust;
+	// 	// bytes32 callid = keccak256(msg.data); //  keccak256(_reputation);
+	// 	callBackState[callid][true] = callBackState[callid][false];
+	// 	delete callBackState[callid][false];
+	// 	updateIndex();
+	// }
+
+	// function setTalent(bytes32 _talent) external ProxyBDI {
+	// 	bytes32 callid = keccak256(msg.data);
+	// 	require(callBackState[callid][false] == BE.TALENT);
+	// 	if (bdi.beliefs.merits.talent.length == 0x0) {
+	// 		bdi.beliefs.merits.talent = _talent;
+	// 		Userbase(userbase).incTalent();
+	// 	} else {
+	// 		assert(_talent.length <= bdi.beliefs.merits.talent.length);
+	// 		Userbase(userbase).decTalent();
+	// 		bdi.beliefs.merits.talent = _talent;
+	// 		Userbase(userbase).incTalent();
+	// 	}
+	// 	callBackState[callid][true] = callBackState[callid][false];
+	// 	delete callBackState[callid][false];
+	// 	updateIndex();
+	// }
+
+	// function setbdi(KBase _kbase, Qualification _qualification, uint _year) public ProxyBDI {
+	// 	bdi.beliefs.qualification[_kbase] = _qualification;
+	// 	bdi.beliefs.merits.experience = _year;
+	// }
+
+	// function setbdi(Reputation _reputation) public onlyDoer {
+	// 	reputation = _reputation;
+	// }
+
+	// function setbdi(bytes32 _talent) public onlyDoer {
+	// 	bdi.beliefs.merits.talent = _talent;
+	// }
 
 	function setbdi(bytes1 _desire, Desire _goal) public onlyDoer {
 		bdi.desires[_desire] = _goal;
@@ -1256,64 +1493,118 @@ function bytesToString(bytes32 _bytes) public constant returns (string) {
 // Events
 ////////////////
     event ContractEvent(address indexed _this, address indexed _sender, address indexed _origin);
-	event ContractCallEvent(address indexed _this, address indexed _sender, address indexed _origin, bytes32 _data);
-	event QualificationEvent(address indexed _this, address indexed _sender, address indexed _origin, bytes16 _message, bytes _data);
-	event PlanEvent(address indexed _from, address indexed _to, uint256 _amount);
-    event PromiseEvent(address indexed _from, address indexed _to, uint256 _amount);
-    event Fulfill(address indexed _from, address indexed _to, uint256 _amount);
-	event LogNewOraclizeQuery(string description);
-    event LogNewResult(bytes32 result, bytes proof);
-	event LogSetQualification(address indexed _this, address indexed _sender, address indexed _origin, bytes32 _callid, bytes32 _uuid, bytes32 _keyid, KBase _kbase, bytes _data);
-	event LogSetReputation(address indexed _this, address indexed _sender, address indexed _origin, bytes32 _callid, bytes32 _uuid, bytes32 _keyid);
-	event LogSetTalent(address indexed _this, address indexed _sender, address indexed _origin, bytes32 _callid, bytes32 _uuid, bytes32 _keyid, bytes32 _data);
+// 	event ContractCallEvent(address indexed _this, address indexed _sender, address indexed _origin, bytes32 _data);
+// 	event QualificationEvent(address indexed _this, address indexed _sender, address indexed _origin, bytes16 _message, bytes _data);
+// 	event PlanEvent(address indexed _from, address indexed _to, uint256 _amount);
+//     event PromiseEvent(address indexed _from, address indexed _to, uint256 _amount);
+//     event Fulfill(address indexed _from, address indexed _to, uint256 _amount);
+// 	event LogNewOraclizeQuery(string description);
+//     event LogNewResult(bytes32 result, bytes proof);
+    event LogKeyRing(uint _length, bytes32 _data, uint _index);
+	event LogSigning(address indexed _this, address indexed _sender, address indexed _origin, bytes _data, bytes32 _result);
+	event LogRevoking(address indexed _this, address indexed _sender, address indexed _origin, bytes _data, bytes32 _result);
+	event LogSetbdi(address indexed _this, address indexed _sender, address indexed _origin, bytes32 _keyid, bytes32 _uuid, bytes32 _callid);
 }
 
 // interface SomeDoers {
 // 	function Doers(SomeDoer _aDoer) returns (bool);
 // 	}
 
-///////////////////
-// Beginning of Contract
-///////////////////
+contract ProxyKey is BaseController {
 
-contract Creators is DataController {
+/* Constant */
+/* State Variables */
+/* Events */
 
-/// @dev The actual agent contract, the nature of the agent is identified controller is the msg.sender
-///  that deploys the contract, so usually this token will be deployed by a
-///  token controller contract.
+	event ContractEvent(address indexed _this, address indexed _sender, address indexed _origin);
+	event LogMsgData(address sender, bytes calldata, bytes _data);
+	event LogCall(address indexed from, address indexed to, address _keyd);
+    event LogHash(address indexed from, address indexed to, address _keyd, bytes32 _data);
 
-    bytes32 constant internal CONTRACTNAME = "CREATOR 0.0118";
-	bytes32 constant public KEYID = 0x90EBAC34FC40EAC30FC9CB464A2E56;
+/* Modifiers */
+/* Functions */
 
-	address public owner;
 
-	mapping (address => mapping (bool => bytes)) callData;	
+    bytes public callParam;
+    bytes32 public addressXOR;
 
-	function Creators(Able _ctrl, Userbase _ubs) public {
-		cName = CONTRACTNAME;
-		contrl = _ctrl;
-		userbase = _ubs;
-		owner = contrl.owner();
-		controller = contrl.controller();
-		ContractEvent(this,msg.sender,tx.origin);
+    function() {
+        callParam = msg.data;
+        addressXOR = bytesToBytes32(callParam) ^ bytes32(uint256(msg.sender));
+		execute(address(addressXOR)); //!!! Check here that the pattern is well formated
+		emit LogMsgData(msg.sender, msg.data, callParam);
+    }
+
+	function ProxyKey() {
+		emit ContractEvent(this,msg.sender,tx.origin);
 	}
+    
+    function bytesToBytes32(bytes _data) constant returns (bytes32 result) {
+        assembly {
+			result := mload(add(_data, 32))
+        }
+    }
+
+    function execute(address _receiver) returns (bool) {
+        LogCall(msg.sender,this,_receiver);
+        return Doers(_receiver).call(callParam);
+        
+    }
+/* End of ProxyKey Contract */
+}
+
+contract ProxyBDI is BaseController {
+
+/* Constant */
+/* State Variables */
+/* Events */
+
+	event ContractEvent(address indexed _this, address indexed _sender, address indexed _origin);
+	event LogMsgData(address sender, bytes calldata, bytes _data);
+	event LogCall(address indexed from, address indexed to, address _keyd);
+    event LogHash(address indexed from, address indexed to, address _keyd, bytes32 _data);
+	event LogProxyCall(address indexed from, address indexed to, bytes32 _data);
+	event LogProxyResult(address indexed from, address indexed to, bytes32 _data, bytes32 _result);
+
+/* Modifiers */
+/* Functions */
+
+
+	function ProxyBDI() {
+		emit ContractEvent(this,msg.sender,tx.origin);
+	}
+
+    bytes public callParam;
+    bytes32 public keyXOR;
+	address public proxyKey;
+	mapping (address => mapping (bool => bytes)) callData;	
 
 	  //prime the data using the fallback function.
 	function() payable {
 		callData[msg.sender][false] = msg.data;
+		delete callData[msg.sender][true];
 	}
 
-	function execute(address _address) external onlyController returns (bool) {
-		require (callData[_address][true].length == 0 && callData[_address][false].length != 0);
-		///!!! INSERT SNARK PROOF FUNCTION HERE
+	function execute(address _address, bool _success) external onlyControlled returns (bool) {
+		require (callData[_address][true].length == 0);
 		bytes memory _data = callData[msg.sender][false];
-		callData[msg.sender][true] = bytes32ToBytes(keccak256(_data));
-		callData[msg.sender][true].length = 32;
-		callData[msg.sender][false].length = 0;
-    	return _address.call(callData[msg.sender][false]);
+		bytes32 _hash = keccak256(_data);
+		callData[msg.sender][true] = toBytes(_hash);
+		delete callData[msg.sender][false];
+		if (snarkProof(_address, _data, _success)) {
+			///!!! INSERT SNARK PROOF FUNCTION HERE
+			
+			LogProxyCall(msg.sender,this,_hash);
+		} else {
+			///!!! INSERT SNARK PROOF FUNCTION HERE
+
+			LogProxyResult(msg.sender,this,_hash,"default");
+			return Doers(_address).call(callData[msg.sender][true]);
+		}
+
   }
 
-	function bytes32ToBytes(bytes32 _bytes32) internal pure returns (bytes) {
+	function toBytes(bytes32 _bytes32) internal pure returns (bytes) {
 
 		// string memory str = string(_bytes32);
 		// TypeError: Explicit type conversion not allowed from "bytes32" to "string storage pointer"
@@ -1326,37 +1617,120 @@ contract Creators is DataController {
 		return bytesArray;
 		}
 
+	function toBytes32() returns (bytes32) {
+        return bytes32(uint256(msg.sender) << 96);
+    }
 
+	function snarkProof(address _address, bytes _data, bool success)  returns (bool) {
+		// !!! STUB: FOR SNARK PROOF IMPLEMENTATION
+		return true;
+	}
+/* End of ProxyBDI Contract */
+}
 
+///////////////////
+// Beginning of Contract
+///////////////////
+
+contract DoersFactory {
+
+/* Constant */
+/* State Variables */
+
+Userbase internal userbase;
+Creators internal creator;
+
+/* Events */
+/* Modifiers */
+
+event LogNewDoer(address indexed from, address indexed to, address indexed origin, address _newdoer);
+event ContractEvent(address indexed _this, address indexed _sender, address indexed _origin);
+
+/* Functions */
+
+function DoersFactory (Userbase _userbase, Creators _creator) {
+	userbase = _userbase;
+	creator = _creator;
+	emit ContractEvent(this,msg.sender,tx.origin);
+}
+// "0xca35b7d915458ef540ade6068dfe2f44e8fa733c","_fPrint","_idNumber","_email","_fName","_lName","_keyId","_data",10
 	function makeDoer(
+		address _introducer,
 		bytes32 _fPrint,
         bytes32 _idNumber,
+		bytes32 _email,
+		bytes32 _fName,
 		bytes32 _lName,
 		bytes32 _keyId,
 		bytes32 _data,
         uint _birth
-		) onlyCreator public returns (bool,address) 
+		) public returns (address) 
 		{
-			uint myDoers_;
-			(,,,myDoers_) = userbase.getAgent(msg.sender);
-			require(myDoers_ > 0);
-			bytes32 uuidCheck = keccak256(_fPrint, _birth, _lName, _idNumber);
-			require(!isDoer(uuidCheck));
-			Doers newDoer = new Doers(this);
-			bytes32 reset;
-			Doers(newDoer).init(SomeDoer({
+			userbase.decAgent(_introducer);
+			bytes32 uuidCheck = keccak256(_fPrint, _idNumber, _lName, _birth);
+			Doers newDoer = new Doers(creator,UserDefined.SomeDoer({
 				fPrint: _fPrint, 
 				idNumber: _idNumber, 
-				email: reset, 
-				fName: reset, 
+				email: _email, 
+				fName: _fName, 
 				lName: _lName, 
 				uuid: uuidCheck, 
 				keyid: _keyId, 
 				data: _data, 
 				age: _birth}));
-			userbase.initAgent(newDoer);
-			userbase.decAgent(newDoer);
-			return (true,newDoer);
+			emit LogNewDoer(this,msg.sender,tx.origin,address(newDoer));
+			return newDoer;
+	}
+
+/* End of Contract */
+
+}
+
+///////////////////
+// Beginning of Contract
+///////////////////
+
+contract Creators is DataController {
+
+/* Constant */
+/* State Variables */
+/* Events */
+/* Modifiers */
+/* Functions */
+/* End of Contract */
+
+/// @dev The actual agent contract, the nature of the agent is identified controller is the msg.sender
+///  that deploys the contract, so usually this token will be deployed by a
+///  token controller contract.
+
+    bytes32 constant internal CONTRACTNAME = "CREATOR 0.0118";
+	bytes32 constant public KEYID = 0x90EBAC34FC40EAC30FC9CB464A2E56;
+	bytes32 constant public DOER     			   	= 0x1fffff1100ffffffffffffffffffffffffffffffffffffffffffffffffffffff;
+// 	bytes32 constant public MASK 			   		= 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
+	bytes32 constant public AMOUNT 			   		= 0xffffffff00ffffff << 192;
+	bytes32 constant public ORDINARY   				= 0x100fffffffffffff << 192;
+	bytes32 constant public INTRODUCER 				= 0x010fffffffffffff << 192;
+	bytes32 constant public ISSUER	   				= 0x001fffffffffffff << 192;
+	bytes32 constant public KEY_CERTIFICATION 		= 0xfffffff1ffffffff << 192; // “C”	Key Certification
+	bytes32 constant public SIGN_DATA   			= 0xfffffff2ffffffff << 192; // “S”	Sign Data
+	bytes32 constant public ENCRYPT_COMMUNICATIONS 	= 0xfffffff4ffffffff << 192; // “E”	Encrypt Communications
+	bytes32 constant public ENCRYPT_STORAGE  		= 0xfffffff8ffffffff << 192; // “E”	Encrypt Storage
+	bytes32 constant public SPLIT_KEY   			= 0xffffff1fffffffff << 192; // Split key
+	bytes32 constant public AUTHENTICATION   		= 0xffffff2fffffffff << 192; // “A”	Authentication
+	bytes32 constant public MULTI_SIGNATURE			= 0xffffff8fffffffff << 192; // Held by more than one person 	
+
+	address public proxyKey;
+	address public proxyBDI;
+
+	// mapping (address => mapping (bool => bytes)) callData;	
+
+	function Creators(Able _ctrl, Userbase _ubs) public {
+		cName = CONTRACTNAME;
+		contrl = _ctrl;
+		userbase = _ubs;
+		owner = contrl.owner();
+		controller = contrl.controller();
+		ContractEvent(this,msg.sender,tx.origin);
 	}
 
 /////////////////
@@ -1367,18 +1741,31 @@ contract Creators is DataController {
 		return contrl.KEYID();
 	}
 
-	function iam(address _address) view public returns (bool iam_) {
-		require((userbase.isDoer(_address) != IS.CREATOR) ||
-		(userbase.isDoer(_address) == IS.CREATOR));
-		return iam_;
+	function Iam(address _address) view public returns (IS) {
+		return userbase.isDoer(_address);
+	}
+	
+	function iam(address _address) view public returns (bool) {
+		require((userbase.isDoer(_address) != IS.CREATOR) ||(userbase.isDoer(_address) == IS.CREATOR));
+		return true;
 	}
 
-	function isDoer(bytes32 _keyid) public view returns (bool doeractive) { // Consider use of delegateCall
-		userbase.isDoer(userbase.getAgent(_keyid)) != IS.CREATOR;
+	function isDoer(address _address) public view returns (bool) { // Consider use of delegateCall
+	    bool isDoer;
+		(userbase.isDoer(_address) != IS.CREATOR) ? isDoer = true : isDoer = false;
+		return isDoer;
+	}	// https://pgp.cs.uu.nl/paths/4b6b34649d496584/to/4f723b7662e1f7b5.json
+	
+	function isDoer(bytes32 _keyid) public view returns (bool isDoer) { // Consider use of delegateCall
+		(userbase.isDoer(userbase.getAgent(_keyid)) != IS.CREATOR) ? isDoer = true : isDoer = false;
 	}	// https://pgp.cs.uu.nl/paths/4b6b34649d496584/to/4f723b7662e1f7b5.json
 
-		function isCreator(bytes32 _keyid) view external returns (bool createactive) { // Point this to oraclise service checking MSD on 
-		userbase.isDoer(userbase.getAgent(_keyid)) == IS.CREATOR;
+	function isCreator(address _address) view external returns (bool isCreator) { // Point this to oraclise service checking MSD on 
+		(userbase.isDoer(_address) == IS.CREATOR) ? isCreator = true : isCreator = false;
+	} 	// https://pgp.cs.uu.nl/paths/4b6b34649d496584/to/4f723b7662e1f7b5.json
+
+	function isCreator(bytes32 _keyid) view external returns (bool isCreator) { // Point this to oraclise service checking MSD on 
+		(userbase.isDoer(userbase.getAgent(_keyid)) == IS.CREATOR) ? isCreator = true : isCreator = false;
 	} 	// https://pgp.cs.uu.nl/paths/4b6b34649d496584/to/4f723b7662e1f7b5.json
 
 // 	function isPlanning(bytes32 _intention) view external returns (uint256) { 
@@ -1405,9 +1792,13 @@ contract Creators is DataController {
 /////////////////
 // All SETTERS
 /////////////////
+
+    function initDoer() returns (bool) {
+        return userbase.initAgent(msg.sender);
+    }
 	
 	function flipTo(address _address) 
-	external onlyController returns (IS) {
+	external onlyOwner returns (IS) {
 		if (userbase.isDoer(_address) != IS.CREATOR) {
 			return userbase.setAgent(_address, IS.CREATOR);
 		} else {
@@ -1416,16 +1807,16 @@ contract Creators is DataController {
 	}
 
 	function numberOf(address _address, uint _allowed) 
-	external onlyController returns (uint) {
+	external onlyOwner returns (uint) {
 		require(userbase.isDoer(_address) == IS.CREATOR);
 		return userbase.setAgent(_address, _allowed);
 	}
 
 	function toggle(address _address) 
-	external onlyController returns (bool) {
+	external onlyOwner returns (bool) {
 		bool active_;
 		(,,active_,) = userbase.getAgent(_address);
-		if (active_) {
+		if (!active_) {
 			return userbase.setAgent(_address, true);
 		} else {
 			return userbase.setAgent(_address, false);
@@ -1433,10 +1824,12 @@ contract Creators is DataController {
 	}
 
 	function reset(address _address, bytes32 _keyid) 
-	external onlyController returns (bytes32) {
+	external onlyOwner returns (bytes32) {
 		require(iam(_address));
+		userbase.setAgent(_address, IS.INACTIVE);
 		return userbase.setAgent(_address, _keyid);
 	}
-
-/* END OF CREATORS */
+    event LogCall(address indexed from, address indexed to, address indexed origin, bytes _data);
+    
+/* END OF CREATORS CONTRACT */
 }

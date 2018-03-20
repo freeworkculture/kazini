@@ -69,8 +69,8 @@ contract Kazini is Database {
 		ContractEvent(this,msg.sender,tx.origin);
 	}
 
-	function serviceId(bytes32 _intention) internal view onlyCreator returns (bytes32) {
-        return bytes32(msg.sender) ^ plans[_intention].plan.postCondition.goal;  // bitwise XOR builds a map of serviceIds
+	function serviceId(bytes32 _intention) internal view onlyCreator returns (bytes32) {//bytes32(uint256(msg.sender) << 96)
+        return bytes32(uint256(msg.sender) << 96) ^ plans[_intention].plan.postCondition.goal;  // bitwise XOR builds a map of serviceIds
     }
 
 	function verify(Database.Order _lso) view internal returns (address) {

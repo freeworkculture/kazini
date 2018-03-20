@@ -52,6 +52,15 @@ contract UserDefined {
 		service,S,
 		payout,p
 	}
+		// 0x01	“C”	Key Certification
+		// 0x02	“S”	Sign Data
+		// 0x04	“E”	Encrypt Communications
+		// 0x08	“E”	Encrypt Storage
+		// 0x10	 	Split key
+		// 0x20	“A”	Authentication
+		// 0x80	 	Held by more than one person
+	enum KFlag {REVOCATION, TIMESTAMP, BINARY, CANONICAL, GENERIC, PERSONA, CASUAL, POSITIVE}
+
 
 /* Structs*/
 
@@ -91,7 +100,7 @@ contract UserDefined {
 		mapping(uint8 => Qualification) qualification; // Key is the keccak256 hash of the struct contents
 		} struct Merits {
 			uint experience;
-			bytes32 reputation;
+			uint reputation;
 			bytes32 talent;
 			uint8 index;
 			bytes32 hash;
@@ -188,7 +197,20 @@ contract UserDefined {
         		bytes32 hash;
 	}
 
+	struct Reputation {
+		uint refMSD; // !!! GET THIS DATA FROM DATABASE  **** MAYBE WE SHOULD JUST MEASURE THIS RELATIVE TO THE INDIVIDUAL ****
+		uint refRank;  //!!! GET THIS DATA FROM DATABASE
+		uint signer; //!!! GET THIS DATA FROM DATABASE
+		uint signee; //!!! GET THIS DATA FROM DATABASE
+		uint refTrust; //!!! GET THIS DATA FROM DATABASE
+	}
 
 }
 
+/* Constant */
+/* State Variables */
+/* Events */
+/* Modifiers */
+/* Functions */
+/* End of Contract */
 
