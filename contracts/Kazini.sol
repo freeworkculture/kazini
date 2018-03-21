@@ -18,6 +18,7 @@ contract Kazini is Database {
 	Creators internal creators;
 	DoitToken internal doit;
 	Reserve internal reserve;
+	address proxyVerify;
     uint public promiseCount;
 
 /* Events */
@@ -54,18 +55,25 @@ contract Kazini is Database {
 		_;
 	}
 
+    modifier ProxyVerify {
+        require(msg.sender == proxyVerify);
+        _;
+	}
+
 /* Functions */
     
     function Kazini(
         Able _ctrl, 
         Userbase _ubs,
 		DoitToken _diy,
-		Reserve _rsv) public {
+		Reserve _rsv,
+		address _verify) public {
 		cName = CONTRACTNAME;
         contrl = _ctrl;
         userbase = _ubs;
 		doit = _diy;
 		reserve = _rsv;
+		proxyVerify = _verify;
 		ContractEvent(this,msg.sender,tx.origin);
 	}
 
@@ -268,6 +276,16 @@ contract Kazini is Database {
 		bytes32 _message_,
 		bytes32 _thing) public payable onlyDoer returns(bool) 
 		{
+			Kazini(proxyVerify).verify(_intention,_serviceId,_verity,_message_,_thing);
+		}
+
+    function verify(
+		bytes32 _intention, 
+		bytes32 _serviceId, 
+		bytes32 _verity, 
+		bytes32 _message_,
+		bytes32 _thing) external ProxyVerify returns(bool) 
+		{
 			// Validate existing promise.
 			require(plans[_intention].services[_serviceId].definition.metas.doer != msg.sender);
 			address doers = verify(
@@ -328,3 +346,79 @@ contract Kazini is Database {
 
 }
 /* End of Input Factor */
+
+contract ProxyVerify is BaseController {
+
+/* Constant */
+bytes32 constant internal CONTRACTNAME = "DOERSFACTORY 0.0118";
+/* State Variables */
+/* Events */
+
+	event ContractEvent(address indexed _this, address indexed _sender, address indexed _origin);
+	event LogMsgData(address sender, bytes calldata, bytes _data);
+	event LogCall(address indexed from, address indexed to, address _keyd);
+    event LogHash(address indexed from, address indexed to, address _keyd, bytes32 _data);
+	event LogProxyCall(address indexed from, address indexed to, bytes32 _data);
+	event LogProxyResult(address indexed from, address indexed to, bytes32 _data, bytes32 _result);
+
+/* Modifiers */
+/* Functions */
+
+
+	function ProxyVerify() {
+		emit ContractEvent(this,msg.sender,tx.origin);
+	}
+
+    bytes public callParam;
+    bytes32 public keyXOR;
+	address public proxyKey;
+	mapping (address => mapping (bool => bytes)) callData;	
+
+	  //prime the data using the fallback function.
+	function() payable {
+		callData[msg.sender][false] = msg.data;
+		delete callData[msg.sender][true];
+	}
+
+	function execute(address _address, bool _success) external onlyControlled returns (bool) {
+		require (callData[_address][true].length == 0);
+		bytes memory _data = callData[msg.sender][false];
+		bytes32 _hash = keccak256(_data);
+		callData[msg.sender][true] = toBytes(_hash);
+		delete callData[msg.sender][false];
+		if (snarkProof(_address, _data, _success)) {
+			///!!! INSERT SNARK PROOF FUNCTION HERE
+			
+			LogProxyCall(msg.sender,this,_hash);
+		} else {
+			///!!! INSERT SNARK PROOF FUNCTION HERE
+
+			LogProxyResult(msg.sender,this,_hash,"default");
+			return Doers(_address).call(callData[msg.sender][true]);
+		}
+
+  }
+
+	function toBytes(bytes32 _bytes32) internal pure returns (bytes) {
+
+		// string memory str = string(_bytes32);
+		// TypeError: Explicit type conversion not allowed from "bytes32" to "string storage pointer"
+		// thus we should fist convert bytes32 to bytes (to dynamically-sized byte array)
+
+		bytes memory bytesArray = new bytes(32);
+		for (uint256 i; i < 32; i++) {
+			bytesArray[i] = _bytes32[i];
+			}
+		return bytesArray;
+		}
+
+	function toBytes32() returns (bytes32) {
+        return bytes32(uint256(msg.sender) << 96);
+    }
+
+	function snarkProof(address _address, bytes _data, bool success)  returns (bool) {
+		// !!! STUB: FOR SNARK PROOF IMPLEMENTATION
+		return true;
+	}
+/* End of ProxyBDI Contract */
+}

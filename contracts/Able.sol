@@ -810,6 +810,15 @@ contract Userbase is BaseController {
 // All ASSERTS
 /////////////////
 
+    function iam(address _address) public view returns (bool) {
+        require(agents[_address].active);
+        return true;
+    }
+    
+    function iam(bytes32 _uuids) external view returns (bool) {
+        return iam(uuids[_uuids]); 
+    }
+
 	function isDoer(address _address) public view returns (IS) { // Consider use of delegateCall
 		require(agents[_address].active);
 		return agents[_address].state;
@@ -902,7 +911,7 @@ contract Userbase is BaseController {
 
 	function initAgent(address _address) external onlyControlled returns (bool) {
 		require(doerCount++ < 2^256 &&
-		Doers(_address).keyring(0) == 0x0);
+		Doers(_address).ringlength() == 0); //(0) == 0x0);
 		bytes32 uuid_ = Doers(_address).UUID();
 		bytes32 keyid_ = Doers(_address).KEYID();
 		require(keyid_ != 0x0 && uuid_ != 0x0 && this.getAgent(uuid_) == 0x0);
@@ -1010,17 +1019,17 @@ contract Doers is UserDefined {
 	enum BE {NULL, QUALIFICATION, EXPERIENCE, REPUTATION, TALENT}
 
 	modifier onlyCreator {
-		require(creator.isCreator(msg.sender));
+		require(creator.isCreator());
 		_;
 	}
 
 	modifier onlyDoer {
-		require (creator.isDoer(msg.sender)); 
+		require (creator.isDoer()); 
 		_;
 	}
 
 	modifier onlyOwner {
-		require(iam() && msg.sender == owner);
+		require(creator.iam() && msg.sender == owner);
 		_;
 	}
 
@@ -1062,7 +1071,7 @@ contract Doers is UserDefined {
 	mapping (bytes32 => mapping (bool => BE)) callBackState;
 	
 	bytes32[] public keyring;
-	uint public lentemp;
+	uint public ringlength;
 	Reputation reputation;
 
 	mapping (bytes32 => uint) keyIndex;
@@ -1078,7 +1087,7 @@ contract Doers is UserDefined {
 		Iam = _adoer;
 		KEYID = Iam.keyid;
 		UUID = Iam.uuid;
-		ContractEvent(this,msg.sender,tx.origin);
+		emit ContractEvent(this,msg.sender,tx.origin);
 	}
 
 	function updateIndex() internal returns (bool) {
@@ -1125,10 +1134,8 @@ contract Doers is UserDefined {
 // All ASSERTERS
 /////////////////
 
-	function iam() view public returns (bool iam) {
-		userbase.isDoer(this) != IS.CREATOR ? 
-		iam = true : 
-		iam = userbase.isDoer(this) == IS.CREATOR;
+	function iam() view public returns (bool) {
+		return creator.iam();
 	}
 
 /////////////////
@@ -1195,42 +1202,73 @@ contract Doers is UserDefined {
 	// function sign(Doers _address) onlyOwner returns (uint, bool) {
 	// 	return _address.sign();
 	// }
-	function sign(Doers _address) onlyOwner {
-	    _address.sign();
-	}
-	
-	function revoke(Doers _address) onlyOwner {
-	    _address.revoke();
-	}
-	
-	function sign() external onlyDoer returns (uint len, bool signed) { // padd left before using bytes32(uint256(this) << 96)
-		bytes32 keyXOR = bytes32(uint256(this)) ^ bytes32(uint256(msg.sender));
-		bytes memory callData = msg.data;
-		emit LogSigning(this, msg.sender, tx.origin, callData, keyXOR);
-		
-		if (msg.sender != owner) {
-		    
-			require(keyring.length > 0 && keyring.length < 2^256);
-		    keyIndex[(keyXOR << 96)] = keyring.push(MASK & keyXOR);
-		    len = keyring.length;
-            reputation.signee = len;
-            Doers(msg.sender).incSigns(keyXOR);
-            emit LogKeyRing(len,keyring[0],keyIndex[keyXOR]);
-            return (len,signed);
-		    
+	function sign(Doers _address) onlyOwner returns (uint) {
+		bytes32 keyXOR_;
+		if (_address != this) {
+		    keyXOR_ = bytes32(uint256(_address)) ^ bytes32(uint256(this));
+		    Doers(proxyKey).sign(keyXOR_ << 32);
+	    	emit LogSign(this, msg.sender, tx.origin, _address, keyXOR_);
+	    	return ringlength;
 		} else {
+		    keyXOR_ = bytes32(uint256(this)) ^ bytes32(uint256(msg.sender));
 		    if (keyring.length == 0) {
-		        len = keyring.push(MASK & keyXOR);
-		        keyIndex[keyXOR] = 0;
-			    require(reputation.signer++ < 2^256);
+		    ringlength = keyring.push(keyXOR_ | MASK);
+			keyIndex[keyXOR_] = 0;
+			require(reputation.signer++ < 2^256);
 		    } else {
-		        keyring[0] = (MASK ^ keyXOR);
-		        len = keyring.length;
+		        keyring[0] = (keyXOR_ | MASK);
+		        ringlength = keyring.length;
 		    }
+    		emit LogKeyRing(ringlength,keyring[0],keyIndex[keyXOR_]);
+    		return ringlength;
 		}
-		lentemp = keyring.length;
-		emit LogKeyRing(len,keyring[0],keyIndex[keyXOR]);
-		return (len,signed);
+	}
+	
+	function revoke(Doers _address) onlyOwner returns (uint) {
+		bytes32 keyXOR_;
+		if (keyring.length == 1) {	//	a ^ b; == key; //	key ^ a == b
+			keyXOR_ = bytes32(uint256(this)) ^ bytes32(uint256(msg.sender));
+			keyIndex[keyXOR_] = 2^256;	
+			delete keyring;
+			delete reputation.signee;
+			require(reputation.signer-- > 0);
+			ringlength = 0;
+    		return ringlength;
+		} else {
+			keyXOR_ = bytes32(uint256(_address)) ^ bytes32(uint256(this));
+			Doers(proxyKey).revoke(keyXOR_ << 32);
+		}
+	    
+	}
+
+	// 0x01	“C”	Key Certification
+	// 0x02	“S”	Sign Data
+	// 0x04	“E”	Encrypt Communications
+	// 0x08	“E”	Encrypt Storage
+	// 0x10	 	Split key
+	// 0x20	“A”	Authentication
+	// 0x80	 	Held by more than one person
+	// enum KFlag {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x80}
+	// enum KFlag {REVOCATION, TIMESTAMP, BINARY, CANONICAL, GENERIC, PERSONA, CASUAL, POSITIVE}
+	function trust(Doers _address, Trust _level) {
+		bytes32 keyXOR = bytes32(uint256(_address)) ^ bytes32(uint256(this));
+		keyXOR |= creator.trust(_level);
+		Doers(proxyKey).trust(keyXOR << 32);
+	}
+	
+	function sign(bytes32 _keyXOR) external ProxyKey returns (uint) { // padd left before using bytes32(uint256(this) << 96)
+		bytes memory callData = msg.data;
+		emit LogSigned(this, msg.sender, tx.origin, callData, _keyXOR);
+
+		require(keyring.length > 0 && keyring.length < 2^256);
+		keyIndex[(_keyXOR << 96)] = keyring.push(_keyXOR | MASK);
+		ringlength = keyring.length;
+		reputation.signee = ringlength;
+
+		Doers(proxyKey).incSigns(_keyXOR << 32);
+		emit LogKeyRing(ringlength,keyring[0],keyIndex[_keyXOR]);
+		return ringlength;
+
 	}
      //"0xa9c40ddcb43ebbc83add97b8f9f361f12b19bceff2f76b68f66b5bb1812365a9"
   //use this as remix command
@@ -1243,73 +1281,26 @@ contract Doers is UserDefined {
           half2 := mload(add(freemem_pointer,0x10))
         }
     }
-	function revoke() external onlyDoer returns (uint len, bool revoked) { // pad left bytes32(uint256(this) << 96) before using
-		require(keyring.length > 0);
-		bytes32 keyXOR = bytes32(uint256(this)) ^ bytes32(uint256(msg.sender));
-		require (address(keyXOR) == address(keyring[keyIndex[keyXOR]]));
+	function revoke(bytes32 _keyXOR) external ProxyKey returns (uint) { // pad left bytes32(uint256(this) << 96) before using
+		require(keyring.length > 1);
+		require (address(_keyXOR) == address(keyring[keyIndex[_keyXOR]]));
 		bytes memory callData = msg.data;
-		emit LogRevoking(this, msg.sender, tx.origin, callData, keyXOR);
-
-		if (keyring.length == 1) {	//	a ^ b; == key; //	key ^ a == b
-			keyIndex[keyXOR] = 2^256;	
-			delete keyring;
-			delete reputation.signee;
-			require(reputation.signer-- > 0);
-			len = 0;
-			lentemp = len;
-    		return (len,revoked);
-		}
-		keyring[keyIndex[keyXOR]] = keyring[keyring.length--];
-		keyIndex[(keyring[keyring.length--] << 96)] = keyIndex[keyXOR];
+		emit LogRevoking(this, msg.sender, tx.origin, callData, _keyXOR);
+		keyring[keyIndex[_keyXOR]] = keyring[keyring.length--];
+		keyIndex[(keyring[keyring.length--] << 96)] = keyIndex[_keyXOR];
 		delete keyring[keyring.length--];
-		len = keyring.length;
-		delete keyIndex[keyXOR];
-		reputation.signee = len;
-		Doers(proxyKey).decSigns(keyXOR);
-		lentemp = len;
-		return (len,revoked);
+		ringlength = keyring.length;
+		delete keyIndex[_keyXOR];
+		reputation.signee = ringlength;
+		Doers(proxyKey).decSigns(_keyXOR << 32);
+		return ringlength;
 	}
 
-	function trust(KFlag _level) external returns (bool) {
+	function trust(bytes32 _keyXOR) external ProxyKey returns (bool) {
 		require((keyring.length > 0) && (keyring.length < 2^256));
-		bytes32 keyXOR = bytes32(uint256(this)) ^ bytes32(uint256(msg.sender));
-		require (address(keyXOR) == address(keyring[keyIndex[keyXOR]]));
-		// 0x01	“C”	Key Certification
-		// 0x02	“S”	Sign Data
-		// 0x04	“E”	Encrypt Communications
-		// 0x08	“E”	Encrypt Storage
-		// 0x10	 	Split key
-		// 0x20	“A”	Authentication
-		// 0x80	 	Held by more than one person
-		// enum KFlag {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x80}
-	// enum KFlag {REVOCATION, TIMESTAMP, BINARY, CANONICAL, GENERIC, PERSONA, CASUAL, POSITIVE}
-		if (_level == KFlag.REVOCATION) {
-			keyring[keyIndex[keyXOR]] = keyring[keyIndex[keyXOR]] ^ 
-			0xffffffff02ffffffffffffffffffffffffffffffffffffffffffffffffffffff;
-		} else if (_level == KFlag.TIMESTAMP ) {
-			keyring[keyIndex[keyXOR]] = keyring[keyIndex[keyXOR]] ^ 
-			0xffffffff04ffffffffffffffffffffffffffffffffffffffffffffffffffffff;
-		} else if (_level == KFlag.BINARY ) {
-			keyring[keyIndex[keyXOR]] = keyring[keyIndex[keyXOR]] ^ 
-			0xffffffff08ffffffffffffffffffffffffffffffffffffffffffffffffffffff;
-		} else if (_level == KFlag.CANONICAL ) {
-			keyring[keyIndex[keyXOR]] = keyring[keyIndex[keyXOR]] ^ 
-			0xffffffff10ffffffffffffffffffffffffffffffffffffffffffffffffffffff;
-		} else if (_level == KFlag.GENERIC ) {
-			keyring[keyIndex[keyXOR]] = keyring[keyIndex[keyXOR]] ^ 
-			0xffffffff20ffffffffffffffffffffffffffffffffffffffffffffffffffffff;
-		} else if (_level == KFlag.PERSONA ) {
-			keyring[keyIndex[keyXOR]] = keyring[keyIndex[keyXOR]] ^ 
-			0xffffffff40ffffffffffffffffffffffffffffffffffffffffffffffffffffff;
-		} else if (_level == KFlag.CASUAL ) {
-			keyring[keyIndex[keyXOR]] = keyring[keyIndex[keyXOR]] ^ 
-			0xffffffff80ffffffffffffffffffffffffffffffffffffffffffffffffffffff;
-		} else if (_level == KFlag.POSITIVE ) {
-			keyring[keyIndex[keyXOR]] = keyring[keyIndex[keyXOR]] ^ 
-			0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
-		}
+		require (address(_keyXOR) == address(keyring[keyIndex[_keyXOR]]));
+		keyring[keyIndex[_keyXOR]] = _keyXOR; 
 		return true;
-
 	}
 
 	function incSigns(bytes32 _keyd) external ProxyKey returns (uint) {
@@ -1382,6 +1373,7 @@ contract Doers is UserDefined {
 				callBackState[callid][true] = callBackState[callid][false];
 				delete callBackState[callid][false];
 				updateIndex();
+
 		}
 		
 	}
@@ -1429,7 +1421,8 @@ contract Doers is UserDefined {
 // 	event LogNewOraclizeQuery(string description);
 //     event LogNewResult(bytes32 result, bytes proof);
     event LogKeyRing(uint _length, bytes32 _data, uint _index);
-	event LogSigning(address indexed _this, address indexed _sender, address indexed _origin, bytes _data, bytes32 _result);
+	event LogSign(address indexed _this, address indexed _sender, address indexed _origin, address _data, bytes32 _result);
+	event LogSigned(address indexed _this, address indexed _sender, address indexed _origin, bytes _data, bytes32 _result);
 	event LogRevoking(address indexed _this, address indexed _sender, address indexed _origin, bytes _data, bytes32 _result);
 	event LogSetbdi(address indexed _this, address indexed _sender, address indexed _origin, bytes32 _keyid, bytes32 _uuid, bytes32 _callid);
 }
@@ -1445,7 +1438,7 @@ contract ProxyKey is BaseController {
 /* Events */
 
 	event ContractEvent(address indexed _this, address indexed _sender, address indexed _origin);
-	event LogMsgData(address sender, bytes calldata, bytes _data);
+	event LogData(address sender, bytes calldata, bytes _data, bytes32 _data1, bytes32 _data2);
 	event LogCall(address indexed from, address indexed to, address _keyd);
     event LogHash(address indexed from, address indexed to, address _keyd, bytes32 _data);
 
@@ -1458,9 +1451,11 @@ contract ProxyKey is BaseController {
 
     function() {
         callParam = msg.data;
-        addressXOR = bytesToBytes32(callParam) ^ bytes32(uint256(msg.sender));
+        bytes32 newcallparam = bytesToBytes32(callParam);
+        bytes32 newaddress = bytes32(uint256(msg.sender));
+        addressXOR = newcallparam ^ newaddress;
 		execute(address(addressXOR)); //!!! Check here that the pattern is well formated
-		emit LogMsgData(msg.sender, msg.data, callParam);
+		emit LogData(msg.sender, msg.data, callParam, newcallparam, newaddress);
     }
 
 	function ProxyKey() {
@@ -1474,8 +1469,8 @@ contract ProxyKey is BaseController {
     }
 
     function execute(address _receiver) returns (bool) {
-        LogCall(msg.sender,this,_receiver);
-        return Doers(_receiver).call(callParam);
+        emit LogCall(msg.sender,this,_receiver);
+        return _receiver.call(callParam);
         
     }
 /* End of ProxyKey Contract */
@@ -1484,7 +1479,6 @@ contract ProxyKey is BaseController {
 contract ProxyBDI is BaseController {
 
 /* Constant */
-bytes32 constant internal CONTRACTNAME = "DOERSFACTORY 0.0118";
 /* State Variables */
 /* Events */
 
@@ -1564,8 +1558,6 @@ bytes32 constant internal CONTRACTNAME = "DOERSFACTORY 0.0118";
 contract DoersFactory {
 
 /* Constant */
-bytes32 constant public CONTRACTNAME = "DOERSFACTORY 0.0118";
-
 /* State Variables */
 
 Userbase internal userbase;
@@ -1636,7 +1628,7 @@ contract Creators is DataController {
 
     bytes32 constant internal CONTRACTNAME = "CREATOR 0.0118";
 	bytes32 constant public KEYID = 0x90EBAC34FC40EAC30FC9CB464A2E56;
-	bytes32 constant public DOER     			   	= 0x1fffff1100ffffffffffffffffffffffffffffffffffffffffffffffffffffff;
+	bytes32 constant public DOER     			   	= 0x1fffff1100ffffff << 192;
 // 	bytes32 constant public MASK 			   		= 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
 	bytes32 constant public AMOUNT 			   		= 0xffffffff00ffffff << 192;
 	bytes32 constant public ORDINARY   				= 0x100fffffffffffff << 192;
@@ -1648,7 +1640,19 @@ contract Creators is DataController {
 	bytes32 constant public ENCRYPT_STORAGE  		= 0xfffffff8ffffffff << 192; // “E”	Encrypt Storage
 	bytes32 constant public SPLIT_KEY   			= 0xffffff1fffffffff << 192; // Split key
 	bytes32 constant public AUTHENTICATION   		= 0xffffff2fffffffff << 192; // “A”	Authentication
-	bytes32 constant public MULTI_SIGNATURE			= 0xffffff8fffffffff << 192; // Held by more than one person 	
+	bytes32 constant public MULTI_SIGNATURE			= 0xffffff8fffffffff << 192; // Held by more than one person
+
+	Clearance internal TRUST = Clearance({
+		Revocation: 0xffffffff02ffffffffffffffffffffffffffffffffffffffffffffffffffffff,
+		Timestamp: 0xffffffff04ffffffffffffffffffffffffffffffffffffffffffffffffffffff,
+		Binary : 0xffffffff08ffffffffffffffffffffffffffffffffffffffffffffffffffffff,
+		Canonical : 0xffffffff10ffffffffffffffffffffffffffffffffffffffffffffffffffffff,
+		Generic : 0xffffffff20ffffffffffffffffffffffffffffffffffffffffffffffffffffff,
+		Persona : 0xffffffff40ffffffffffffffffffffffffffffffffffffffffffffffffffffff,
+		Casual : 0xffffffff80ffffffffffffffffffffffffffffffffffffffffffffffffffffff,
+		Positive : 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+	});
+			
 
 	address public proxyKey;
 	address public proxyBDI;
@@ -1661,6 +1665,8 @@ contract Creators is DataController {
 		userbase = _ubs;
 		owner = contrl.owner();
 		controller = contrl.controller();
+		proxyKey = new ProxyKey();
+		proxyBDI = new ProxyBDI();
 		ContractEvent(this,msg.sender,tx.origin);
 	}
 
@@ -1672,31 +1678,32 @@ contract Creators is DataController {
 		return contrl.KEYID();
 	}
 
-	function Iam(address _address) view public returns (IS) {
-		return userbase.isDoer(_address);
+	function Iam() view public returns (IS) {
+		return userbase.isDoer(msg.sender);
 	}
 	
-	function iam(address _address) view public returns (bool) {
-		require((userbase.isDoer(_address) != IS.CREATOR) ||(userbase.isDoer(_address) == IS.CREATOR));
-		return true;
+	function iam() view public returns (bool) {
+		return userbase.iam(msg.sender);
 	}
 
-	function isDoer(address _address) public view returns (bool) { // Consider use of delegateCall
-	    bool isDoer;
-		(userbase.isDoer(_address) != IS.CREATOR) ? isDoer = true : isDoer = false;
-		return isDoer;
+	function isDoer() public view returns (bool) { // Consider use of delegateCall
+		require (userbase.isDoer(msg.sender) != IS.CREATOR);
+		return true;
 	}	// https://pgp.cs.uu.nl/paths/4b6b34649d496584/to/4f723b7662e1f7b5.json
 	
 	function isDoer(bytes32 _keyid) public view returns (bool isDoer) { // Consider use of delegateCall
-		(userbase.isDoer(userbase.getAgent(_keyid)) != IS.CREATOR) ? isDoer = true : isDoer = false;
+		require (userbase.isDoer(userbase.getAgent(_keyid)) != IS.CREATOR);
+		return true;
 	}	// https://pgp.cs.uu.nl/paths/4b6b34649d496584/to/4f723b7662e1f7b5.json
 
-	function isCreator(address _address) view external returns (bool isCreator) { // Point this to oraclise service checking MSD on 
-		(userbase.isDoer(_address) == IS.CREATOR) ? isCreator = true : isCreator = false;
+	function isCreator() view external returns (bool isCreator) { // Point this to oraclise service checking MSD on 
+		require (userbase.isDoer(msg.sender) == IS.CREATOR);
+		return true;
 	} 	// https://pgp.cs.uu.nl/paths/4b6b34649d496584/to/4f723b7662e1f7b5.json
 
 	function isCreator(bytes32 _keyid) view external returns (bool isCreator) { // Point this to oraclise service checking MSD on 
-		(userbase.isDoer(userbase.getAgent(_keyid)) == IS.CREATOR) ? isCreator = true : isCreator = false;
+		require (userbase.isDoer(userbase.getAgent(_keyid)) == IS.CREATOR);
+		return true;
 	} 	// https://pgp.cs.uu.nl/paths/4b6b34649d496584/to/4f723b7662e1f7b5.json
 
 // 	function isPlanning(bytes32 _intention) view external returns (uint256) { 
@@ -1756,10 +1763,31 @@ contract Creators is DataController {
 
 	function reset(address _address, bytes32 _keyid) 
 	external onlyOwner returns (bytes32) {
-		require(iam(_address));
+		require(userbase.iam(_address));
 		userbase.setAgent(_address, IS.INACTIVE);
 		return userbase.setAgent(_address, _keyid);
 	}
+
+	function trust(Trust _level) returns (bytes32) {
+		if (_level == Trust.REVOCATION) {
+			return TRUST.Revocation;
+			} else if (_level == Trust.TIMESTAMP ) {
+				return TRUST.Timestamp;
+				} else if (_level == Trust.BINARY ) {
+					return TRUST.Binary;
+					} else if (_level == Trust.CANONICAL ) {
+						return TRUST.Canonical;
+						} else if (_level == Trust.GENERIC ) {
+							return TRUST.Generic;
+							} else if (_level == Trust.PERSONA ) {
+								return TRUST.Persona;
+								} else if (_level == Trust.CASUAL ) {
+										return TRUST.Casual;
+										} else if (_level == Trust.POSITIVE ) {
+											return TRUST.Positive;
+											}
+											}
+
     event LogCall(address indexed from, address indexed to, address indexed origin, bytes _data);
     
 /* END OF CREATORS CONTRACT */

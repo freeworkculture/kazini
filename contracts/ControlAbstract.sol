@@ -59,7 +59,7 @@ contract UserDefined {
 		// 0x10	 	Split key
 		// 0x20	“A”	Authentication
 		// 0x80	 	Held by more than one person
-	enum KFlag {REVOCATION, TIMESTAMP, BINARY, CANONICAL, GENERIC, PERSONA, CASUAL, POSITIVE}
+	enum Trust {REVOCATION, TIMESTAMP, BINARY, CANONICAL, GENERIC, PERSONA, CASUAL, POSITIVE}
 
 
 /* Structs*/
@@ -203,6 +203,17 @@ contract UserDefined {
 		uint signer; //!!! GET THIS DATA FROM DATABASE
 		uint signee; //!!! GET THIS DATA FROM DATABASE
 		uint refTrust; //!!! GET THIS DATA FROM DATABASE
+	}
+
+	struct Clearance {
+		bytes32 Revocation;
+		bytes32 Timestamp;
+		bytes32 Binary;
+		bytes32 Canonical;
+		bytes32 Generic;
+		bytes32 Persona;
+		bytes32 Casual;
+		bytes32 Positive;
 	}
 
 }
