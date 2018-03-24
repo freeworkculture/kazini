@@ -1,46 +1,25 @@
 {
   "name": "FreeWork",
   "version": "1.0.0",
-  "description": "Decentralised application made to incentivise doers in a FreeWork Culture.",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/freeworkculture/FreeWork.git"
-  },
-  "bugs": {
-    "url": "https://github.com/freeworkculture/FreeWork/issues"
-  },
+  "description": "",
   "main": "truffle-config.js",
   "directories": {
     "test": "test"
   },
   "scripts": {
-    "test": "solcpiler; mocha --harmony",
-    "build": "webpack; solcpiler",
-    "dev": "webpack-dev-server"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
-  "author": "Chris Daniels",
-  "license": "GPL-3.0",
-  "dependencies": {
-    "eth-contract-class": "0.0.6"
-  },
+  "author": "",
+  "license": "ISC",
   "devDependencies": {
-    "json-loader": "~0.5",
-    "truffle-contract": "~1",
-    "webpack": "~2",
-    "webpack-dev-server": "~2",
-    "bootstrap": "~3",
-    "babel-eslint": "^7.2.3",
-    "eslint-config-airbnb": "^15.0.1",
-    "eslint-plugin-import": "^2.6.0",
-    "eslint-plugin-jsx-a11y": "^6.0.2",
-    "eslint-plugin-react": "^7.1.0",
-    "ethereumjs-testrpc": "git://github.com/perissology/testrpc.git#81216dbc",
-    "lerna": "^2.2.0",
-    "random-bytes": "^1.0.0",
-    "mocha": "^3.5.0",
-    "solcpiler": "0.0.6",
-    "web3": "git://github.com/perissology/web3.js.git#all_fixes",
-    "chai": "^4.1.0"
+    "babel-polyfill": "^6.26.0",
+    "ganache-cli": "^6.1.0",
+    "mocha": "^5.0.4",
+    "mocha-junit-reporter": "^1.17.0",
+    "truffle": "^4.1.3"
+  },
+  "dependencies": {
+    "webpack": "^4.1.1"
   }
 }

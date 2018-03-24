@@ -16,8 +16,7 @@ GNU lesser General Public License for more details.
 
 pragma solidity ^0.4.19;
 
-contract Math
-{
+contract Math {
 
 /* Constants */
 
@@ -36,10 +35,10 @@ contract Math
 /* Modifiers */
 
 /* Functions */
-    function assert(bool assertion) internal constant
-    {
-      require(assertion);
-    }
+    // function assert(bool assertion) internal constant
+    // {
+    //   require(assertion);
+    // }
     
     // @dev Parametric comparitor for > or <
     // !_sym returns a < b
