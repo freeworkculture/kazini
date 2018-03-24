@@ -13,6 +13,8 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "babel-polyfill": "^6.26.0",
+    "ganache-cli": "^6.1.0",
     "mocha": "^5.0.4",
     "mocha-junit-reporter": "^1.17.0",
     "truffle": "^4.1.3"
