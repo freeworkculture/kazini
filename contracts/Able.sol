@@ -19,6 +19,7 @@ contract BaseController is UserDefined {
     Able public contrl;
     address public owner;
     address public controller;
+    Peana internal _peana_;
     bool mutex;
     bytes32 public cName;
     uint8 V;
@@ -38,6 +39,7 @@ contract BaseController is UserDefined {
     event Fulfill(address indexed _from, address indexed _to, uint256 _amount);
     event LogNewOraclizeQuery(string description);
     event LogNewResult(string result, bytes proof);
+
 
 /* Modifiers */
 
@@ -92,6 +94,11 @@ contract BaseController is UserDefined {
         require(!mutex);
         _;
     }
+    
+    modifier toPeana {
+        Collector(_peana_).sendLog(msg.sender,this,msg.data);
+        _;
+    }
 
 /* Functions */
 
@@ -104,8 +111,13 @@ contract BaseController is UserDefined {
         return contrl;
     }
 
-    function isAble() view public returns (bytes32) {
-        contrl.KEYID;
+    function isAble() view public returns (bytes32 Able_) {
+        Able_ = contrl.KEYID();
+    }
+    
+    
+    function peana() view public returns (address) {
+        return address(_peana_);
     }
 
     // Change the owner of a contract
@@ -115,7 +127,7 @@ contract BaseController is UserDefined {
     function setOwner(address _newOwner) internal onlyOwner returns (bool) {
         assert(owner != _newOwner);
         owner = _newOwner;
-        ChangedOwner(msg.sender, owner);
+        emit ChangedOwner(msg.sender, owner);
         return true;
     }
 
@@ -125,7 +137,7 @@ contract BaseController is UserDefined {
     function setContrl(Able _newCtrl) internal onlyOwner returns (bool) {
         assert(contrl != _newCtrl);
         contrl = _newCtrl;
-        ChangedContrl(msg.sender, owner);
+        emit ChangedContrl(msg.sender, owner);
         return true;
     }
 
@@ -145,6 +157,7 @@ contract BaseController is UserDefined {
         assert(controller != address(contrl));
         controller = address(contrl);
         ChangedController(msg.sender, owner);
+        return true;
     }
 
     function verify(bytes32 _message, uint8 _v, bytes32 _r, bytes32 _s) view public returns (address) {
@@ -153,7 +166,7 @@ contract BaseController is UserDefined {
         return ecrecover(prefixedHash, _v, _r, _s);
     }
 
-    function verified(bytes32 _message, uint8 _v, bytes32 _r, bytes32 _s) view external returns (bool success) {
+    function verified(bytes32 _message, uint8 _v, bytes32 _r, bytes32 _s) view external returns  (bool success) {
         verify(_message,_v,_r,_s) == msg.sender ? success = true : success = false;
     }
 
@@ -220,7 +233,7 @@ contract DataController is BaseController {
 
     /// @notice `anybody` can Get the address of an existing contract frrom the controller.
     function getDatabase() view public returns (Database,Userbase) {
-        return (database, userbase);
+        return (database, userbase);   
     }
 }
 /* End of Data */
@@ -236,7 +249,8 @@ contract Able is DataController {
     bytes32 constant internal CONTRACTNAME = "Able";
 
 /* State Variables */
-
+    
+    // Peana internal peana;
     // This is where we keep all the contracts.
     mapping (address => bytes32) public contracts;
 
@@ -244,12 +258,17 @@ contract Able is DataController {
 /* Modifiers */
 /* Functions */
 
+    // function() onlyControlled {
+
+    // }
+
     function Able() public {
         contrl = Able(this);
         controller = this;
         cName = CONTRACTNAME;
         contracts[this] = cName;
         owner = msg.sender;
+        _peana_ = new Peana(this);
         //	database = Database(makeContract("database"));
         //  userbase = Userbase(makeContract("userbase"));
         // 	ContractEvent(this,msg.sender,tx.origin);
@@ -265,7 +284,7 @@ contract Able is DataController {
     function changeOwner(address _newOwner, bytes32 _sig) public onlyOwner returns (bool) {
         require(_sig == 0x0);
         // require(verify(_sig,_v,_r,_s) == controller);
-        setOwner(_newOwner);
+        return setOwner(_newOwner);
     }
 
     /// @notice `contrl` can step down and assign some other address to this role
@@ -274,7 +293,7 @@ contract Able is DataController {
     function changeContrl(Able _newCtrl, bytes32 _sig) public onlyOwner returns (bool) {
         require(_sig == 0x0);
         // require(verify(_sig,_v,_r,_s) == controller);
-        setContrl(_newCtrl);
+        return setContrl(_newCtrl);
         // _e.delegatecall(bytes4(sha3("setN(uint256)")), _n); // D's storage is set, E is not modified
         // contrl.delegatecall(bytes4(sha3("setContrl(address)")),_newCtrl);
 
@@ -285,8 +304,8 @@ contract Able is DataController {
     ///  0x0 can be used to create an unowned neutral vault, however that cannot be undone
     function changeController(bytes32 _sig) public onlyOwner returns (bool) {
         require(_sig == 0x0);
-        // require(verify(_sig,_v,_r,_s) == controller);
-        setController();
+        // require(verify(_sig,_v,_r,_s) == controller);        
+        return setController();
     }
     ///////////////////
 
@@ -315,11 +334,12 @@ contract Able is DataController {
     }
 
     // Remove a contract from the controller. We could also selfdestruct if we want to.
-    function removeContract(address _address, bytes32 _sig) onlyOwner external returns (bool result) {
+    function removeContract(address _address, bytes32 _sig) onlyOwner external returns  (bool result) {
         require(_sig == 0x0);
         // require(verify(_sig,_v,_r,_s) == controller);
         require(contracts[_address] != 0x0);
         // Kill any contracts we remove, for now.
+        suicide(_address);
         // bytes32 reset;
         delete contracts[_address];
         ContractCallEvent(this,msg.sender,tx.origin,CONTRACTNAME);
@@ -327,7 +347,7 @@ contract Able is DataController {
     }
 
     // // Make a new contract.
-    // function makeContract(bytes32 _base, bytes32 _sig) public returns (address contract_) {
+    // function makeContract(bytes32 _base, bytes32 _sig) public toPeana toPeana returns (address contract_) {
     // 	require(_sig == 0x0);
     // 	// require(verify(_sig,_v,_r,_s) == controller);
     //     if (_base == "database") {
@@ -344,7 +364,7 @@ contract Able is DataController {
 
 
     // // Make a new creators contract.
-    // function makeCreators(bytes32 _name) onlyController public returns (Creators create) {
+    // function makeCreators(bytes32 _name) onlyController toPeana public returns (Creators create) {
     //     create = new Creators(this,userbase,_name);
     //     contracts[create] = create.cName();
     // }
@@ -429,7 +449,7 @@ contract Database is BaseController {
     }
 /* Functions */
 
-    function Database(Able _ctrl) public {
+    function Database(Able _ctrl) public toPeana {
         cName = CONTRACTNAME;
         contrl = _ctrl;
         owner = contrl.owner();
@@ -445,12 +465,12 @@ contract Database is BaseController {
     // 	allPlans.push(_planId);
     // }
 
-    function setPromise(bytes32 _serviceId) external onlyController {
+    function setPromise(bytes32 _serviceId) external onlyController toPeana {
         require(promiseCount++ < 2^256);
         allPromises[_serviceId].push(tx.origin);
     }
 
-    function getBase() pure public returns (uint8) {
+    function getBase() public toPeana  returns (uint8) {
         return BASE;
     }
 
@@ -458,7 +478,7 @@ contract Database is BaseController {
 // All ASSERTS
 /////////////////
 
-    function isPlanning(bytes32 _intention) public view returns (uint256) {
+    function isPlanning(bytes32 _intention) view public toPeana  returns (uint256) {
         return uint256(plans[_intention].state);
     }
 
@@ -472,47 +492,47 @@ contract Database is BaseController {
 
 
     function plan(bytes32 _intention)
-    view public returns (Plan) {
+    view public toPeana returns (Plan) {
         return plans[_intention].plan;
     }
 
     function status(bytes32 _intention)
-    view public returns (Project) {
+    view public toPeana returns (Project) {
         return plans[_intention].state;
     }
 
     function precondition(bytes32 _intention, bytes32 _serviceId)
-    view public returns (Merits) {
+    view public toPeana returns (Merits) {
         return plans[_intention].services[_serviceId].definition.preCondition.merits;
     }
 
     function precondition(bytes32 _intention, bytes32 _serviceId, KBase _index)
-    view public returns (Qualification) {
+    view public toPeana returns (Qualification) {
         return plans[_intention].services[_serviceId].definition.preCondition.qualification[BASE^uint8(_index)];
     }
 
     function postcondition(bytes32 _intention, bytes32 _serviceId)
-    view public returns (Desire) {
+    view public toPeana returns (Desire) {
         return plans[_intention].services[_serviceId].definition.postCondition;
     }
 
     function metas(bytes32 _intention, bytes32 _serviceId)
-    view public returns (Metas) {
+    view public toPeana returns (Metas) {
         return plans[_intention].services[_serviceId].definition.metas;
     }
 
     function promise(bytes32 _intention, bytes32 _serviceId, address _address)
-    view public returns (Promise) {
+    view public toPeana returns (Promise) {
         return plans[_intention].services[_serviceId].procure[_address].promise;
     }
 
     function fulfillment(bytes32 _intention, bytes32 _serviceId, address _doer)
-    view public returns (Fulfillment) {
+    view public toPeana returns (Fulfillment) {
         return plans[_intention].services[_serviceId].procure[_doer].fulfillment;
     }
 
     function verification(bytes32 _intention, bytes32 _serviceId, address _doer, address _prover)
-    view public returns (Verification) {
+    view public toPeana returns (Verification) {
         return plans[_intention].services[_serviceId].procure[_doer].verification[_prover];
     }
 
@@ -523,7 +543,7 @@ contract Database is BaseController {
 
 
     function getPlan(bytes32 _intention)
-    view public returns (
+    view public toPeana returns (
     bytes32 preCondition,
     uint time,
     uint budget,
@@ -540,7 +560,7 @@ contract Database is BaseController {
     }
 
     function getStatus(bytes32 _intention)
-    view external returns (Project, bytes32 goal, bool success) {
+    view external toPeana returns  (Project, bytes32 goal, bool success) {
         return (
             plans[_intention].state,
             plans[_intention].plan.postCondition.goal,
@@ -549,9 +569,9 @@ contract Database is BaseController {
 
     function getPrecondition(
         bytes32 _intention, bytes32 _serviceId)
-    view public returns (
+    view public toPeana returns (
     uint experience,
-    uint reputation,
+    bytes32 reputation,
     bytes32 talent,
     uint8 index) {
         return (
@@ -563,7 +583,7 @@ contract Database is BaseController {
 
     function getPrecondition(
         bytes32 _intention, bytes32 _serviceId, KBase _index)
-    view public returns (
+    view public toPeana returns (
     bytes32 country,
     bytes32 cAuthority,
     bytes32 score) {
@@ -575,7 +595,7 @@ contract Database is BaseController {
 
     function getPostcondition(
         bytes32 _intention, bytes32 _serviceId)
-    view external returns (
+    view external toPeana returns  (
     bytes32 goal_,
     bool status_) {
         return (
@@ -585,7 +605,7 @@ contract Database is BaseController {
 
     function getMetas(
         bytes32 _intention, bytes32 _serviceId)
-    view external returns (
+    view external toPeana returns  (
     uint timeSoft, // preferred timeline
     uint expire,
     bytes32 hash,
@@ -601,7 +621,7 @@ contract Database is BaseController {
 
     function getPromise(
         bytes32 _intention, bytes32 _serviceId, address _address)
-    view external returns (
+    view external toPeana returns  (
     IS state,			// Intention type,
     bytes32 service,	// Intention type,
     uint256 payout, 	// Intention type,
@@ -617,7 +637,7 @@ contract Database is BaseController {
 
     function getFulfillment(
         bytes32 _intention, bytes32 _serviceId, address _doer)
-    view external returns (
+    view external toPeana returns  (
     bytes32 proof,
     Level rubric,
     uint timestamp,
@@ -631,7 +651,7 @@ contract Database is BaseController {
 
     function getVerification(
         bytes32 _intention, bytes32 _serviceId, address _doer, address _prover)
-    view external returns (
+    view external toPeana returns  (
     bytes32 verity,
     bool complete,
     uint timestamp,
@@ -652,7 +672,7 @@ contract Database is BaseController {
     //  @dev `anybody` can retrive the plan data in the contract Plan has five levels
     function setPlan(
         bytes32 _intention, Plan _planData, Project _state)
-    public payable onlyCreator {
+    public payable onlyCreator toPeana {
         require(uint(plans[_intention].state) == 0); // This is a new plan? // Cannot overwrite incomplete Plan // succesful plan??
         plans[_intention].plan = _planData;
         plans[_intention].state = _state;
@@ -666,7 +686,7 @@ contract Database is BaseController {
 
     function setService(
         bytes32 _intention, bytes32 _serviceId, Merits _merits, Qualification _qualification, KBase _index)
-    public onlyCurator {
+    public onlyCurator toPeana {
         plans[_intention].services[_serviceId].definition.preCondition.merits = _merits;
         plans[_intention].services[_serviceId].definition.preCondition.qualification[BASE^uint8(_index)] = _qualification;
         SetService(
@@ -679,7 +699,7 @@ contract Database is BaseController {
 
     function setService(
         bytes32 _intention, bytes32 _serviceId, Desire _postCondition)
-    public onlyCurator {
+    public onlyCurator toPeana {
         plans[_intention].services[_serviceId].definition.postCondition = _postCondition;
         SetService(
             tx.origin,
@@ -691,7 +711,7 @@ contract Database is BaseController {
 
     function setService(
         bytes32 _intention, bytes32 _serviceId, Metas _metas)
-    public onlyCurator {
+    public onlyCurator toPeana {
         plans[_intention].services[_serviceId].definition.metas = _metas;
         SetService(
             tx.origin,
@@ -703,28 +723,28 @@ contract Database is BaseController {
 
     function setPromise(
         bytes32 _intention, bytes32 _serviceId, address _address, Promise _data)
-    public onlyDoer {
+    public onlyDoer toPeana {
         plans[_intention].services[_serviceId].procure[_address].promise = _data;
         SetPromise(tx.origin,msg.sender,_intention,_serviceId);
     }
 
     function setOrder(
         bytes32 _intention, bytes32 _serviceId, address _address, Order _data)
-    public onlyDoer {
+    public onlyDoer toPeana {
         plans[_intention].services[_serviceId].order = _data;
         SetOrder(tx.origin,msg.sender,_intention,_serviceId);
     }
 
     function setFulfillment(
         bytes32 _intention, bytes32 _serviceId, address _doer, Fulfillment _data)
-    public onlyTrustee {
+    public onlyTrustee toPeana {
         plans[_intention].services[_serviceId].procure[_doer].fulfillment = _data;
         SetFulfillment(tx.origin,msg.sender,_intention,_serviceId);
     }
 
     function setVerification(
         bytes32 _intention, bytes32 _serviceId, address _doer, address _prover, Verification _data)
-    public onlyProver {
+    public onlyProver toPeana {
         plans[_intention].services[_serviceId].procure[_doer].verification[_prover] = _data;
         SetVerification(tx.origin,msg.sender,_intention,_serviceId);
     }
@@ -798,7 +818,7 @@ contract Userbase is BaseController {
     }
 /* Functions */
 
-    function Userbase(Able _ctrl) public {
+    function Userbase(Able _ctrl) public toPeana {
         cName = CONTRACTNAME;
         contrl = _ctrl;
         owner = contrl.owner();
@@ -810,21 +830,21 @@ contract Userbase is BaseController {
 // All ASSERTS
 /////////////////
 
-    function iam(address _address) public view returns (bool) {
+    function iam(address _address) view public toPeana returns (bool) {
         require(agents[_address].active);
         return true;
     }
 
-    function iam(bytes32 _uuids) external view returns (bool) {
+    function iam(bytes32 _uuids) view external toPeana returns (bool) {
         return iam(uuids[_uuids]);
     }
 
-    function isDoer(address _address) public view returns (IS) { // Consider use of delegateCall
+    function isDoer(address _address) view public toPeana returns (IS) { // Consider use of delegateCall
         require(agents[_address].active);
         return agents[_address].state;
     }
 
-    function isDoer(bytes32 _uuids) external view returns (IS) { // Consider use of delegateCall
+    function isDoer(bytes32 _uuids) view external toPeana returns (IS) { // Consider use of delegateCall
         return isDoer(uuids[_uuids]);
     }
 
@@ -836,7 +856,7 @@ contract Userbase is BaseController {
     /// @param _talent The talent whose frequency is being queried
     //  @dev `anybody` can retrive the talent data in the contract
     function getTalents(bytes32 _talent)
-    view external returns (uint talentK_, uint talentI_, uint talentR_, uint talentF_) {
+    view external toPeana returns  (uint talentK_, uint talentI_, uint talentR_, uint talentF_) {
         // check_condition ? true : false;
         talentK_ = talentK;
         talentI_ = talentI;
@@ -849,7 +869,7 @@ contract Userbase is BaseController {
     /// The query condition of the contract
     //  @dev `anybody` can retrive the count data in the contract
     function getAgent(address _address)
-    public view returns (bytes32 keyid_, IS state_, bool active_, uint myDoers_) {
+    view public toPeana returns (bytes32 keyid_, IS state_, bool active_, uint myDoers_) {
         return (
             agents[_address].keyId,
             agents[_address].state,
@@ -858,7 +878,7 @@ contract Userbase is BaseController {
     }
 
     function getAgent(bytes32 _uuid)
-    external view returns (address) { // Point this to oraclise service checking MSD on
+    view external toPeana returns (address) { // Point this to oraclise service checking MSD on
         return uuids[_uuid];	// https://pgp.cs.uu.nl/paths/4b6b34649d496584/to/4f723b7662e1f7b5.json
     }
 
@@ -874,7 +894,7 @@ contract Userbase is BaseController {
     /// The query condition of the contract
     //  @dev `anybody` can retrive the plan data in the contract Plan has five levels
 
-    function incTalent() payable public onlyDoer returns (bool) {
+    function incTalent() payable public onlyDoer toPeana returns (bool) {
         bytes32 _talent_;
         (,,_talent_,,) = Doers(msg.sender).merits();
         if (talentF[_talent_] == 0) {  // First time Doer
@@ -885,7 +905,7 @@ contract Userbase is BaseController {
         require(talentK++ < 2^256);
     }
 
-    function decTalent() payable public onlyDoer returns (bool) {
+    function decTalent() payable public onlyDoer toPeana returns (bool) {
         bytes32 _talent_;
         (,,_talent_,,) = Doers(msg.sender).merits();
         require(talentF[_talent_]-- > 0);
@@ -895,7 +915,7 @@ contract Userbase is BaseController {
         require(talentI-- > 0);
     }
 
-    function initCreator(address _address) public returns (bool) {
+    function initCreator(address _address) public toPeana returns (bool) {
         require(doerCount++ < 2^256);
         bytes32 keyid_;
         bytes32 uuid_;
@@ -909,7 +929,7 @@ contract Userbase is BaseController {
         return agents[_address].active;
     }
 
-    function initAgent(Doers _address) external onlyControlled returns (bool) {
+    function initAgent(Doers _address) external onlyControlled toPeana returns (bool) {
         require(doerCount++ < 2^256 && _address.ringlength() == 0); //(0) == 0x0);
         bytes32 uuid_ = _address.UUID();
         bytes32 keyid_ = _address.KEYID();
@@ -924,35 +944,35 @@ contract Userbase is BaseController {
         return agents[_address].active;
     }
 
-    function incAgent(address _address) public { // Decrement a Creators Doers
+    function incAgent(address _address) public toPeana { // Decrement a Creators Doers
         require(agents[_address].myDoers++ < 2^256);
     }
 
-    function decAgent(address _address) public { // Decrement a Creators Doers
+    function decAgent(address _address) public toPeana { // Decrement a Creators Doers
         require(agents[_address].myDoers-- > 0);
     }
 
     function setAgent(address _address, bytes32 _keyId)
-    external onlyControlled returns (bytes32) {
+    external onlyControlled toPeana returns (bytes32) {
         return agents[_address].keyId = _keyId;
     }
 
     function setAgent(address _address, IS _state)
-    external onlyControlled returns (IS) {
+    external onlyControlled toPeana returns (IS) {
         return agents[_address].state = _state;
     }
 
     function setAgent(address _address, bool _active)
-    external onlyControlled returns (bool) {
+    external onlyControlled toPeana returns (bool) {
         return agents[_address].active = _active;
     }
 
     function setAgent(address _address, uint _myDoers)
-    external onlyControlled returns (uint) {
+    external onlyControlled toPeana returns (uint) {
         return agents[_address].myDoers = _myDoers;
     }
 
-    function setAllPromises(bytes32 _serviceId) external onlyControlled {
+    function setAllPromises(bytes32 _serviceId) external onlyControlled toPeana {
         require(promiseCount++ < 2^256);
         allPromises[tx.origin].push(_serviceId);
     }
@@ -1007,17 +1027,78 @@ contract Userbase is BaseController {
 contract Doers is UserDefined {
 
 /* Constant */
-/* State Variables */
-/* Events */
-/* Modifiers */
-/* Functions */
-/* End of Contract */
+
 
     bytes32 constant public CONTRACTNAME = "DOER 0.0118";
     bytes32 public MASK = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
-    bool public init;
+
+/* User Types */
 
     enum BE {NULL, QUALIFICATION, EXPERIENCE, REPUTATION, TALENT}
+
+/* State Variables */
+
+    Creators internal creator;
+    Userbase internal userbase;
+
+    address public owner;
+    address internal peana;
+    address internal proxyKey;
+    address internal proxyBDI;
+
+    bool public init;
+    bytes32 public KEYID;
+    bytes32 public UUID;
+    Merits public merits = bdi.beliefs.merits;
+    uint public promiseCount;
+    uint public orderCount;
+    uint public fulfillmentCount;
+
+    SomeDoer internal Iam;// = SomeDoer(0x4fc6c65443d1b988, "whoiamnottelling", 346896000, "Iam", "Not", false);
+
+    BDI internal bdi;
+// 	mapping (bytes32 => bytes32) promises;
+
+    uint8 BASE; // !!! GET THIS DATA FROM DATABASE
+    uint8 rate = 10; // !!! GET THIS DATA FROM DATABASE
+    uint year = 31536000; // !!! GET THIS DATA FROM DATABASE
+    uint period = 31536000; // !!! GET THIS DATA FROM DATABASE
+
+    // mapping (bool => BE) callBackState;
+    // mapping (bytes32 => bool) callBackData;
+    mapping (bytes32 => mapping (bool => BE)) callBackState;
+
+    bytes32[] public keyring;
+    uint public ringlength;
+    Reputation public reputation;
+
+    mapping (bytes32 => uint) keyIndex;
+
+    //Creators.Flag aflag;
+
+
+
+/* Events */
+
+////////////////
+// Events
+////////////////
+    event ContractEvent(address indexed _this, address indexed _sender, address indexed _origin);
+// 	event ContractCallEvent(address indexed _this, address indexed _sender, address indexed _origin, bytes32 _data);
+// 	event QualificationEvent(address indexed _this, address indexed _sender, address indexed _origin, bytes16 _message, bytes _data);
+// 	event PlanEvent(address indexed _from, address indexed _to, uint256 _amount);
+//     event PromiseEvent(address indexed _from, address indexed _to, uint256 _amount);
+//     event Fulfill(address indexed _from, address indexed _to, uint256 _amount);
+// 	event LogNewOraclizeQuery(string description);
+//     event LogNewResult(bytes32 result, bytes proof);
+    event LogKeyRing(uint _length, bytes32 _data, uint _index);
+    event LogSigning(address indexed _this, address indexed _sender, address indexed _origin, address _data, bytes32 _result);
+    event LogSigned(address indexed _this, address indexed _sender, address indexed _origin, bytes _data, bytes32 _result);
+    event LogTrusted(address indexed _this, address indexed _sender, address indexed _origin, bytes _data, bytes32 _result);
+    event LogRevoking(address indexed _this, address indexed _sender, address indexed _origin, bytes _data, bytes32 _result);
+    event LogSetbdi(address indexed _this, address indexed _sender, address indexed _origin, bytes32 _keyid, bytes32 _uuid, bytes32 _callid);
+
+/* Modifiers */
 
     modifier onlyCreator {
         require(creator.isCreator());
@@ -1043,45 +1124,20 @@ contract Doers is UserDefined {
         require(msg.sender == proxyKey || msg.sender == owner);
         _;
     }
+    
+    modifier toPeana {
+        Collector(creator.peana()).sendLog(msg.sender,this,msg.data);
+        _;
+    }
 
-    bytes32 public KEYID;
-    bytes32 public UUID;
-    Merits public merits = bdi.beliefs.merits;
-    uint public promiseCount;
-    uint public orderCount;
-    uint public fulfillmentCount;
 
-    Creators internal creator;
-    Userbase internal userbase;
-    address public owner;
-    address internal proxyKey;
-    address internal proxyBDI;
 
-    SomeDoer internal Iam;// = SomeDoer(0x4fc6c65443d1b988, "whoiamnottelling", 346896000, "Iam", "Not", false);
+/* Functions */
 
-    BDI internal bdi;
-// 	mapping (bytes32 => bytes32) promises;
-
-    uint8 BASE; // !!! GET THIS DATA FROM DATABASE
-    uint8 rate = 10; // !!! GET THIS DATA FROM DATABASE
-    uint year = 31536000; // !!! GET THIS DATA FROM DATABASE
-    uint period = 31536000; // !!! GET THIS DATA FROM DATABASE
-
-    // mapping (bool => BE) callBackState;
-    // mapping (bytes32 => bool) callBackData;
-    mapping (bytes32 => mapping (bool => BE)) callBackState;
-
-    bytes32[] public keyring;
-    uint public ringlength;
-    Reputation public reputation;
-
-    mapping (bytes32 => uint) keyIndex;
-
-    //Creators.Flag aflag;
-
-    function Doers(Creators _creator, SomeDoer _adoer) public {
+    function Doers(Creators _creator, SomeDoer _adoer) public toPeana {
         creator = _creator;
         owner = tx.origin;
+        peana = _creator.peana();
         MASK = _creator.DOER();
         proxyKey = _creator.proxyKey();
         proxyBDI = _creator.proxyBDI();
@@ -1091,7 +1147,7 @@ contract Doers is UserDefined {
         emit ContractEvent(this, msg.sender, tx.origin);
     }
 
-    function updateIndex() internal returns (bool) {
+    function updateIndex() internal toPeana returns (bool) {
         uint8 kbase = uint8(KBase.DOCTORATE);
         while (bdi.beliefs.qualification[kbase].cAuthority == 0x0) {
             // merit == 0 ? bdi.beliefs.index = merit : merit --;
@@ -1113,12 +1169,14 @@ contract Doers is UserDefined {
             }
         BASE = T + R + q;
 
+        Collector(creator.peana()).updateLog(keccak256("updateIndex()"),true);
+
     }
 
 /////////////////
 // All HELPERS
 /////////////////
-// function bytesToString(bytes32 _bytes) public constant returns (string) {
+// function bytesToString(bytes32 _bytes) public toPeana constant returns (string) {
 
 //     // string memory str = string(_bytes);
 //     // TypeError: Explicit type conversion not allowed from "bytes32" to "string storage pointer"
@@ -1135,8 +1193,10 @@ contract Doers is UserDefined {
 // All ASSERTERS
 /////////////////
 
-    function iam() view public returns (bool) {
-        return creator.iam();
+    function iam() view public toPeana returns (bool iam) {
+        iam = creator.iam();
+        Collector(creator.peana()).updateLog(keccak256("iam()"),iam);
+        return iam;
     }
 
 /////////////////
@@ -1144,23 +1204,36 @@ contract Doers is UserDefined {
 /////////////////
 
     function getDoer()
-    view external returns (
+    view external toPeana returns  (
     bytes32 fPrint,
+    bool iam_,
     bytes32 email,
     bytes32 fName,
+    bytes32 lName,
+    uint age,
     bytes32 data) {
-        return(
-            Iam.fPrint,
-            Iam.email,
-            Iam.fName,
-            Iam.data);
+        Collector(creator.peana()).updateLog(
+            keccak256("getDoer()"),
+            keccak256(Iam.fPrint),
+            keccak256(this.iam()),
+            keccak256(Iam.email),
+            keccak256(Iam.fName),
+            keccak256(Iam.lName),
+            keccak256(Iam.age),
+            keccak256(Iam.data));
+        return(Iam.fPrint,this.iam(),Iam.email,Iam.fName,Iam.lName,Iam.age,Iam.data);
     }
 
     function getBelief(KBase _kbase)
-    view external returns (
+    view external toPeana returns  (
     bytes32 country_,
     bytes32 cAuthority_,
     bytes32 score_) {
+        Collector(creator.peana()).updateLog(
+            keccak256("getBelief(KBase)"),
+            bdi.beliefs.qualification[uint8(_kbase)].country,
+            bdi.beliefs.qualification[uint8(_kbase)].cAuthority,
+            bdi.beliefs.qualification[uint8(_kbase)].score);
         return (
             bdi.beliefs.qualification[uint8(_kbase)].country,
             bdi.beliefs.qualification[uint8(_kbase)].cAuthority,
@@ -1168,14 +1241,23 @@ contract Doers is UserDefined {
     }
 
     function getDesire(bytes1 _desire)
-    view external returns (bytes32,bool) {
+    view external toPeana returns  (bytes32,bool) {
+        Collector(creator.peana()).updateLog(
+            keccak256("getBelief(KBase)"),
+            bdi.desires[_desire].goal,
+            bdi.desires[_desire].status);        
         return (
             bdi.desires[_desire].goal,
             bdi.desires[_desire].status);
     }
 
     function getIntention(bool _intention)
-    view external returns (IS,bytes32,uint256) {
+    view external toPeana returns  (IS,bytes32,uint256) {
+        Collector(creator.peana()).updateLog(
+            keccak256("getBelief(KBase)"),
+            bdi.intentions[_intention].state,
+            bdi.intentions[_intention].service,
+            bdi.intentions[_intention].payout);
         return (
             bdi.intentions[_intention].state,
             bdi.intentions[_intention].service,
@@ -1186,12 +1268,16 @@ contract Doers is UserDefined {
 // All SETTERS
 /////////////////
 
-    function init() external returns (bool) {
+    function init() external toPeana returns  (bool) {
         require(msg.sender == owner && !init);
-        return init = creator.initDoer();
+        init = creator.initDoer();
+        Collector(creator.peana()).updateLog(
+            keccak256("getBelief(KBase)"),
+            init);
+        return init;
     }
 //
-    function sign(address _address) onlyOwner public returns (uint, bool signed) {
+    function sign(address _address) public onlyOwner toPeana returns (uint, bool signed) {
 
         emit LogSigning(this, msg.sender, tx.origin, _address, keyXOR);
 
@@ -1215,11 +1301,19 @@ contract Doers is UserDefined {
             }
             keyIndex[keyXOR] = 0;
             emit LogKeyRing(ringlength,keyring[keyIndex[keyXOR]],keyIndex[keyXOR]);
+
+            Collector(creator.peana()).updateLog(
+            keccak256("sign(address)"),
+            ringlength,
+            keyring[keyIndex[keyXOR]],
+            keyIndex[keyXOR],
+            signed);
+
             return (ringlength,signed);
         }
     }
 
-    function sign() external onlyDoer returns (uint, bool signed) { // padd left before using bytes32(uint256(this) << 96)
+    function sign() external onlyDoer toPeana returns (uint, bool signed) { // padd left before using bytes32(uint256(this) << 96)
         require(msg.sender != owner);
         bytes32 keyXOR = bytes32(uint256(this)) ^ bytes32(uint256(msg.sender));
         bytes memory callData = msg.data;
@@ -1235,10 +1329,16 @@ contract Doers is UserDefined {
         signed = true;
 
         emit LogKeyRing(ringlength,keyring[keyIndex[keyXOR]],keyIndex[keyXOR]);
+        Collector(creator.peana()).updateLog(
+            keccak256("sign()"),
+            ringlength,
+            keyring[keyIndex[keyXOR]],
+            keyIndex[keyXOR],
+            signed);
         return (ringlength,signed);
     }
 
-    function revoke(address _address) external onlyDoer returns (uint, bool revoked) { // pad left bytes32(uint256(this) << 96) before using
+    function revoke(address _address) external onlyDoer toPeana returns (uint, bool revoked) { // pad left bytes32(uint256(this) << 96) before using
         require(keyring.length > 0);
 
         bytes memory callData = msg.data;
@@ -1259,11 +1359,18 @@ contract Doers is UserDefined {
             require(reputation.signer-- > 0);
             return (reputation.signer,revoked);
         }
+
         emit LogKeyRing(ringlength,keyXOR,keyIndex[keyXOR]);
+        Collector(creator.peana()).updateLog(
+            keccak256("revoke(address)"),
+            ringlength,
+            keyXOR,
+            keyIndex[keyXOR],
+            revoked);
         return (ringlength,revoked);
     }
 
-    function revoke() external onlyDoer returns (uint, bool revoked) { // pad left bytes32(uint256(this) << 96) before using
+    function revoke() external onlyDoer toPeana returns (uint, bool revoked) { // pad left bytes32(uint256(this) << 96) before using
         require(keyring.length > 1 && msg.sender != owner);
         bytes32 keyXOR = bytes32(uint256(this)) ^ bytes32(uint256(msg.sender));
         require (address(keyXOR) == address(keyring[keyIndex[keyXOR]]));
@@ -1280,10 +1387,16 @@ contract Doers is UserDefined {
         revoked == true;
 
         emit LogKeyRing(ringlength,keyXOR,keyIndex[keyXOR]);
+        Collector(creator.peana()).updateLog(
+            keccak256("revoke()"),
+            ringlength,
+            keyXOR,
+            keyIndex[keyXOR],
+            revoked);
         return (ringlength,revoked);
     }
 
-    function trust(Trust _level) returns (bool) {
+    function trust(Trust _level) toPeana returns (bool) {
         require((keyring.length > 0) && (keyring.length < 2^256));
         bytes32 keyXOR = bytes32(uint256(this)) ^ bytes32(uint256(msg.sender));
         uint num = keyIndex[keyXOR];
@@ -1291,18 +1404,28 @@ contract Doers is UserDefined {
         keyXOR = keyring[num];
         bytes memory callData = msg.data;
         emit LogTrusted(this, msg.sender, tx.origin, callData, keyXOR);
+        // if (((keyXOR >> 192) << 240) > (creator.trust(_level) << 48)) {
+        //     keyXOR &= 0xffffffffffff00ffffffffffffffffffffffffffffffffffffffffffffffffff;   // RESET THE TRUST FLAG FIRST
+        // }
         keyXOR &= 0xffffffffffff00ffffffffffffffffffffffffffffffffffffffffffffffffff;   // RESET THE TRUST FLAG FIRST
         keyXOR |= creator.trust(_level);    // NO ADDING UP, JUST SET CUMULATIVE VALUE
         keyring[num] = keyXOR;
         emit LogKeyRing(ringlength,keyring[keyIndex[keyXOR]],keyIndex[keyXOR]);
+        Collector(creator.peana()).updateLog(
+            keccak256("trust(Trust)"),
+            ringlength,
+            keyring[keyIndex[keyXOR]],
+            keyIndex[keyXOR],
+            true);
+
         return true;
     }
 
-    function incSigns(bytes32 _keyd) external ProxyKey returns (uint) {
+    function incSigns(bytes32 _keyd) external ProxyKey toPeana returns (uint) {
         require(reputation.signer++ < 2^256);
         return reputation.signer;
     }
-    function decSigns(bytes32 _keyd) external ProxyKey returns (uint) {
+    function decSigns(bytes32 _keyd) external ProxyKey toPeana returns (uint) {
         require(reputation.signer-- > 0);
         return reputation.signer;
     }
@@ -1313,7 +1436,7 @@ contract Doers is UserDefined {
         bytes32 _cAuthority,
         bytes32 _score,
         uint _year)
-    external ProxyBDI {
+    external ProxyBDI toPeana returns(bool index_) {
         bytes32 callid = keccak256(msg.data);
         if(msg.sender == owner) {
             Doers(proxyBDI).setbdi(_kbase,_country,_cAuthority,_score,_year);
@@ -1331,9 +1454,11 @@ contract Doers is UserDefined {
             bdi.beliefs.merits.experience = _year;
             callBackState[callid][true] = callBackState[callid][false];
             delete callBackState[callid][false];
-            updateIndex();
+            index_ = updateIndex();
+            Collector(creator.peana()).updateLog(
+            keccak256("setbdi(KBase,bytes32,bytes32,bytes32,uint)"),
+            index_);
         }
-
     }
 
     function setbdi(
@@ -1341,8 +1466,8 @@ contract Doers is UserDefined {
         uint _refRank,
         uint _refSigned,
         uint _refSigs,
-        uint _refTrust)
-    external ProxyBDI {
+        bytes32 _refTrust)
+    external ProxyBDI toPeana returns (bool index_) {
         bytes32 callid = keccak256(msg.data);
         if(msg.sender == owner) {
             Doers(proxyBDI).setbdi(_refMSD,_refRank,_refSigs,_refSigned,_refTrust);
@@ -1356,11 +1481,14 @@ contract Doers is UserDefined {
             bdi.beliefs.merits.reputation = _refTrust;
             callBackState[callid][true] = callBackState[callid][false];
             delete callBackState[callid][false];
-            updateIndex();
+            index_ = updateIndex();
+            Collector(creator.peana()).updateLog(
+            keccak256("setbdi(uint,uint,uint,uint,uint)"),
+            index_);
         }
     }
 
-    function setbdi(bytes32 _talent) external ProxyBDI {
+    function setbdi(bytes32 _talent) external ProxyBDI toPeana returns (bool index_) {
         bytes32 callid = keccak256(msg.data);
         if(msg.sender == owner) {
             Doers(proxyBDI).setbdi(_talent);
@@ -1378,40 +1506,33 @@ contract Doers is UserDefined {
             }
             callBackState[callid][true] = callBackState[callid][false];
             delete callBackState[callid][false];
-            updateIndex();
+            index_ = updateIndex();
+            Collector(creator.peana()).updateLog(
+            keccak256("setbdi(bytes32)"),
+            index_);
             }
-
     }
 
-    function setbdi(bytes1 _desire, Desire _goal) public onlyDoer {
+    function setbdi(bytes1 _desire, Desire _goal) public onlyDoer toPeana {
         bdi.desires[_desire] = _goal;
+         Collector(creator.peana()).updateLog(
+            keccak256("setbdi(bytes1,Desire)"),
+            true);
     }
 
-    function setbdi(bool _intention, Intention _service) public onlyDoer {
+    function setbdi(bool _intention, Intention _service) public onlyDoer toPeana {
         bdi.intentions[_intention] = _service;
+        Collector(creator.peana()).updateLog(
+            keccak256("setbdi(bytes1,Desire)"),
+            true);
     }
 
-////////////////
-// Events
-////////////////
-    event ContractEvent(address indexed _this, address indexed _sender, address indexed _origin);
-// 	event ContractCallEvent(address indexed _this, address indexed _sender, address indexed _origin, bytes32 _data);
-// 	event QualificationEvent(address indexed _this, address indexed _sender, address indexed _origin, bytes16 _message, bytes _data);
-// 	event PlanEvent(address indexed _from, address indexed _to, uint256 _amount);
-//     event PromiseEvent(address indexed _from, address indexed _to, uint256 _amount);
-//     event Fulfill(address indexed _from, address indexed _to, uint256 _amount);
-// 	event LogNewOraclizeQuery(string description);
-//     event LogNewResult(bytes32 result, bytes proof);
-    event LogKeyRing(uint _length, bytes32 _data, uint _index);
-    event LogSigning(address indexed _this, address indexed _sender, address indexed _origin, address _data, bytes32 _result);
-    event LogSigned(address indexed _this, address indexed _sender, address indexed _origin, bytes _data, bytes32 _result);
-    event LogTrusted(address indexed _this, address indexed _sender, address indexed _origin, bytes _data, bytes32 _result);
-    event LogRevoking(address indexed _this, address indexed _sender, address indexed _origin, bytes _data, bytes32 _result);
-    event LogSetbdi(address indexed _this, address indexed _sender, address indexed _origin, bytes32 _keyid, bytes32 _uuid, bytes32 _callid);
+
+/* End of Doers Contract */
 }
 
 // interface SomeDoers {
-// 	function Doers(SomeDoer _aDoer) returns (bool);
+// 	function Doers(SomeDoer _aDoer) toPeana returns (bool);
 // 	}
 
 contract ProxyKey is BaseController {
@@ -1441,23 +1562,171 @@ contract ProxyKey is BaseController {
         emit LogData(msg.sender, msg.data, callParam, newcallparam, newaddress);
     }
 
-    function ProxyKey() {
+    function ProxyKey() toPeana {
         emit ContractEvent(this,msg.sender,tx.origin);
     }
 
-    function bytesToBytes32(bytes _data) constant returns (bytes32 result) {
+    function bytesToBytes32(bytes _data) constant toPeana returns (bytes32 result) {
         assembly {
             result := mload(add(_data, 32))
         }
     }
 
-    function execute(address _receiver) returns (bool) {
+    function execute(address _receiver) toPeana returns (bool) {
         emit LogCall(msg.sender,this,_receiver);
         return _receiver.call(callParam);
 
     }
 /* End of ProxyKey Contract */
 }
+
+///////////////////
+// Beginning of Contract
+///////////////////
+
+contract Collector is UserDefined {
+    
+        
+    function sendLog(address _address, address _address2, bytes _data) view external returns (bool) {
+        return true;
+    }
+    
+    function updateLog(bytes32 _funcSignature, bool _result) pure external returns (bool) {
+        return true;
+    }
+    
+    function updateLog(bytes32 _funcSignature, address _result) pure external returns (bool) {
+        return true;
+    }
+    
+    function updateLog(
+        bytes32 _funcSignature, 
+        bytes32 _result0, 
+        bool _result1) pure external returns (bool) {
+        return true;
+    }
+    
+    function updateLog(
+        bytes32 _funcSignature, 
+        bytes32 _result0, 
+        bytes32 _result1) pure external returns (bool) {
+        return true;
+    }
+    
+    function updateLog(
+        bytes32 _funcSignature, 
+        IS _result0, 
+        bytes32 _result1,
+        uint _result2) pure external returns (bool) {
+        return true;
+    }
+            
+    function updateLog(
+        bytes32 _funcSignature, 
+        uint _result0, 
+        bytes32 _result1,
+        uint _result2,
+        bool _results3) pure external returns (bool) {
+        return true;
+    }
+    
+    function updateLog(
+        bytes32 _funcSignature, 
+        bytes32 _result0, 
+        bytes32 _result1,
+        bytes32 _result2) pure external returns (bool) {
+        return true;
+    }
+    
+    function updateLog(
+        bytes32 _funcSignature, 
+        bytes32 _result0, 
+        bytes32 _result1,
+        bytes32 _result2,
+        bytes32 _result3,
+        bytes32 _result4,
+        bytes32 _result5,
+        bytes32 _result6) pure external returns (bool) {
+        return true;
+    }
+}
+
+contract Peana is BaseController {
+
+/* Constant */
+
+    Able contrl;
+    
+/* State Variables */
+/* Events */
+
+    event ContractEvent(address indexed _this, address indexed _sender, address indexed _origin);
+    event LogMsgData(address sender, bytes calldata, bytes _data);
+    event LogCall(address indexed from, address indexed to, address _keyd);
+    event LogHash(address indexed from, address indexed to, address _keyd, bytes32 _data);
+    event LogProxyCall(address indexed from, address indexed to, bytes32 _data);
+    event LogProxyResult(address indexed from, address indexed to, bytes32 _data, bytes32 _result);
+
+/* Modifiers */
+/* Functions */
+
+
+    function Peana(Able _ctrl) {
+        contrl = _ctrl;
+        emit ContractEvent(this,msg.sender,tx.origin);
+    }
+
+    bytes public callParam;
+    mapping (address => mapping (bool => bytes)) callData;
+
+      //prime the data using the fallback function.
+    function() payable {
+        callData[msg.sender][false] = msg.data;
+        delete callData[msg.sender][true];
+    }
+
+    function execute(address _address, bool _success) external onlyControlled toPeana returns (bool) {
+        require (callData[_address][true].length == 0);
+        bytes memory _data = callData[msg.sender][false];
+        bytes32 _hash = keccak256(_data);
+        callData[msg.sender][true] = toBytes(_hash);
+        delete callData[msg.sender][false];
+        if (snarkProof(_address, _data, _success)) {
+            ///!!! INSERT SNARK PROOF FUNCTION HERE
+
+            LogProxyCall(msg.sender,this,_hash);
+        } else {
+            ///!!! INSERT SNARK PROOF FUNCTION HERE
+
+            LogProxyResult(msg.sender,this,_hash,"default");
+            return Doers(_address).call(callData[msg.sender][true]);
+        }
+    }
+
+    function toBytes(bytes32 _bytes32) pure internal returns (bytes) {
+
+        // string memory str = string(_bytes32);
+        // TypeError: Explicit type conversion not allowed from "bytes32" to "string storage pointer"
+        // thus we should fist convert bytes32 to bytes (to dynamically-sized byte array)
+
+        bytes memory bytesArray = new bytes(32);
+        for (uint256 i; i < 32; i++) {
+            bytesArray[i] = _bytes32[i];
+            }
+        return bytesArray;
+    }
+
+    function toBytes32() toPeana returns (bytes32) {
+        return bytes32(uint256(msg.sender) << 96);
+    }
+
+    function snarkProof(address _address, bytes _data, bool success) toPeana returns (bool) {
+        // !!! STUB: FOR SNARK PROOF IMPLEMENTATION
+        return true;
+    }
+/* End of ProxyBDI Contract */
+}
+
 
 contract ProxyBDI is BaseController {
 
@@ -1491,7 +1760,7 @@ contract ProxyBDI is BaseController {
         delete callData[msg.sender][true];
     }
 
-    function execute(address _address, bool _success) external onlyControlled returns (bool) {
+    function execute(address _address, bool _success) external onlyControlled toPeana returns (bool) {
         require (callData[_address][true].length == 0);
         bytes memory _data = callData[msg.sender][false];
         bytes32 _hash = keccak256(_data);
@@ -1509,7 +1778,7 @@ contract ProxyBDI is BaseController {
         }
     }
 
-    function toBytes(bytes32 _bytes32) internal pure returns (bytes) {
+    function toBytes(bytes32 _bytes32) pure internal returns (bytes) {
 
         // string memory str = string(_bytes32);
         // TypeError: Explicit type conversion not allowed from "bytes32" to "string storage pointer"
@@ -1522,16 +1791,17 @@ contract ProxyBDI is BaseController {
         return bytesArray;
     }
 
-    function toBytes32() returns (bytes32) {
+    function toBytes32() toPeana returns (bytes32) {
         return bytes32(uint256(msg.sender) << 96);
     }
 
-    function snarkProof(address _address, bytes _data, bool success)  returns (bool) {
+    function snarkProof(address _address, bytes _data, bool success)  toPeana returns (bool) {
         // !!! STUB: FOR SNARK PROOF IMPLEMENTATION
         return true;
     }
 /* End of ProxyBDI Contract */
 }
+
 
 ///////////////////
 // Beginning of Contract
@@ -1546,10 +1816,16 @@ contract DoersFactory {
     Creators internal creator;
 
 /* Events */
-/* Modifiers */
 
     event LogNewDoer(address indexed from, address indexed to, address indexed origin, address _newdoer);
     event ContractEvent(address indexed _this, address indexed _sender, address indexed _origin);
+    
+/* Modifiers */
+
+    modifier toPeana {
+        Collector(creator.peana()).sendLog(msg.sender,this,msg.data);
+        _;
+    }
 
 /* Functions */
 
@@ -1570,21 +1846,24 @@ contract DoersFactory {
         bytes32 _keyId,
         bytes32 _data,
         uint _birth)
-    public returns (address) {
-        userbase.decAgent(_introducer);
-        bytes32 uuidCheck = keccak256(_fPrint, _idNumber, _lName, _birth);
-        Doers newDoer = new Doers(creator,UserDefined.SomeDoer({
-            fPrint: _fPrint,
-            idNumber: _idNumber,
-            email: _email,
-            fName: _fName,
-            lName: _lName,
-            uuid: uuidCheck,
-            keyid: _keyId,
-            data: _data,
-            age: _birth}));
-        emit LogNewDoer(this,msg.sender,tx.origin,address(newDoer));
-        return newDoer;
+        public toPeana returns (address) {
+            userbase.decAgent(_introducer);
+            bytes32 uuidCheck = keccak256(_fPrint, _idNumber, _lName, _birth);
+            Doers newDoer = new Doers(creator,UserDefined.SomeDoer({
+                fPrint: _fPrint,
+                idNumber: _idNumber,
+                email: _email,
+                fName: _fName,
+                lName: _lName,
+                uuid: uuidCheck,
+                keyid: _keyId,
+                data: _data,
+                age: _birth}));
+            emit LogNewDoer(this,msg.sender,tx.origin,address(newDoer));
+            Collector(creator.peana()).updateLog(
+            keccak256("setbdi(makeDoer(address,bytes32,bytes32,bytes32,bytes32,bytes32,bytes32,bytes32,uint)"),
+            newDoer);
+            return newDoer;
     }
 
 /* End of Contract */
@@ -1641,13 +1920,21 @@ contract Creators is DataController {
 
     Clearance internal TRUST = Clearance({
         Zero:       0x01ff << 192,
+        // Zero:       0x01ff << 192,
         Unknown:    0x03ff << 192,
+        // Unknown:    0x02ff << 192,
         Generic:    0x07ff << 192,
+        // Generic:    0x04ff << 192,
         Poor:       0xF0ff << 192,
+        // Poor:       0x08ff << 192,
         Casual:     0xF1ff << 192,
+        // Casual:     0x10ff << 192,
         Partial:    0xF3ff << 192,
+        // Partial:    0x20ff << 192,
         Complete:   0xF7ff << 192,
+        // Complete:   0x40ff << 192,
         Ultimate:   0xFFff << 192
+        // Ultimate:   0x80ff << 192
     });
 
     address public proxyKey;
@@ -1655,7 +1942,7 @@ contract Creators is DataController {
 
     // mapping (address => mapping (bool => bytes)) callData;
 
-    function Creators(Able _ctrl, Userbase _ubs) public {
+    function Creators(Able _ctrl, Userbase _ubs) public toPeana {
         cName = CONTRACTNAME;
         contrl = _ctrl;
         userbase = _ubs;
@@ -1670,39 +1957,39 @@ contract Creators is DataController {
 // All ASSERTS
 /////////////////
 
-    function isAble() view public returns (bytes32) {
+    function isAble() view public toPeana returns (bytes32) {
         return contrl.KEYID();
     }
 
-    function Iam() view public returns (IS) {
+    function Iam() view public toPeana returns (IS) {
         return userbase.isDoer(msg.sender);
     }
 
-    function iam() view public returns (bool) {
+    function iam() view public toPeana returns (bool) {
         return userbase.iam(msg.sender);
     }
 
-    function isDoer() public view returns (bool) { // Consider use of delegateCall
+    function isDoer() public toPeana view returns (bool) { // Consider use of delegateCall
         require (userbase.isDoer(msg.sender) != IS.CREATOR);
         return true;
     }	// https://pgp.cs.uu.nl/paths/4b6b34649d496584/to/4f723b7662e1f7b5.json
 
-    function isDoer(bytes32 _keyid) public view returns (bool isDoer) { // Consider use of delegateCall
+    function isDoer(bytes32 _keyid) public toPeana view returns (bool isDoer) { // Consider use of delegateCall
         require (userbase.isDoer(userbase.getAgent(_keyid)) != IS.CREATOR);
         return true;
     }	// https://pgp.cs.uu.nl/paths/4b6b34649d496584/to/4f723b7662e1f7b5.json
 
-    function isCreator() view external returns (bool isCreator) { // Point this to oraclise service checking MSD on
+    function isCreator() view external toPeana returns  (bool isCreator) { // Point this to oraclise service checking MSD on
         require (userbase.isDoer(msg.sender) == IS.CREATOR);
         return true;
     } 	// https://pgp.cs.uu.nl/paths/4b6b34649d496584/to/4f723b7662e1f7b5.json
 
-    function isCreator(bytes32 _keyid) view external returns (bool isCreator) { // Point this to oraclise service checking MSD on
+    function isCreator(bytes32 _keyid) view external toPeana returns  (bool isCreator) { // Point this to oraclise service checking MSD on
         require (userbase.isDoer(userbase.getAgent(_keyid)) == IS.CREATOR);
         return true;
     } 	// https://pgp.cs.uu.nl/paths/4b6b34649d496584/to/4f723b7662e1f7b5.json
 
-// 	function isPlanning(bytes32 _intention) view external returns (uint256) {
+// 	function isPlanning(bytes32 _intention) view external toPeana returns  (uint256) {
 //         return userbase.isPlanning(_intention);
 //     }
 
@@ -1714,12 +2001,12 @@ contract Creators is DataController {
     /// @param _address The query condition of the contract
     //  @dev `anybody` can retrive the count data in the contract
     function getAgent(address _address)
-    view public returns (bytes32 keyid_, IS state_, bool active_, uint myDoers_) {
+    view public toPeana returns (bytes32 keyid_, IS state_, bool active_, uint myDoers_) {
         return userbase.getAgent(_address);
     }
 
     function getAgent(bytes32 _uuid)
-    view external returns (bytes32 keyid_, IS state_, bool active_, uint myDoers_) {
+    view external toPeana returns  (bytes32 keyid_, IS state_, bool active_, uint myDoers_) {
         return userbase.getAgent(userbase.getAgent(_uuid));
     }
 
@@ -1727,12 +2014,12 @@ contract Creators is DataController {
 // All SETTERS
 /////////////////
 
-    function initDoer() returns (bool) {
+    function initDoer() toPeana returns (bool) {
         return userbase.initAgent(Doers(msg.sender));
     }
 
     function flipTo(address _address)
-    external onlyOwner returns (IS) {
+    external onlyOwner toPeana returns (IS) {
         if (userbase.isDoer(_address) != IS.CREATOR) {
             return userbase.setAgent(_address, IS.CREATOR);
         } else {
@@ -1741,13 +2028,13 @@ contract Creators is DataController {
     }
 
     function numberOf(address _address, uint _allowed)
-    external onlyOwner returns (uint) {
+    external onlyOwner toPeana returns (uint) {
         require(userbase.isDoer(_address) == IS.CREATOR);
         return userbase.setAgent(_address, _allowed);
     }
 
     function toggle(address _address)
-    external onlyOwner returns (bool) {
+    external onlyOwner toPeana returns (bool) {
         bool active_;
         (,,active_,) = userbase.getAgent(_address);
         if (!active_) {
@@ -1758,13 +2045,13 @@ contract Creators is DataController {
     }
 
     function reset(address _address, bytes32 _keyid)
-    external onlyOwner returns (bytes32) {
+    external onlyOwner toPeana returns (bytes32) {
         require(userbase.iam(_address));
         userbase.setAgent(_address, IS.INACTIVE);
         return userbase.setAgent(_address, _keyid);
     }
 
-    function trust(Trust _level) returns (bytes32) {
+    function trust(Trust _level) toPeana returns (bytes32) {
         if (_level == Trust.ZERO) {
             return TRUST.Zero;
             } else if (_level == Trust.UNKNOWN ) {

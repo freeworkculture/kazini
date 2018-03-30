@@ -100,7 +100,7 @@ contract UserDefined {
         mapping(uint8 => Qualification) qualification; // Key is the keccak256 hash of the struct contents
         } struct Merits {
             uint experience;
-            uint reputation;
+            bytes32 reputation;
             bytes32 talent;
             uint8 index;
             bytes32 hash;
@@ -202,7 +202,7 @@ contract UserDefined {
         uint refRank;  //!!! GET THIS DATA FROM DATABASE
         uint signer; //!!! GET THIS DATA FROM DATABASE
         uint signee; //!!! GET THIS DATA FROM DATABASE
-        uint refTrust; //!!! GET THIS DATA FROM DATABASE
+        bytes32 refTrust; //!!! GET THIS DATA FROM DATABASE
     }
 
     struct Clearance {
