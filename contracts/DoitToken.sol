@@ -66,7 +66,9 @@ contract ApproveAndCallFallBack {
 /// @dev The actual token contract, the default controller is the msg.sender
 ///  that deploys the contract, so usually this token will be deployed by a
 ///  token controller contract.
-contract DoitToken is BaseController, Math {
+contract DoitToken is Math, BaseController {
+    
+    bytes32 constant public CONTRACTNAME = "DOIT TOKEN 0.2.3";
 
     string public name;                 //The Token's name: e.g. DigixDAO Tokens
     string public symbol;               //An identifier: e.g. REP
@@ -148,8 +150,8 @@ contract DoitToken is BaseController, Math {
         uint8 _decimalUnits,
         string _tokenVersion,
         uint _tokenMaturity,
-        bool _transfersEnabled,
-        Able _ctrl
+        bool _transfersEnabled
+        // Able _ctrl
     ) public {
         tokenFactory = DoitTokenFactory(_tokenFactory);
         name = _tokenName;                                 // Set the name
@@ -162,7 +164,10 @@ contract DoitToken is BaseController, Math {
         transfersEnabled = _transfersEnabled;
         creationBlock = block.number;
         // registerContract("DoitToken", this);
-        contrl = _ctrl;
+        contrl = tokenFactory.contrl();
+        owner = contrl.owner();
+        controller = contrl.controller();
+        cName = CONTRACTNAME;
     }
 
 ////////////////
@@ -381,6 +386,66 @@ contract DoitToken is BaseController, Math {
     }
 
 ////////////////
+// Enable tokens transfers
+////////////////
+
+    /// @notice Enables token holders to doit.transfer their tokens freely if true
+    // @param _transfersEnabled True if transfers are allowed in the clone
+    function enableTransfers(bool _transfersEnabled) public onlyController {
+        transfersEnabled = _transfersEnabled;
+    }
+
+////////////////
+// Freeze Account
+////////////////
+    
+    /// @notice `freeze? Prevent | Allow` `target` from sending & receiving tokens
+    // @param target Address to be frozen
+    // @param freeze either to freeze it or not
+    function freezeAccount(address target, bool freeze) onlyController public {
+        freezeAccount(target, freeze);
+        FrozenFunds(target, freeze);/// @notice Enables token holders to doit.transfer their tokens freely if true
+    }
+
+////////////////
+// Generate and destroy tokens
+////////////////
+
+    /// @notice Generates `_amount` tokens that are assigned to `_owner`
+    // @param _owner The address that will be assigned the new tokens
+    // @param _amount The quantity of tokens generated
+    // @return True if the tokens are generated correctly
+    function generateTokens(address _owner, uint _amount
+    ) public onlyController returns (bool)
+    {
+        uint curTotalSupply = totalSupply();
+        require(curTotalSupply + _amount >= curTotalSupply); // Check for overflow
+        uint previousBalanceTo = balanceOf(_owner);
+        require(previousBalanceTo + _amount >= previousBalanceTo); // Check for overflow
+        updateValueAtNow(totalSupplyHistory, curTotalSupply + _amount);
+        updateValueAtNow(balances[_owner], previousBalanceTo + _amount);
+        Transfer(0, _owner, _amount);
+        return true;
+    }
+
+    /// @notice Burns `_amount` tokens from `_owner`
+    // @param _owner The address that will lose the tokens
+    // @param _amount The quantity of tokens to burn
+    // @return True if the tokens are burned correctly
+    function destroyTokens(address _owner, uint _amount
+    ) onlyController public returns (bool)
+    {
+        uint curTotalSupply = totalSupply();
+        require(curTotalSupply >= _amount);
+        uint previousBalanceFrom = balanceOf(_owner);
+        require(previousBalanceFrom >= _amount);
+        updateValueAtNow(totalSupplyHistory, curTotalSupply - _amount);
+        updateValueAtNow(balances[_owner], previousBalanceFrom - _amount);
+        Transfer(_owner, 0, _amount);
+        return true;
+    }
+
+////////////////
 // Internal helper functions to query and set a value in a snapshot array
 ////////////////
 
@@ -484,6 +549,41 @@ contract DoitToken is BaseController, Math {
         ClaimedTokens(_token, controller, balance);
     }
 
+///////////////////
+	// Controller Logic
+
+	// Change the owner of a contract
+	/// @notice `owner` can step down and assign some other address to this role
+	/// @param _newOwner _sig The address of the new owner. 0x0 can be used to create
+	///  an unowned neutral vault, however that cannot be undone
+	function changeOwner(address _newOwner, bytes32 _sig) public onlyOwner returns (bool) {
+		require(_sig == 0x0);
+		// require(verify(_sig,_v,_r,_s) == controller);
+		setOwner(_newOwner);
+	}
+
+	/// @notice `contrl` can step down and assign some other address to this role
+	/// @param _newCtrl _sig The address of the new owner. 0x0 can be used to create
+	///  an unowned neutral vault, however that cannot be undone
+	function changeContrl(Able _newCtrl, bytes32 _sig) public onlyOwner returns (bool) {
+		require(_sig == 0x0);
+		// require(verify(_sig,_v,_r,_s) == controller);
+		setContrl(_newCtrl);
+		// _e.delegatecall(bytes4(sha3("setN(uint256)")), _n); // D's storage is set, E is not modified
+		// contrl.delegatecall(bytes4(sha3("setContrl(address)")),_newCtrl);
+		
+	}
+
+	/// @notice `controller` can step down and assign some other address to this role
+	/// @param _sig The address of the new controller is the address of the contrl. 
+	///  0x0 can be used to create an unowned neutral vault, however that cannot be undone
+	function changeController(bytes32 _sig) public onlyOwner returns (bool) {
+		require(_sig == 0x0);
+		// require(verify(_sig,_v,_r,_s) == controller);
+		setController();
+	}
+	///////////////////
+
 ////////////////
 // Events
 ////////////////
@@ -502,14 +602,15 @@ contract DoitToken is BaseController, Math {
 /// @dev This contract is used to generate clone contracts from a contract.
 ///  In solidity this is the way to create a contract from a contract of the
 ///  same class
-contract DoitTokenFactory is DataController {
+contract DoitTokenFactory {
     
+    Able public contrl;
 
-    function DoitTokenFactory(Able _ctrl, Database _dbs, Userbase _ubs) internal {
+    function DoitTokenFactory(Able _ctrl) public {
         // registerContract("DoitTokenFactory", this);
         contrl = _ctrl;
-        database = _dbs;
-        userbase = _ubs;
+        // database = _dbs;
+        // userbase = _ubs;
         }
 
     /// @notice Update the DApp by creating a new token with new functionalities
@@ -531,7 +632,8 @@ contract DoitTokenFactory is DataController {
         string _tokenVersion,
         uint _tokenMaturity,
         bool _transfersEnabled,
-        Able _ctrl
+        // Able _ctrl,
+        bytes32 _sig
     ) public returns (DoitToken)
     {
         DoitToken newToken = new DoitToken(
@@ -543,11 +645,12 @@ contract DoitTokenFactory is DataController {
             _decimalUnits,
             _tokenVersion,
             _tokenMaturity,
-            _transfersEnabled,
-            _ctrl
+            _transfersEnabled
+            // _ctrl
             );
+            
 
-        newToken.changeController(msg.sender);
+        newToken.changeOwner(msg.sender,_sig);
         return newToken;
     }
 }

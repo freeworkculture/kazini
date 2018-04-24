@@ -32,7 +32,7 @@ library LibCLLu {
     bool constant PREV = false;
     bool constant NEXT = true;
     
-    struct CLL{
+    struct CLL {
         mapping (uint => mapping (bool => uint)) cll;
     }
 
@@ -79,7 +79,7 @@ library LibCLLu {
         internal  constant returns (uint r)
     {
         r = step(self, a, d);
-        while  ((b!=r) && ((b < r) != d)) r = self.cll[r][d];
+        while ((b!=r) && ((b < r) != d)) r = self.cll[r][d];
         return;
     }
 
@@ -97,7 +97,10 @@ library LibCLLu {
     }
     
     function remove(CLL storage self, uint n) internal returns (uint) {
-        if (n == NULL) return;
+        if (n == NULL) {
+            return;
+        }
+        
         stitch(self, self.cll[n][PREV], self.cll[n][NEXT], NEXT);
         delete self.cll[n][PREV];
         delete self.cll[n][NEXT];
@@ -122,7 +125,7 @@ library LibCLLi {
     bool constant PREV = false;
     bool constant NEXT = true;
     
-    struct CLL{
+    struct CLL {
         mapping (int => mapping (bool => int)) cll;
     }
 
@@ -165,7 +168,7 @@ library LibCLLi {
         internal  constant returns (int r)
     {
         r = step(self, a, d);
-        while  ((b!=r) && ((b < r) != d)) r = self.cll[r][d];
+        while ((b!=r) && ((b < r) != d)) r = self.cll[r][d];
         return;
     }
 
@@ -183,7 +186,9 @@ library LibCLLi {
     }
     
     function remove(CLL storage self, int n) internal returns (int) {
-        if (n == NULL) return;
+        if (n == NULL) {
+            return;
+        }
         stitch(self, self.cll[n][PREV], self.cll[n][NEXT], NEXT);
         delete self.cll[n][PREV];
         delete self.cll[n][NEXT];
