@@ -77,21 +77,22 @@ contract Math {
 */    
     function safeMul(uint a, uint b) internal constant returns (uint)
     {
-      uint c = a * b;
-      assert(a == 0 || c / a == b);
-      return c;
+        uint c = a * b;
+        assert(a == 0 || c / a == b);
+        return c;
     }
 
     function safeSub(uint a, uint b) internal constant returns (uint)
     {
-      assert(b <= a);
-      return a - b;
+        assert(b <= a);
+        return a - b;
     }
 
     function safeAdd(uint a, uint b) internal constant returns (uint)
     {
-      uint c = a + b;
-      assert(c>=a && c>=b);
-      return c;
+        uint c = a + b;
+        assert(c>=a && c>=b);
+        return c;
     }
 }
+
