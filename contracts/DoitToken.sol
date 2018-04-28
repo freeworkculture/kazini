@@ -1,4 +1,5 @@
 pragma solidity ^0.4.19;
+pragma experimental ABIEncoderV2;
 
 /*
     
@@ -191,34 +192,34 @@ contract DoitToken is Math, BaseController {
             return;
             }
 
-           require(parentSnapShotBlock < block.number);
+        require(parentSnapShotBlock < block.number);
 
-           // Do not allow transfer to 0x0 or the token contract itself
-           require((_to != 0) && (_to != address(this)));
+        // Do not allow transfer to 0x0 or the token contract itself
+        require((_to != 0) && (_to != address(this)));
 
-           // If the amount being transfered is more than the balance of the
-           //  account the transfer throws
-           var previousBalanceFrom = balanceOfAt(_from, block.number);
+        // If the amount being transfered is more than the balance of the
+        //  account the transfer throws
+        var previousBalanceFrom = balanceOfAt(_from, block.number);
 
-           require(previousBalanceFrom >= _amount);
+        require(previousBalanceFrom >= _amount);
 
-           // Alerts the token controller of the transfer
-           if (isContract(controller)) {
-               require(TokenController(controller).onTransfer(_from, _to, _amount));
-           }
+        // Alerts the token controller of the transfer
+        if (isContract(controller)) {
+            require(TokenController(controller).onTransfer(_from, _to, _amount));
+        }
 
-           // First update the balance array with the new value for the address
-           //  sending the tokens
-           updateValueAtNow(balances[_from], previousBalanceFrom - _amount);
+        // First update the balance array with the new value for the address
+        //  sending the tokens
+        updateValueAtNow(balances[_from], previousBalanceFrom - _amount);
 
-           // Then update the balance array with the new value for the address
-           //  receiving the tokens
-           var previousBalanceTo = balanceOfAt(_to, block.number);
-           require(previousBalanceTo + _amount >= previousBalanceTo); // Check for overflow
-           updateValueAtNow(balances[_to], previousBalanceTo + _amount);
+        // Then update the balance array with the new value for the address
+        //  receiving the tokens
+        var previousBalanceTo = balanceOfAt(_to, block.number);
+        require(previousBalanceTo + _amount >= previousBalanceTo); // Check for overflow
+        updateValueAtNow(balances[_to], previousBalanceTo + _amount);
 
-           // An event to make the transfer easy to find on the blockchain
-           Transfer(_from, _to, _amount);
+        // An event to make the transfer easy to find on the blockchain
+        Transfer(_from, _to, _amount);
 
     }
 
@@ -486,13 +487,14 @@ contract DoitToken is Math, BaseController {
     function updateValueAtNow(Checkpoint[] storage checkpoints, uint _value) internal {
         if ((checkpoints.length == 0) ||
         (checkpoints[checkpoints.length - 1].fromBlock < block.number)) {
-               Checkpoint storage newCheckPoint = checkpoints[checkpoints.length++];
-               newCheckPoint.fromBlock = uint128(block.number);
-               newCheckPoint.value = uint128(_value);
-           } else {
-               Checkpoint storage oldCheckPoint = checkpoints[checkpoints.length-1];
-               oldCheckPoint.value = uint128(_value);
-           }
+            Checkpoint storage newCheckPoint = checkpoints[checkpoints.length++];
+            newCheckPoint.fromBlock = uint128(block.number);
+            newCheckPoint.value = uint128(_value);
+        } else {
+            Checkpoint storage oldCheckPoint = checkpoints[checkpoints.length-1];
+            oldCheckPoint.value = uint128(_value);
+        }
+        
     }
 
     /// @dev Internal function to determine if an address is a contract
@@ -550,39 +552,39 @@ contract DoitToken is Math, BaseController {
     }
 
 ///////////////////
-	// Controller Logic
+    // Controller Logic
 
-	// Change the owner of a contract
-	/// @notice `owner` can step down and assign some other address to this role
-	/// @param _newOwner _sig The address of the new owner. 0x0 can be used to create
-	///  an unowned neutral vault, however that cannot be undone
-	function changeOwner(address _newOwner, bytes32 _sig) public onlyOwner returns (bool) {
-		require(_sig == 0x0);
-		// require(verify(_sig,_v,_r,_s) == controller);
-		setOwner(_newOwner);
-	}
+    // Change the owner of a contract
+    /// @notice `owner` can step down and assign some other address to this role
+    /// @param _newOwner _sig The address of the new owner. 0x0 can be used to create
+    ///  an unowned neutral vault, however that cannot be undone
+    function changeOwner(address _newOwner, bytes32 _sig) public onlyOwner returns (bool) {
+        require(_sig == 0x0);
+        // require(verify(_sig,_v,_r,_s) == controller);
+        setOwner(_newOwner);
+    }
 
-	/// @notice `contrl` can step down and assign some other address to this role
-	/// @param _newCtrl _sig The address of the new owner. 0x0 can be used to create
-	///  an unowned neutral vault, however that cannot be undone
-	function changeContrl(Able _newCtrl, bytes32 _sig) public onlyOwner returns (bool) {
-		require(_sig == 0x0);
-		// require(verify(_sig,_v,_r,_s) == controller);
-		setContrl(_newCtrl);
-		// _e.delegatecall(bytes4(sha3("setN(uint256)")), _n); // D's storage is set, E is not modified
-		// contrl.delegatecall(bytes4(sha3("setContrl(address)")),_newCtrl);
-		
-	}
+    /// @notice `contrl` can step down and assign some other address to this role
+    /// @param _newCtrl _sig The address of the new owner. 0x0 can be used to create
+    ///  an unowned neutral vault, however that cannot be undone
+    function changeContrl(Able _newCtrl, bytes32 _sig) public onlyOwner returns (bool) {
+        require(_sig == 0x0);
+        // require(verify(_sig,_v,_r,_s) == controller);
+        setContrl(_newCtrl);
+        // _e.delegatecall(bytes4(sha3("setN(uint256)")), _n); // D's storage is set, E is not modified
+        // contrl.delegatecall(bytes4(sha3("setContrl(address)")),_newCtrl);
+        
+    }
 
-	/// @notice `controller` can step down and assign some other address to this role
-	/// @param _sig The address of the new controller is the address of the contrl. 
-	///  0x0 can be used to create an unowned neutral vault, however that cannot be undone
-	function changeController(bytes32 _sig) public onlyOwner returns (bool) {
-		require(_sig == 0x0);
-		// require(verify(_sig,_v,_r,_s) == controller);
-		setController();
-	}
-	///////////////////
+    /// @notice `controller` can step down and assign some other address to this role
+    /// @param _sig The address of the new controller is the address of the contrl. 
+    ///  0x0 can be used to create an unowned neutral vault, however that cannot be undone
+    function changeController(bytes32 _sig) public onlyOwner returns (bool) {
+        require(_sig == 0x0);
+        // require(verify(_sig,_v,_r,_s) == controller);
+        setController();
+    }   
+    ///////////////////
 
 ////////////////
 // Events
@@ -611,7 +613,7 @@ contract DoitTokenFactory {
         contrl = _ctrl;
         // database = _dbs;
         // userbase = _ubs;
-        }
+    }
 
     /// @notice Update the DApp by creating a new token with new functionalities
     ///  the msg.sender becomes the controller of this clone token

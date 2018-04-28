@@ -185,6 +185,8 @@ contract ReserveInterface {
 ///  funding round.
 
 contract Reserve is ReserveInterface, BaseController, Math, usingOraclize {
+    
+    bytes32 constant internal CONTRACTNAME = "RESERVE 0.0118";
 
 /* Structs */
 
@@ -235,31 +237,11 @@ contract Reserve is ReserveInterface, BaseController, Math, usingOraclize {
 
 /* Functions */
 
-    function Reserve(
-        // address _tokenFactory,
-        // address _parentToken,
-        // uint _parentSnapShotBlock,
-        // string _tokenName,
-        // string _tokenSymbol,
-        // uint8 _decimalUnits,
-        // string _tokenVersion,
-        // uint _tokenMaturity,
-        // bool _transfersEnabled
-        // Able _ctrl
-        ) 
-            // DoitToken(
-            // _tokenFactory,
-            // _parentToken,
-            // _parentSnapShotBlock,
-            // _tokenName,
-            // _tokenSymbol,
-            // _decimalUnits,
-            // _tokenVersion,
-            // _tokenMaturity,
-            // _transfersEnabled
-            // _ctrl
-            // )
-            {
+    function Reserve(Able _ctrl)
+	public {
+	    cName = CONTRACTNAME;
+        contrl = _ctrl;
+        controller = address(_ctrl);
         // setup pricebook and maximum spread.
         priceBook.cll[HEAD][PREV] = MINPRICE;
         priceBook.cll[MINPRICE][PREV] = MAXNUM;
@@ -267,6 +249,7 @@ contract Reserve is ReserveInterface, BaseController, Math, usingOraclize {
         priceBook.cll[MAXNUM][NEXT] = MINPRICE;
         trading = true;
         // doit.transfer(owner, doit.totalSupply()); //!!! WHAT IS THE RESERVE BALANCE?
+        emit ContractEvent(this,msg.sender,tx.origin);
     }
 
 ////////////////
