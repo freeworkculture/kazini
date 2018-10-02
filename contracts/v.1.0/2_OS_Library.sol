@@ -1,18 +1,18 @@
-/*
-file:   OS_Library.sol
-ver:    0.2.3
-updated:20-Apr-2018
-author: Darryl Morris 
-contributors: terraflops
-email:  o0ragman0o AT gmail.com
-
-An inheritable contract containing math functions and comparitors.
-
-This software is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU lesser General Public License for more details.
-<http://www.gnu.org/licenses/>.
+/**
+* file:   OS_Library.sol
+* ver:    0.2.3
+* updated:20-Apr-2018
+* author: Darryl Morris 
+* contributors: terraflops
+* email:  o0ragman0o AT gmail.com
+* 
+* An inheritable contract containing math functions and comparitors.
+* 
+* This software is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU lesser General Public License for more details.
+* <http://www.gnu.org/licenses/>.
 */
 
 pragma solidity ^0.4.24;
@@ -139,4 +139,31 @@ library SafeMathLib {
     function min(uint a, uint b) pure internal returns (uint) {
         return a < b ? a : b;
     }
+}
+
+/**
+ * Utility library of inline functions on addresses
+ */
+library AddressLib {
+
+    /**
+    * Returns whether the target address is a contract
+    * @dev This function will return false if invoked during the constructor of a contract,
+    * as the code is not actually created until after the constructor finishes.
+    * @param account address of the account to check
+    * @return whether the target address is a contract
+    */
+    function isContract(address account) internal view returns (bool) {
+        uint256 size;
+    // XXX Currently there is no better way to check if there is a contract in an address
+    // than to check the size of the code at that address.
+    // See https://ethereum.stackexchange.com/a/14016/36603
+    // for more details about how this works.
+    // TODO Check this again before the Serenity release, because all addresses will be
+    // contracts then.
+    // solium-disable-next-line security/no-inline-assembly
+    assembly { size := extcodesize(account) }
+    return size > 0;
+    }
+
 }
