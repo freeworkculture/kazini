@@ -19,127 +19,7 @@ pragma solidity ^0.4.24;
 
 import "./1_Kernel.sol";
 import "./2_OS_Library.sol";
-
-/**
-* @title IERC165
-* @dev https://github.com/ethereum/EIPs/blob/master/EIPS/eip-165.md
-*/
-interface IERC165 {
-
-    /**
-    * @notice Query if a contract implements an interface
-    * @param interfaceId The interface identifier, as specified in ERC-165
-    * @dev Interface identification is specified in ERC-165. This function
-    * uses less than 30,000 gas.
-    */
-    function supportsInterface(bytes4 interfaceId)
-        external
-        view
-        returns (bool);
-}
-
-/**
-* @title ERC721 Non-Fungible Token Standard basic interface
-* @dev see https://github.com/ethereum/EIPs/blob/master/EIPS/eip-721.md
-*/
-contract IERC721 is IERC165 {
-
-    event Transfer(
-        address indexed from,
-        address indexed to,
-        uint256 indexed tokenId
-    );
-    event Approval(
-        address indexed owner,
-        address indexed approved,
-        uint256 indexed tokenId
-    );
-    event ApprovalForAll(
-        address indexed owner,
-        address indexed operator,
-        bool approved
-    );
-
-    function balanceOf(address owner) public view returns (uint256 balance);
-    function ownerOf(uint256 tokenId) public view returns (address owner);
-
-    function approve(address to, uint256 tokenId) public;
-    function getApproved(uint256 tokenId)
-        public view returns (address operator);
-
-    function setApprovalForAll(address operator, bool _approved) public;
-    function isApprovedForAll(address owner, address operator)
-        public view returns (bool);
-
-    function transferFrom(address from, address to, uint256 tokenId) public;
-    function safeTransferFrom(address from, address to, uint256 tokenId)
-        public;
-
-    function safeTransferFrom(
-        address from,
-        address to,
-        uint256 tokenId,
-        bytes data
-    )
-        public;
-}
-
-/**
-* @title ERC721 token receiver interface
-* @dev Interface for any contract that wants to support safeTransfers
-* from ERC721 asset contracts.
-*/
-contract IERC721Receiver {
-    /**
-    * @notice Handle the receipt of an NFT
-    * @dev The ERC721 smart contract calls this function on the recipient
-    * after a `safeTransfer`. This function MUST return the function selector,
-    * otherwise the caller will revert the transaction. The selector to be
-    * returned can be obtained as `this.onERC721Received.selector`. This
-    * function MAY throw to revert and reject the transfer.
-    * Note: the ERC721 contract address is always the message sender.
-    * @param operator The address which called `safeTransferFrom` function
-    * @param from The address which previously owned the token
-    * @param tokenId The NFT identifier which is being transferred
-    * @param data Additional data with no specified format
-    * @return `bytes4(keccak256("onERC721Received(address,address,uint256,bytes)"))`
-    */
-    function onERC721Received(
-        address operator,
-        address from,
-        uint256 tokenId,
-        bytes data
-    )
-        public
-        returns(bytes4);
-}
-
-    /**
-    * @title ERC-721 Non-Fungible Token Standard, optional metadata extension
-    * @dev See https://github.com/ethereum/EIPs/blob/master/EIPS/eip-721.md
-    */
-contract IERC721Metadata is IERC721 {
-    function name() external view returns (string);
-    function symbol() external view returns (string);
-    function tokenURI(uint256 tokenId) public view returns (string);
-}
-
-/**
- * @title ERC-721 Non-Fungible Token Standard, optional enumeration extension
- * @dev See https://github.com/ethereum/EIPs/blob/master/EIPS/eip-721.md
- */
-contract IERC721Enumerable is IERC721 {
-    function totalSupply() public view returns (uint256);
-    function tokenOfOwnerByIndex(
-        address owner,
-        uint256 index
-    )
-        public
-        view
-        returns (uint256 tokenId);
-
-    function tokenByIndex(uint256 index) public view returns (uint256);
-}
+import "./5_ERC721_Library.sol";
 
 /**
 * @title ERC165
@@ -148,16 +28,31 @@ contract IERC721Enumerable is IERC721 {
 */
 contract ERC165 is IERC165 {
 
+/* Using */
+
+    using ERC165Lib for bytes4;
+
+    using ERC165Lib for ERC165Lib.STORAGE;
+
+/* Events */
+
+/* Structs */
+
+/* Constants */
+
     bytes4 private constant _InterfaceId_ERC165 = 0x01ffc9a7;
     /**
     * 0x01ffc9a7 ===
     *   bytes4(keccak256('supportsInterface(bytes4)'))
     */
 
-    /**
-    * @dev a mapping of interface id to whether or not it's supported
-    */
-    mapping(bytes4 => bool) internal _supportedInterfaces;
+/* State Valiables */
+
+    ERC165Lib.STORAGE erc165data;
+
+/* Modifiers */
+
+/* Functions */
 
     /**
     * @dev A contract implementing SupportsInterfaceWithLookup
@@ -166,7 +61,7 @@ contract ERC165 is IERC165 {
     constructor()
         public
     {
-        _registerInterface(_InterfaceId_ERC165);
+        erc165data.init();
     }
 
     /**
@@ -177,7 +72,7 @@ contract ERC165 is IERC165 {
         view
         returns (bool)
     {
-        return _supportedInterfaces[interfaceId];
+        return erc165data.supportsInterface(interfaceId);
     }
 
     /**
@@ -186,8 +81,7 @@ contract ERC165 is IERC165 {
     function _registerInterface(bytes4 interfaceId)
         internal
     {
-        require(interfaceId != 0xffffffff);
-        _supportedInterfaces[interfaceId] = true;
+        return interfaceId._registerInterface(erc165data);
     }
 }
 
@@ -197,24 +91,19 @@ contract ERC165 is IERC165 {
 */
 contract ERC721 is ERC165, IERC721 {
 
-    using SafeMathLib for uint256;
-    using AddressLib for address;
+/* Using */
+
+    using ERC721Lib for ERC721Lib.STORAGE;
+
+/* Events */
+
+/* Structs */
+
+/* Constants */
 
     // Equals to `bytes4(keccak256("onERC721Received(address,address,uint256,bytes)"))`
     // which can be also obtained as `IERC721Receiver(0).onERC721Received.selector`
     bytes4 private constant _ERC721_RECEIVED = 0x150b7a02;
-
-    // Mapping from token ID to owner
-    mapping (uint256 => address) private _tokenOwner;
-
-    // Mapping from token ID to approved address
-    mapping (uint256 => address) private _tokenApprovals;
-
-    // Mapping from owner to number of owned token
-    mapping (address => uint256) private _ownedTokensCount;
-
-    // Mapping from owner to operator approvals
-    mapping (address => mapping (address => bool)) private _operatorApprovals;
 
     bytes4 private constant _InterfaceId_ERC721 = 0x80ac58cd;
     /*
@@ -230,11 +119,19 @@ contract ERC721 is ERC165, IERC721 {
     *   bytes4(keccak256('safeTransferFrom(address,address,uint256,bytes)'))
     */
 
+/* State Valiables */
+
+    ERC721Lib.STORAGE erc721data;
+
+/* Modifiers */
+
+/* Function */
+
     constructor()
         public
     {
         // register the supported interfaces to conform to ERC721 via ERC165
-        _registerInterface(_InterfaceId_ERC721);
+        erc721data.init(erc165data);
     }
 
     /**
@@ -243,8 +140,7 @@ contract ERC721 is ERC165, IERC721 {
     * @return uint256 representing the amount owned by the passed address
     */
     function balanceOf(address owner) public view returns (uint256) {
-        require(owner != address(0));
-        return _ownedTokensCount[owner];
+        return erc721data.balanceOf(owner);
     }
 
     /**
@@ -253,9 +149,7 @@ contract ERC721 is ERC165, IERC721 {
     * @return owner address currently marked as the owner of the given token ID
     */
     function ownerOf(uint256 tokenId) public view returns (address) {
-        address owner = _tokenOwner[tokenId];
-        require(owner != address(0));
-        return owner;
+        return erc721data.ownerOf(tokenId);
     }
 
     /**
@@ -278,7 +172,7 @@ contract ERC721 is ERC165, IERC721 {
         public
     {
         // solium-disable-next-line arg-overflow
-        safeTransferFrom(from, to, tokenId, "");
+        erc721data.safeTransferFrom(from, to, tokenId);
     }
 
     /**
@@ -301,9 +195,7 @@ contract ERC721 is ERC165, IERC721 {
     )
         public
     {
-        transferFrom(from, to, tokenId);
-        // solium-disable-next-line arg-overflow
-        require(_checkAndCallSafeTransfer(from, to, tokenId, _data));
+        erc721data.safeTransferFrom(from, to, tokenId, _data);
     }
 
     /**
@@ -321,14 +213,7 @@ contract ERC721 is ERC165, IERC721 {
     )
         public
     {
-        require(_isApprovedOrOwner(msg.sender, tokenId));
-        require(to != address(0));
-
-        _clearApproval(from, tokenId);
-        _removeTokenFrom(from, tokenId);
-        _addTokenTo(to, tokenId);
-
-        emit Transfer(from, to, tokenId);
+        erc721data.transferFrom(from, to, tokenId);
     }
 
     /**
@@ -340,12 +225,7 @@ contract ERC721 is ERC165, IERC721 {
     * @param tokenId uint256 ID of the token to be approved
     */
     function approve(address to, uint256 tokenId) public {
-        address owner = ownerOf(tokenId);
-        require(to != owner);
-        require(msg.sender == owner || isApprovedForAll(owner, msg.sender));
-
-        _tokenApprovals[tokenId] = to;
-        emit Approval(owner, to, tokenId);
+        erc721data.approve(to, tokenId);
     }
 
     /**
@@ -355,9 +235,7 @@ contract ERC721 is ERC165, IERC721 {
     * @param approved representing the status of the approval to be set
     */
     function setApprovalForAll(address to, bool approved) public {
-        require(to != msg.sender);
-        _operatorApprovals[msg.sender][to] = approved;
-        emit ApprovalForAll(msg.sender, to, approved);
+        erc721data.setApprovalForAll(to, approved);
     }
 
     /**
@@ -367,8 +245,7 @@ contract ERC721 is ERC165, IERC721 {
     * @return address currently approved for the given token ID
     */
     function getApproved(uint256 tokenId) public view returns (address) {
-        require(_exists(tokenId));
-        return _tokenApprovals[tokenId];
+        return erc721data.getApproved(tokenId);
     }
 
     /**
@@ -385,7 +262,7 @@ contract ERC721 is ERC165, IERC721 {
         view
         returns (bool)
     {
-        return _operatorApprovals[owner][operator];
+        return erc721data.isApprovedForAll(owner, operator);
     }
 
     /**
@@ -394,8 +271,7 @@ contract ERC721 is ERC165, IERC721 {
     * @return whether the token exists
     */
     function _exists(uint256 tokenId) internal view returns (bool) {
-        address owner = _tokenOwner[tokenId];
-        return owner != address(0);
+        return erc721data._exists(tokenId);
     }
 
     /**
@@ -413,15 +289,7 @@ contract ERC721 is ERC165, IERC721 {
         view
         returns (bool)
     {
-        address owner = ownerOf(tokenId);
-        // Disable solium check because of
-        // https://github.com/duaraghav8/Solium/issues/175
-        // solium-disable-next-line operator-whitespace
-        return (
-        spender == owner ||
-        getApproved(tokenId) == spender ||
-        isApprovedForAll(owner, spender)
-        );
+        return erc721data._isApprovedOrOwner(spender, tokenId);
     }
 
     /**
@@ -431,9 +299,7 @@ contract ERC721 is ERC165, IERC721 {
     * @param tokenId uint256 ID of the token to be minted by the msg.sender
     */
     function _mint(address to, uint256 tokenId) internal {
-        require(to != address(0));
-        _addTokenTo(to, tokenId);
-        emit Transfer(address(0), to, tokenId);
+        erc721data._mint(to, tokenId);
     }
 
     /**
@@ -442,9 +308,7 @@ contract ERC721 is ERC165, IERC721 {
     * @param tokenId uint256 ID of the token being burned by the msg.sender
     */
     function _burn(address owner, uint256 tokenId) internal {
-        _clearApproval(owner, tokenId);
-        _removeTokenFrom(owner, tokenId);
-        emit Transfer(owner, address(0), tokenId);
+        erc721data._burn(owner, tokenId);
     }
 
     /**
@@ -454,10 +318,7 @@ contract ERC721 is ERC165, IERC721 {
     * @param tokenId uint256 ID of the token to be transferred
     */
     function _clearApproval(address owner, uint256 tokenId) internal {
-        require(ownerOf(tokenId) == owner);
-        if (_tokenApprovals[tokenId] != address(0)) {
-        _tokenApprovals[tokenId] = address(0);
-        }
+        erc721data._clearApproval(owner, tokenId);
     }
 
     /**
@@ -466,9 +327,7 @@ contract ERC721 is ERC165, IERC721 {
     * @param tokenId uint256 ID of the token to be added to the tokens list of the given address
     */
     function _addTokenTo(address to, uint256 tokenId) internal {
-        require(_tokenOwner[tokenId] == address(0));
-        _tokenOwner[tokenId] = to;
-        _ownedTokensCount[to] = _ownedTokensCount[to].add(1);
+        erc721data._addTokenTo(to, tokenId);
     }
 
     /**
@@ -477,9 +336,7 @@ contract ERC721 is ERC165, IERC721 {
     * @param tokenId uint256 ID of the token to be removed from the tokens list of the given address
     */
     function _removeTokenFrom(address from, uint256 tokenId) internal {
-        require(ownerOf(tokenId) == from);
-        _ownedTokensCount[from] = _ownedTokensCount[from].sub(1);
-        _tokenOwner[tokenId] = address(0);
+        erc721data._removeTokenFrom(from, tokenId);
     }
 
     /**
@@ -500,25 +357,22 @@ contract ERC721 is ERC165, IERC721 {
         internal
         returns (bool)
     {
-        if (!to.isContract()) {
-        return true;
-        }
-        bytes4 retval = IERC721Receiver(to).onERC721Received(
-        msg.sender, from, tokenId, _data);
-        return (retval == _ERC721_RECEIVED);
+        return erc721data._checkAndCallSafeTransfer(from, to, tokenId, _data);
     }
 }
 
 
 contract ERC721Metadata is ERC165, ERC721, IERC721Metadata {
-    // Token name
-    string internal _name;
 
-    // Token symbol
-    string internal _symbol;
+/* Using */
 
-    // Optional mapping for token URIs
-    mapping(uint256 => string) private _tokenURIs;
+    using ERC721MetadataLib for ERC721MetadataLib.STORAGE;
+
+/* Events */
+
+/* Structs */
+
+/* Constants */
 
     bytes4 private constant InterfaceId_ERC721Metadata = 0x5b5e139f;
     /**
@@ -528,15 +382,22 @@ contract ERC721Metadata is ERC165, ERC721, IERC721Metadata {
     *   bytes4(keccak256('tokenURI(uint256)'))
     */
 
+/* State Valiables */
+
+    ERC721MetadataLib.STORAGE erc721metadata;
+
+/* Modifiers */
+
+/* Functions */
+
     /**
     * @dev Constructor function
     */
     constructor(string name, string symbol) public {
-        _name = name;
-        _symbol = symbol;
 
         // register the supported interfaces to conform to ERC721 via ERC165
-        _registerInterface(InterfaceId_ERC721Metadata);
+
+        erc721metadata.init(erc165data, name, symbol);
     }
 
     /**
@@ -544,7 +405,7 @@ contract ERC721Metadata is ERC165, ERC721, IERC721Metadata {
     * @return string representing the token name
     */
     function name() external view returns (string) {
-        return _name;
+        return erc721metadata.name();
     }
 
     /**
@@ -552,7 +413,7 @@ contract ERC721Metadata is ERC165, ERC721, IERC721Metadata {
     * @return string representing the token symbol
     */
     function symbol() external view returns (string) {
-        return _symbol;
+        return erc721metadata.symbol();
     }
 
     /**
@@ -561,8 +422,7 @@ contract ERC721Metadata is ERC165, ERC721, IERC721Metadata {
     * @param tokenId uint256 ID of the token to query
     */
     function tokenURI(uint256 tokenId) public view returns (string) {
-        require(_exists(tokenId));
-        return _tokenURIs[tokenId];
+        return erc721metadata.tokenURI(erc721data, tokenId);
     }
 
     /**
@@ -572,8 +432,7 @@ contract ERC721Metadata is ERC165, ERC721, IERC721Metadata {
     * @param uri string URI to assign
     */
     function _setTokenURI(uint256 tokenId, string uri) internal {
-        require(_exists(tokenId));
-        _tokenURIs[tokenId] = uri;
+        erc721metadata._setTokenURI(erc721data, tokenId, uri);
     }
 
     /**
@@ -583,27 +442,21 @@ contract ERC721Metadata is ERC165, ERC721, IERC721Metadata {
     * @param tokenId uint256 ID of the token being burned by the msg.sender
     */
     function _burn(address owner, uint256 tokenId) internal {
-        super._burn(owner, tokenId);
-
-        // Clear metadata (if any)
-        if (bytes(_tokenURIs[tokenId]).length != 0) {
-        delete _tokenURIs[tokenId];
-        }
+        erc721metadata._burn(erc721data, owner, tokenId);
     }
 }
 
 contract ERC721Enumerable is ERC165, ERC721, IERC721Enumerable {
-    // Mapping from owner to list of owned token IDs
-    mapping(address => uint256[]) private _ownedTokens;
 
-    // Mapping from token ID to index of the owner tokens list
-    mapping(uint256 => uint256) private _ownedTokensIndex;
+/* Using */
 
-    // Array with all token ids, used for enumeration
-    uint256[] private _allTokens;
+    using ERC721EnumerableLib for ERC721EnumerableLib.STORAGE;
 
-    // Mapping from token id to position in the allTokens array
-    mapping(uint256 => uint256) private _allTokensIndex;
+/* Events */
+
+/* Structs */
+
+/* Constants */
 
     bytes4 private constant _InterfaceId_ERC721Enumerable = 0x780e9d63;
     /**
@@ -613,12 +466,20 @@ contract ERC721Enumerable is ERC165, ERC721, IERC721Enumerable {
     *   bytes4(keccak256('tokenByIndex(uint256)'))
     */
 
+/* State Valiables */
+
+    ERC721EnumerableLib.STORAGE erc721enumerabledata;
+    
+/* Modifiers */
+
+/* Functions */
+
     /**
     * @dev Constructor function
     */
     constructor() public {
         // register the supported interface to conform to ERC721 via ERC165
-        _registerInterface(_InterfaceId_ERC721Enumerable);
+        erc721enumerabledata.init(erc165data);
     }
 
     /**
@@ -635,8 +496,7 @@ contract ERC721Enumerable is ERC165, ERC721, IERC721Enumerable {
         view
         returns (uint256)
     {
-        require(index < balanceOf(owner));
-        return _ownedTokens[owner][index];
+        return erc721enumerabledata.tokenOfOwnerByIndex(erc721data, owner, index);
     }
 
     /**
@@ -644,7 +504,7 @@ contract ERC721Enumerable is ERC165, ERC721, IERC721Enumerable {
     * @return uint256 representing the total amount of tokens
     */
     function totalSupply() public view returns (uint256) {
-        return _allTokens.length;
+        return erc721enumerabledata.totalSupply();
     }
 
     /**
@@ -654,8 +514,7 @@ contract ERC721Enumerable is ERC165, ERC721, IERC721Enumerable {
     * @return uint256 token ID at the given index of the tokens list
     */
     function tokenByIndex(uint256 index) public view returns (uint256) {
-        require(index < totalSupply());
-        return _allTokens[index];
+        return erc721enumerabledata.tokenByIndex(index);
     }
 
     /**
@@ -664,10 +523,7 @@ contract ERC721Enumerable is ERC165, ERC721, IERC721Enumerable {
     * @param tokenId uint256 ID of the token to be added to the tokens list of the given address
     */
     function _addTokenTo(address to, uint256 tokenId) internal {
-        super._addTokenTo(to, tokenId);
-        uint256 length = _ownedTokens[to].length;
-        _ownedTokens[to].push(tokenId);
-        _ownedTokensIndex[tokenId] = length;
+        erc721enumerabledata._addTokenTo(erc721data, to, tokenId);
     }
 
     /**
@@ -676,24 +532,7 @@ contract ERC721Enumerable is ERC165, ERC721, IERC721Enumerable {
     * @param tokenId uint256 ID of the token to be removed from the tokens list of the given address
     */
     function _removeTokenFrom(address from, uint256 tokenId) internal {
-        super._removeTokenFrom(from, tokenId);
-
-        // To prevent a gap in the array, we store the last token in the index of the token to delete, and
-        // then delete the last slot.
-        uint256 tokenIndex = _ownedTokensIndex[tokenId];
-        uint256 lastTokenIndex = _ownedTokens[from].length.sub(1);
-        uint256 lastToken = _ownedTokens[from][lastTokenIndex];
-
-        _ownedTokens[from][tokenIndex] = lastToken;
-        // This also deletes the contents at the last position of the array
-        _ownedTokens[from].length--;
-
-        // Note that this will handle single-element arrays. In that case, both tokenIndex and lastTokenIndex are going to
-        // be zero. Then we can make sure that we will remove tokenId from the ownedTokens list since we are first swapping
-        // the lastToken to the first position, and then dropping the element placed in the last position of the list
-
-        _ownedTokensIndex[tokenId] = 0;
-        _ownedTokensIndex[lastToken] = tokenIndex;
+        erc721enumerabledata._removeTokenFrom(erc721data, from, tokenId);
     }
 
     /**
@@ -703,10 +542,7 @@ contract ERC721Enumerable is ERC165, ERC721, IERC721Enumerable {
     * @param tokenId uint256 ID of the token to be minted by the msg.sender
     */
     function _mint(address to, uint256 tokenId) internal {
-        super._mint(to, tokenId);
-
-        _allTokensIndex[tokenId] = _allTokens.length;
-        _allTokens.push(tokenId);
+        erc721enumerabledata._mint(erc721data, to, tokenId);
     }
 
     /**
@@ -716,18 +552,6 @@ contract ERC721Enumerable is ERC165, ERC721, IERC721Enumerable {
     * @param tokenId uint256 ID of the token being burned by the msg.sender
     */
     function _burn(address owner, uint256 tokenId) internal {
-        super._burn(owner, tokenId);
-
-        // Reorg all tokens array
-        uint256 tokenIndex = _allTokensIndex[tokenId];
-        uint256 lastTokenIndex = _allTokens.length.sub(1);
-        uint256 lastToken = _allTokens[lastTokenIndex];
-
-        _allTokens[tokenIndex] = lastToken;
-        _allTokens[lastTokenIndex] = 0;
-
-        _allTokens.length--;
-        _allTokensIndex[tokenId] = 0;
-        _allTokensIndex[lastToken] = tokenIndex;
+        erc721enumerabledata._burn(erc721data, owner, tokenId);
     }
 }

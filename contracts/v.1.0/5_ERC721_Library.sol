@@ -153,13 +153,19 @@ contract IERC721Enumerable is IERC721 {
 */
 library ERC165Lib {
 
+    // using SafeMathLib for uint256;
+
+    // using AddressLib for address;
+
+    using ERC165Lib for bytes4;
+
     bytes4 private constant _InterfaceId_ERC165 = 0x01ffc9a7;
     /**
     * 0x01ffc9a7 ===
     *   bytes4(keccak256('supportsInterface(bytes4)'))
     */
 
-    struct ERC165DATA {
+    struct STORAGE {
         /**
         * @dev a mapping of interface id to whether or not it's supported
         */
@@ -177,14 +183,14 @@ library ERC165Lib {
     //     _registerInterface(_InterfaceId_ERC165);
     // }
 
-    // function init(ERC165DATA storage self) {
-    //     _registerInterface(self, _InterfaceId_ERC165);
-    // }
+    function init(STORAGE storage self) {
+        _InterfaceId_ERC165._registerInterface(self);
+    }
 
     /**
     * @dev implement supportsInterface(bytes4) using a lookup table
     */
-    function supportsInterface(ERC165DATA storage self, bytes4 interfaceId)
+    function supportsInterface(STORAGE storage self, bytes4 interfaceId)
         external
         view
         returns (bool)
@@ -195,7 +201,7 @@ library ERC165Lib {
     /**
     * @dev private method for registering an interface
     */
-    function _registerInterface(bytes4 interfaceId, ERC165DATA storage self) {
+    function _registerInterface(bytes4 interfaceId, STORAGE storage self) {
         require(interfaceId != 0xffffffff);
         self._supportedInterfaces[interfaceId] = true;
     }
@@ -216,7 +222,7 @@ library ERC721Lib {
 
     using ERC165Lib for bytes4;
 
-    using ERC165Lib for ERC165Lib.ERC165DATA;
+    using ERC165Lib for ERC165Lib.STORAGE;
 
 /* Events */
 
@@ -238,7 +244,7 @@ library ERC721Lib {
 
 /* Structs */
 
-    struct ERC721DATA {
+    struct STORAGE {
         // Mapping from token ID to owner
         mapping (uint256 => address) _tokenOwner;
 
@@ -285,7 +291,7 @@ library ERC721Lib {
 
 /* Funtions */
 
-    function init(ERC165Lib.ERC165DATA storage llib)
+    function init(STORAGE storage self, ERC165Lib.STORAGE storage llib)
         public
     {
         // register the supported interfaces to conform to ERC721 via ERC165
@@ -297,7 +303,7 @@ library ERC721Lib {
     * @param owner address to query the balance of
     * @return uint256 representing the amount owned by the passed address
     */
-    function balanceOf(ERC721DATA storage self, address owner) public view returns (uint256) {
+    function balanceOf(STORAGE storage self, address owner) public view returns (uint256) {
         require(owner != address(0));
         return self._ownedTokensCount[owner];
     }
@@ -307,7 +313,7 @@ library ERC721Lib {
     * @param tokenId uint256 ID of the token to query the owner of
     * @return owner address currently marked as the owner of the given token ID
     */
-    function ownerOf(ERC721DATA storage self, uint256 tokenId) public view returns (address) {
+    function ownerOf(STORAGE storage self, uint256 tokenId) public view returns (address) {
         address owner = self._tokenOwner[tokenId];
         require(owner != address(0));
         return owner;
@@ -326,7 +332,7 @@ library ERC721Lib {
     * @param tokenId uint256 ID of the token to be transferred
     */
     function safeTransferFrom(
-        ERC721DATA storage self,
+        STORAGE storage self,
         address from,
         address to,
         uint256 tokenId
@@ -350,7 +356,7 @@ library ERC721Lib {
     * @param _data bytes data to send along with a safe transfer check
     */
     function safeTransferFrom(
-        ERC721DATA storage self,
+        STORAGE storage self,
         address from,
         address to,
         uint256 tokenId,
@@ -360,7 +366,7 @@ library ERC721Lib {
     {
         transferFrom(self, from, to, tokenId);
         // solium-disable-next-line arg-overflow
-        require(_checkAndCallSafeTransfer(from, to, tokenId, _data));
+        require(_checkAndCallSafeTransfer(self, from, to, tokenId, _data));
     }
 
     /**
@@ -372,7 +378,7 @@ library ERC721Lib {
     * @param tokenId uint256 ID of the token to be transferred
     */
     function transferFrom(
-        ERC721DATA storage self,
+        STORAGE storage self,
         address from,
         address to,
         uint256 tokenId
@@ -397,7 +403,7 @@ library ERC721Lib {
     * @param to address to be approved for the given token ID
     * @param tokenId uint256 ID of the token to be approved
     */
-    function approve(ERC721DATA storage self, address to, uint256 tokenId) public {
+    function approve(STORAGE storage self, address to, uint256 tokenId) public {
         address owner = ownerOf(self, tokenId);
         require(to != owner);
         require(msg.sender == owner || isApprovedForAll(self, owner, msg.sender));
@@ -412,7 +418,7 @@ library ERC721Lib {
     * @param to operator address to set the approval
     * @param approved representing the status of the approval to be set
     */
-    function setApprovalForAll(ERC721DATA storage self, address to, bool approved) public {
+    function setApprovalForAll(STORAGE storage self, address to, bool approved) public {
         require(to != msg.sender);
         self._operatorApprovals[msg.sender][to] = approved;
         emit ApprovalForAll(msg.sender, to, approved);
@@ -424,7 +430,7 @@ library ERC721Lib {
     * @param tokenId uint256 ID of the token to query the approval of
     * @return address currently approved for the given token ID
     */
-    function getApproved(ERC721DATA storage self, uint256 tokenId) public view returns (address) {
+    function getApproved(STORAGE storage self, uint256 tokenId) public view returns (address) {
         require(_exists(self, tokenId));
         return self._tokenApprovals[tokenId];
     }
@@ -436,7 +442,7 @@ library ERC721Lib {
     * @return bool whether the given operator is approved by the given owner
     */
     function isApprovedForAll(
-        ERC721DATA storage self,
+        STORAGE storage self,
         address owner,
         address operator
     )
@@ -452,7 +458,7 @@ library ERC721Lib {
     * @param tokenId uint256 ID of the token to query the existence of
     * @return whether the token exists
     */
-    function _exists(ERC721DATA storage self, uint256 tokenId) internal view returns (bool) {
+    function _exists(STORAGE storage self, uint256 tokenId) internal view returns (bool) {
         address owner = self._tokenOwner[tokenId];
         return owner != address(0);
     }
@@ -465,7 +471,7 @@ library ERC721Lib {
     *  is an operator of the owner, or is the owner of the token
     */
     function _isApprovedOrOwner(
-        ERC721DATA storage self,
+        STORAGE storage self,
         address spender,
         uint256 tokenId
     )
@@ -490,7 +496,7 @@ library ERC721Lib {
     * @param to The address that will own the minted token
     * @param tokenId uint256 ID of the token to be minted by the msg.sender
     */
-    function _mint(ERC721DATA storage self, address to, uint256 tokenId) internal {
+    function _mint(STORAGE storage self, address to, uint256 tokenId) internal {
         require(to != address(0));
         _addTokenTo(self, to, tokenId);
         emit Transfer(address(0), to, tokenId);
@@ -501,7 +507,7 @@ library ERC721Lib {
     * Reverts if the token does not exist
     * @param tokenId uint256 ID of the token being burned by the msg.sender
     */
-    function _burn(ERC721DATA storage self, address owner, uint256 tokenId) internal {
+    function _burn(STORAGE storage self, address owner, uint256 tokenId) internal {
         _clearApproval(self, owner, tokenId);
         _removeTokenFrom(self, owner, tokenId);
         emit Transfer(owner, address(0), tokenId);
@@ -513,7 +519,7 @@ library ERC721Lib {
     * @param owner owner of the token
     * @param tokenId uint256 ID of the token to be transferred
     */
-    function _clearApproval(ERC721DATA storage self, address owner, uint256 tokenId) internal {
+    function _clearApproval(STORAGE storage self, address owner, uint256 tokenId) internal {
         require(ownerOf(self, tokenId) == owner);
         if (self._tokenApprovals[tokenId] != address(0)) {
         self._tokenApprovals[tokenId] = address(0);
@@ -525,7 +531,7 @@ library ERC721Lib {
     * @param to address representing the new owner of the given token ID
     * @param tokenId uint256 ID of the token to be added to the tokens list of the given address
     */
-    function _addTokenTo(ERC721DATA storage self, address to, uint256 tokenId) internal {
+    function _addTokenTo(STORAGE storage self, address to, uint256 tokenId) internal {
         require(self._tokenOwner[tokenId] == address(0));
         self._tokenOwner[tokenId] = to;
         self._ownedTokensCount[to] = self._ownedTokensCount[to].add(1);
@@ -536,7 +542,7 @@ library ERC721Lib {
     * @param from address representing the previous owner of the given token ID
     * @param tokenId uint256 ID of the token to be removed from the tokens list of the given address
     */
-    function _removeTokenFrom(ERC721DATA storage self, address from, uint256 tokenId) internal {
+    function _removeTokenFrom(STORAGE storage self, address from, uint256 tokenId) internal {
         require(ownerOf(self, tokenId) == from);
         self._ownedTokensCount[from] = self._ownedTokensCount[from].sub(1);
         self._tokenOwner[tokenId] = address(0);
@@ -552,6 +558,7 @@ library ERC721Lib {
     * @return whether the call correctly returned the expected magic value
     */
     function _checkAndCallSafeTransfer(
+        STORAGE storage self,
         address from,
         address to,
         uint256 tokenId,
@@ -581,15 +588,15 @@ library ERC721MetadataLib {
 
     using ERC165Lib for bytes4;
 
-    using ERC165Lib for ERC165Lib.ERC165DATA;
+    using ERC165Lib for ERC165Lib.STORAGE;
 
-    using ERC721Lib for ERC721Lib.ERC721DATA;
+    using ERC721Lib for ERC721Lib.STORAGE;
 
 /* Events */
 
 /* Structs */
 
-    struct ERC721MetadataDATA {
+    struct STORAGE {
 
         // Token name
         string _name;
@@ -628,7 +635,7 @@ library ERC721MetadataLib {
         // register the supported interfaces to conform to ERC721 via ERC165
     //     _registerInterface(InterfaceId_ERC721Metadata);
     // }
-    function init(ERC721MetadataDATA storage self, ERC165Lib.ERC165DATA storage llib, string name, string symbol) public {
+    function init(STORAGE storage self, ERC165Lib.STORAGE storage llib, string name, string symbol) public {
         self._name = name;
         self._symbol = symbol;
 
@@ -640,7 +647,7 @@ library ERC721MetadataLib {
     * @dev Gets the token name
     * @return string representing the token name
     */
-    function name(ERC721MetadataDATA storage self) external view returns (string) {
+    function name(STORAGE storage self) external view returns (string) {
         return self._name;
     }
 
@@ -648,7 +655,7 @@ library ERC721MetadataLib {
     * @dev Gets the token symbol
     * @return string representing the token symbol
     */
-    function symbol(ERC721MetadataDATA storage self) external view returns (string) {
+    function symbol(STORAGE storage self) external view returns (string) {
         return self._symbol;
     }
 
@@ -657,7 +664,7 @@ library ERC721MetadataLib {
     * Throws if the token ID does not exist. May return an empty string.
     * @param tokenId uint256 ID of the token to query
     */
-    function tokenURI(ERC721MetadataDATA storage self, ERC721Lib.ERC721DATA storage llib, uint256 tokenId) public view returns (string) {
+    function tokenURI(STORAGE storage self, ERC721Lib.STORAGE storage llib, uint256 tokenId) public view returns (string) {
         require(llib._exists(tokenId));
         return self._tokenURIs[tokenId];
     }
@@ -668,7 +675,7 @@ library ERC721MetadataLib {
     * @param tokenId uint256 ID of the token to set its URI
     * @param uri string URI to assign
     */
-    function _setTokenURI(ERC721MetadataDATA storage self, ERC721Lib.ERC721DATA storage llib, uint256 tokenId, string uri) internal {
+    function _setTokenURI(STORAGE storage self, ERC721Lib.STORAGE storage llib, uint256 tokenId, string uri) internal {
         require(llib._exists(tokenId));
         self._tokenURIs[tokenId] = uri;
     }
@@ -679,7 +686,7 @@ library ERC721MetadataLib {
     * @param owner owner of the token to burn
     * @param tokenId uint256 ID of the token being burned by the msg.sender
     */
-    function _burn(ERC721MetadataDATA storage self, ERC721Lib.ERC721DATA storage llib, address owner, uint256 tokenId) internal {
+    function _burn(STORAGE storage self, ERC721Lib.STORAGE storage llib, address owner, uint256 tokenId) internal {
         // super._burn(owner, tokenId);
         llib._burn(owner, tokenId);
 
@@ -700,17 +707,17 @@ library ERC721EnumerableLib {
 
     using ERC165Lib for bytes4;
 
-    using ERC165Lib for ERC165Lib.ERC165DATA;
+    using ERC165Lib for ERC165Lib.STORAGE;
 
-    using ERC721Lib for ERC721Lib.ERC721DATA;
+    using ERC721Lib for ERC721Lib.STORAGE;
 
-    using ERC721MetadataLib for ERC721MetadataLib.ERC721MetadataDATA;
+    using ERC721MetadataLib for ERC721MetadataLib.STORAGE;
 
 /* Events */
 
 /* Structs */
 
-    struct ERC721EnumerableDATA {
+    struct STORAGE {
         // Mapping from owner to list of owned token IDs
         mapping(address => uint256[]) _ownedTokens;
 
@@ -748,7 +755,7 @@ library ERC721EnumerableLib {
     //     _registerInterface(_InterfaceId_ERC721Enumerable);
     // }
 
-    function init(ERC165Lib.ERC165DATA storage llib) public {
+    function init(STORAGE storage self, ERC165Lib.STORAGE storage llib) public {
         // register the supported interface to conform to ERC721 via ERC165
         _InterfaceId_ERC721Enumerable._registerInterface(llib);
     }
@@ -760,8 +767,8 @@ library ERC721EnumerableLib {
     * @return uint256 token ID at the given index of the tokens list owned by the requested address
     */
     function tokenOfOwnerByIndex(
-        ERC721EnumerableDATA storage self,
-        ERC721Lib.ERC721DATA storage llib,
+        STORAGE storage self,
+        ERC721Lib.STORAGE storage llib,
         address owner,
         uint256 index
     )
@@ -777,7 +784,7 @@ library ERC721EnumerableLib {
     * @dev Gets the total amount of tokens stored by the contract
     * @return uint256 representing the total amount of tokens
     */
-    function totalSupply(ERC721EnumerableDATA storage self) public view returns (uint256) {
+    function totalSupply(STORAGE storage self) public view returns (uint256) {
         return self._allTokens.length;
     }
 
@@ -787,7 +794,7 @@ library ERC721EnumerableLib {
     * @param index uint256 representing the index to be accessed of the tokens list
     * @return uint256 token ID at the given index of the tokens list
     */
-    function tokenByIndex(ERC721EnumerableDATA storage self, uint256 index) public view returns (uint256) {
+    function tokenByIndex(STORAGE storage self, uint256 index) public view returns (uint256) {
         require(index < totalSupply(self));
         return self._allTokens[index];
     }
@@ -797,7 +804,7 @@ library ERC721EnumerableLib {
     * @param to address representing the new owner of the given token ID
     * @param tokenId uint256 ID of the token to be added to the tokens list of the given address
     */
-    function _addTokenTo(ERC721EnumerableDATA storage self, ERC721Lib.ERC721DATA storage llib, address to, uint256 tokenId) internal {
+    function _addTokenTo(STORAGE storage self, ERC721Lib.STORAGE storage llib, address to, uint256 tokenId) internal {
         // super._addTokenTo(to, tokenId);
         llib._addTokenTo(to, tokenId);
         uint256 length = self._ownedTokens[to].length;
@@ -810,7 +817,7 @@ library ERC721EnumerableLib {
     * @param from address representing the previous owner of the given token ID
     * @param tokenId uint256 ID of the token to be removed from the tokens list of the given address
     */
-    function _removeTokenFrom(ERC721EnumerableDATA storage self, ERC721Lib.ERC721DATA storage llib, address from, uint256 tokenId) internal {
+    function _removeTokenFrom(STORAGE storage self, ERC721Lib.STORAGE storage llib, address from, uint256 tokenId) internal {
         // super._removeTokenFrom(from, tokenId);
         llib._removeTokenFrom(from, tokenId);
 
@@ -838,7 +845,7 @@ library ERC721EnumerableLib {
     * @param to address the beneficiary that will own the minted token
     * @param tokenId uint256 ID of the token to be minted by the msg.sender
     */
-    function _mint(ERC721EnumerableDATA storage self, ERC721Lib.ERC721DATA storage llib, address to, uint256 tokenId) internal {
+    function _mint(STORAGE storage self, ERC721Lib.STORAGE storage llib, address to, uint256 tokenId) internal {
         // super._mint(to, tokenId);
         llib._mint(to, tokenId);
 
@@ -852,7 +859,7 @@ library ERC721EnumerableLib {
     * @param owner owner of the token to burn
     * @param tokenId uint256 ID of the token being burned by the msg.sender
     */
-    function _burn(ERC721EnumerableDATA storage self, ERC721Lib.ERC721DATA storage llib, address owner, uint256 tokenId) internal {
+    function _burn(STORAGE storage self, ERC721Lib.STORAGE storage llib, address owner, uint256 tokenId) internal {
         // super._burn(owner, tokenId);
         llib._burn(owner, tokenId);
 
