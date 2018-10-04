@@ -303,7 +303,7 @@ library ERC721Lib {
     * @param owner address to query the balance of
     * @return uint256 representing the amount owned by the passed address
     */
-    function balanceOf(STORAGE storage self, address owner) public view returns (uint256) {
+    function balanceOf(STORAGE storage self, address owner) view returns (uint256) {
         require(owner != address(0));
         return self._ownedTokensCount[owner];
     }
@@ -313,7 +313,7 @@ library ERC721Lib {
     * @param tokenId uint256 ID of the token to query the owner of
     * @return owner address currently marked as the owner of the given token ID
     */
-    function ownerOf(STORAGE storage self, uint256 tokenId) public view returns (address) {
+    function ownerOf(STORAGE storage self, uint256 tokenId) view returns (address) {
         address owner = self._tokenOwner[tokenId];
         require(owner != address(0));
         return owner;
@@ -336,9 +336,7 @@ library ERC721Lib {
         address from,
         address to,
         uint256 tokenId
-    )
-        public
-    {
+    ) {
         // solium-disable-next-line arg-overflow
         safeTransferFrom(self, from, to, tokenId, "");
     }
@@ -361,12 +359,10 @@ library ERC721Lib {
         address to,
         uint256 tokenId,
         bytes _data
-    )
-        public
-    {
+    ) {
         transferFrom(self, from, to, tokenId);
         // solium-disable-next-line arg-overflow
-        require(_checkAndCallSafeTransfer(self, from, to, tokenId, _data));
+        require(_checkAndCallSafeTransfer(from, to, tokenId, _data));
     }
 
     /**
@@ -382,9 +378,7 @@ library ERC721Lib {
         address from,
         address to,
         uint256 tokenId
-    )
-        public
-    {
+    ) {
         require(_isApprovedOrOwner(self, msg.sender, tokenId));
         require(to != address(0));
 
@@ -403,7 +397,7 @@ library ERC721Lib {
     * @param to address to be approved for the given token ID
     * @param tokenId uint256 ID of the token to be approved
     */
-    function approve(STORAGE storage self, address to, uint256 tokenId) public {
+    function approve(STORAGE storage self, address to, uint256 tokenId) {
         address owner = ownerOf(self, tokenId);
         require(to != owner);
         require(msg.sender == owner || isApprovedForAll(self, owner, msg.sender));
@@ -418,7 +412,7 @@ library ERC721Lib {
     * @param to operator address to set the approval
     * @param approved representing the status of the approval to be set
     */
-    function setApprovalForAll(STORAGE storage self, address to, bool approved) public {
+    function setApprovalForAll(STORAGE storage self, address to, bool approved) {
         require(to != msg.sender);
         self._operatorApprovals[msg.sender][to] = approved;
         emit ApprovalForAll(msg.sender, to, approved);
@@ -446,7 +440,6 @@ library ERC721Lib {
         address owner,
         address operator
     )
-        public
         view
         returns (bool)
     {
@@ -558,7 +551,6 @@ library ERC721Lib {
     * @return whether the call correctly returned the expected magic value
     */
     function _checkAndCallSafeTransfer(
-        STORAGE storage self,
         address from,
         address to,
         uint256 tokenId,
@@ -635,7 +627,7 @@ library ERC721MetadataLib {
         // register the supported interfaces to conform to ERC721 via ERC165
     //     _registerInterface(InterfaceId_ERC721Metadata);
     // }
-    function init(STORAGE storage self, ERC165Lib.STORAGE storage llib, string name, string symbol) public {
+    function init(STORAGE storage self, ERC165Lib.STORAGE storage llib, string name, string symbol) {
         self._name = name;
         self._symbol = symbol;
 
@@ -647,7 +639,7 @@ library ERC721MetadataLib {
     * @dev Gets the token name
     * @return string representing the token name
     */
-    function name(STORAGE storage self) external view returns (string) {
+    function name(STORAGE storage self) view returns (string) {
         return self._name;
     }
 
@@ -655,7 +647,7 @@ library ERC721MetadataLib {
     * @dev Gets the token symbol
     * @return string representing the token symbol
     */
-    function symbol(STORAGE storage self) external view returns (string) {
+    function symbol(STORAGE storage self) view returns (string) {
         return self._symbol;
     }
 
@@ -664,7 +656,7 @@ library ERC721MetadataLib {
     * Throws if the token ID does not exist. May return an empty string.
     * @param tokenId uint256 ID of the token to query
     */
-    function tokenURI(STORAGE storage self, ERC721Lib.STORAGE storage llib, uint256 tokenId) public view returns (string) {
+    function tokenURI(STORAGE storage self, ERC721Lib.STORAGE storage llib, uint256 tokenId) view returns (string) {
         require(llib._exists(tokenId));
         return self._tokenURIs[tokenId];
     }

@@ -46,7 +46,7 @@ contract ERC165 is IERC165 {
     *   bytes4(keccak256('supportsInterface(bytes4)'))
     */
 
-/* State Valiables */
+/* State Variables */
 
     ERC165Lib.STORAGE erc165data;
 
@@ -119,7 +119,7 @@ contract ERC721 is ERC165, IERC721 {
     *   bytes4(keccak256('safeTransferFrom(address,address,uint256,bytes)'))
     */
 
-/* State Valiables */
+/* State Variables */
 
     ERC721Lib.STORAGE erc721data;
 
@@ -158,29 +158,6 @@ contract ERC721 is ERC165, IERC721 {
     * which is called upon a safe transfer, and return the magic value
     * `bytes4(keccak256("onERC721Received(address,address,uint256,bytes)"))`; otherwise,
     * the transfer is reverted.
-    *
-    * Requires the msg sender to be the owner, approved, or operator
-    * @param from current owner of the token
-    * @param to address to receive the ownership of the given token ID
-    * @param tokenId uint256 ID of the token to be transferred
-    */
-    function safeTransferFrom(
-        address from,
-        address to,
-        uint256 tokenId
-    )
-        public
-    {
-        // solium-disable-next-line arg-overflow
-        erc721data.safeTransferFrom(from, to, tokenId);
-    }
-
-    /**
-    * @dev Safely transfers the ownership of a given token ID to another address
-    * If the target address is a contract, it must implement `onERC721Received`,
-    * which is called upon a safe transfer, and return the magic value
-    * `bytes4(keccak256("onERC721Received(address,address,uint256,bytes)"))`; otherwise,
-    * the transfer is reverted.
     * Requires the msg sender to be the owner, approved, or operator
     * @param from current owner of the token
     * @param to address to receive the ownership of the given token ID
@@ -199,6 +176,29 @@ contract ERC721 is ERC165, IERC721 {
     }
 
     /**
+    * @dev Safely transfers the ownership of a given token ID to another address
+    * If the target address is a contract, it must implement `onERC721Received`,
+    * which is called upon a safe transfer, and return the magic value
+    * `bytes4(keccak256("onERC721Received(address,address,uint256,bytes)"))`; otherwise,
+    * the transfer is reverted.
+    *
+    * Requires the msg sender to be the owner, approved, or operator
+    * @param from current owner of the token
+    * @param to address to receive the ownership of the given token ID
+    * @param tokenId uint256 ID of the token to be transferred
+    */
+    function safeTransferFrom(
+        address from,
+        address to,
+        uint256 tokenId
+    )
+        public
+    {
+        // solium-disable-next-line arg-overflow
+        erc721data.safeTransferFrom(from, to, tokenId);
+    }
+
+    /**
     * @dev Transfers the ownership of a given token ID to another address
     * Usage of this method is discouraged, use `safeTransferFrom` whenever possible
     * Requires the msg sender to be the owner, approved, or operator
@@ -206,6 +206,7 @@ contract ERC721 is ERC165, IERC721 {
     * @param to address to receive the ownership of the given token ID
     * @param tokenId uint256 ID of the token to be transferred
     */
+
     function transferFrom(
         address from,
         address to,
@@ -265,100 +266,7 @@ contract ERC721 is ERC165, IERC721 {
         return erc721data.isApprovedForAll(owner, operator);
     }
 
-    /**
-    * @dev Returns whether the specified token exists
-    * @param tokenId uint256 ID of the token to query the existence of
-    * @return whether the token exists
-    */
-    function _exists(uint256 tokenId) internal view returns (bool) {
-        return erc721data._exists(tokenId);
-    }
-
-    /**
-    * @dev Returns whether the given spender can transfer a given token ID
-    * @param spender address of the spender to query
-    * @param tokenId uint256 ID of the token to be transferred
-    * @return bool whether the msg.sender is approved for the given token ID,
-    *  is an operator of the owner, or is the owner of the token
-    */
-    function _isApprovedOrOwner(
-        address spender,
-        uint256 tokenId
-    )
-        internal
-        view
-        returns (bool)
-    {
-        return erc721data._isApprovedOrOwner(spender, tokenId);
-    }
-
-    /**
-    * @dev Internal function to mint a new token
-    * Reverts if the given token ID already exists
-    * @param to The address that will own the minted token
-    * @param tokenId uint256 ID of the token to be minted by the msg.sender
-    */
-    function _mint(address to, uint256 tokenId) internal {
-        erc721data._mint(to, tokenId);
-    }
-
-    /**
-    * @dev Internal function to burn a specific token
-    * Reverts if the token does not exist
-    * @param tokenId uint256 ID of the token being burned by the msg.sender
-    */
-    function _burn(address owner, uint256 tokenId) internal {
-        erc721data._burn(owner, tokenId);
-    }
-
-    /**
-    * @dev Internal function to clear current approval of a given token ID
-    * Reverts if the given address is not indeed the owner of the token
-    * @param owner owner of the token
-    * @param tokenId uint256 ID of the token to be transferred
-    */
-    function _clearApproval(address owner, uint256 tokenId) internal {
-        erc721data._clearApproval(owner, tokenId);
-    }
-
-    /**
-    * @dev Internal function to add a token ID to the list of a given address
-    * @param to address representing the new owner of the given token ID
-    * @param tokenId uint256 ID of the token to be added to the tokens list of the given address
-    */
-    function _addTokenTo(address to, uint256 tokenId) internal {
-        erc721data._addTokenTo(to, tokenId);
-    }
-
-    /**
-    * @dev Internal function to remove a token ID from the list of a given address
-    * @param from address representing the previous owner of the given token ID
-    * @param tokenId uint256 ID of the token to be removed from the tokens list of the given address
-    */
-    function _removeTokenFrom(address from, uint256 tokenId) internal {
-        erc721data._removeTokenFrom(from, tokenId);
-    }
-
-    /**
-    * @dev Internal function to invoke `onERC721Received` on a target address
-    * The call is not executed if the target address is not a contract
-    * @param from address representing the previous owner of the given token ID
-    * @param to target address that will receive the tokens
-    * @param tokenId uint256 ID of the token to be transferred
-    * @param _data bytes optional data to send along with the call
-    * @return whether the call correctly returned the expected magic value
-    */
-    function _checkAndCallSafeTransfer(
-        address from,
-        address to,
-        uint256 tokenId,
-        bytes _data
-    )
-        internal
-        returns (bool)
-    {
-        return erc721data._checkAndCallSafeTransfer(from, to, tokenId, _data);
-    }
+/* End of Contract ERC721 */ 
 }
 
 
@@ -382,7 +290,7 @@ contract ERC721Metadata is ERC165, ERC721, IERC721Metadata {
     *   bytes4(keccak256('tokenURI(uint256)'))
     */
 
-/* State Valiables */
+/* State Variables */
 
     ERC721MetadataLib.STORAGE erc721metadata;
 
@@ -398,7 +306,7 @@ contract ERC721Metadata is ERC165, ERC721, IERC721Metadata {
         // register the supported interfaces to conform to ERC721 via ERC165
 
         erc721metadata.init(erc165data, name, symbol);
-    }
+        }
 
     /**
     * @dev Gets the token name
@@ -406,7 +314,7 @@ contract ERC721Metadata is ERC165, ERC721, IERC721Metadata {
     */
     function name() external view returns (string) {
         return erc721metadata.name();
-    }
+        }
 
     /**
     * @dev Gets the token symbol
@@ -414,7 +322,7 @@ contract ERC721Metadata is ERC165, ERC721, IERC721Metadata {
     */
     function symbol() external view returns (string) {
         return erc721metadata.symbol();
-    }
+        }
 
     /**
     * @dev Returns an URI for a given token ID
@@ -423,27 +331,8 @@ contract ERC721Metadata is ERC165, ERC721, IERC721Metadata {
     */
     function tokenURI(uint256 tokenId) public view returns (string) {
         return erc721metadata.tokenURI(erc721data, tokenId);
-    }
-
-    /**
-    * @dev Internal function to set the token URI for a given token
-    * Reverts if the token ID does not exist
-    * @param tokenId uint256 ID of the token to set its URI
-    * @param uri string URI to assign
-    */
-    function _setTokenURI(uint256 tokenId, string uri) internal {
-        erc721metadata._setTokenURI(erc721data, tokenId, uri);
-    }
-
-    /**
-    * @dev Internal function to burn a specific token
-    * Reverts if the token does not exist
-    * @param owner owner of the token to burn
-    * @param tokenId uint256 ID of the token being burned by the msg.sender
-    */
-    function _burn(address owner, uint256 tokenId) internal {
-        erc721metadata._burn(erc721data, owner, tokenId);
-    }
+        }
+/* End of Contract ERC721Metadata */
 }
 
 contract ERC721Enumerable is ERC165, ERC721, IERC721Enumerable {
@@ -466,10 +355,10 @@ contract ERC721Enumerable is ERC165, ERC721, IERC721Enumerable {
     *   bytes4(keccak256('tokenByIndex(uint256)'))
     */
 
-/* State Valiables */
+/* State Variables */
 
     ERC721EnumerableLib.STORAGE erc721enumerabledata;
-    
+
 /* Modifiers */
 
 /* Functions */
@@ -480,7 +369,25 @@ contract ERC721Enumerable is ERC165, ERC721, IERC721Enumerable {
     constructor() public {
         // register the supported interface to conform to ERC721 via ERC165
         erc721enumerabledata.init(erc165data);
-    }
+        }
+
+    /**
+    * @dev Gets the total amount of tokens stored by the contract
+    * @return uint256 representing the total amount of tokens
+    */
+    function totalSupply() public view returns (uint256) {
+        return erc721enumerabledata.totalSupply();
+        }
+
+    /**
+    * @dev Gets the token ID at a given index of all the tokens in this contract
+    * Reverts if the index is greater or equal to the total number of tokens
+    * @param index uint256 representing the index to be accessed of the tokens list
+    * @return uint256 token ID at the given index of the tokens list
+    */
+    function tokenByIndex(uint256 index) public view returns (uint256) {
+        return erc721enumerabledata.tokenByIndex(index);
+        }
 
     /**
     * @dev Gets the token ID at a given index of the tokens list of the requested owner
@@ -497,61 +404,6 @@ contract ERC721Enumerable is ERC165, ERC721, IERC721Enumerable {
         returns (uint256)
     {
         return erc721enumerabledata.tokenOfOwnerByIndex(erc721data, owner, index);
-    }
-
-    /**
-    * @dev Gets the total amount of tokens stored by the contract
-    * @return uint256 representing the total amount of tokens
-    */
-    function totalSupply() public view returns (uint256) {
-        return erc721enumerabledata.totalSupply();
-    }
-
-    /**
-    * @dev Gets the token ID at a given index of all the tokens in this contract
-    * Reverts if the index is greater or equal to the total number of tokens
-    * @param index uint256 representing the index to be accessed of the tokens list
-    * @return uint256 token ID at the given index of the tokens list
-    */
-    function tokenByIndex(uint256 index) public view returns (uint256) {
-        return erc721enumerabledata.tokenByIndex(index);
-    }
-
-    /**
-    * @dev Internal function to add a token ID to the list of a given address
-    * @param to address representing the new owner of the given token ID
-    * @param tokenId uint256 ID of the token to be added to the tokens list of the given address
-    */
-    function _addTokenTo(address to, uint256 tokenId) internal {
-        erc721enumerabledata._addTokenTo(erc721data, to, tokenId);
-    }
-
-    /**
-    * @dev Internal function to remove a token ID from the list of a given address
-    * @param from address representing the previous owner of the given token ID
-    * @param tokenId uint256 ID of the token to be removed from the tokens list of the given address
-    */
-    function _removeTokenFrom(address from, uint256 tokenId) internal {
-        erc721enumerabledata._removeTokenFrom(erc721data, from, tokenId);
-    }
-
-    /**
-    * @dev Internal function to mint a new token
-    * Reverts if the given token ID already exists
-    * @param to address the beneficiary that will own the minted token
-    * @param tokenId uint256 ID of the token to be minted by the msg.sender
-    */
-    function _mint(address to, uint256 tokenId) internal {
-        erc721enumerabledata._mint(erc721data, to, tokenId);
-    }
-
-    /**
-    * @dev Internal function to burn a specific token
-    * Reverts if the token does not exist
-    * @param owner owner of the token to burn
-    * @param tokenId uint256 ID of the token being burned by the msg.sender
-    */
-    function _burn(address owner, uint256 tokenId) internal {
-        erc721enumerabledata._burn(erc721data, owner, tokenId);
-    }
-}
+        }
+ /* End of Contract ERC721Enumerable */
+ }
