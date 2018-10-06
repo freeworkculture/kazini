@@ -29,19 +29,17 @@ import "./1_Kernel.sol";
 import "./2_OS_Library.sol";
 import './3_ERC20_Library.sol';
 
-contract ApproveAndCallFallBack {
-    function receiveApproval(address from, uint256 _amount, address _token, bytes _data) public;
-}
 
 /// @dev The actual token contract, the default controller is the msg.sender
 ///  that deploys the contract, so usually this token will be deployed by a
 ///  token controller contract, which Giveth will call a "Campaign"
 
 
-contract ERC20Int {
-    using ERC20Lib for ERC20Lib.TokenStorage;
+contract ERC20 is BaseController {
 
-    ERC20Lib.TokenStorage token;
+    using ERC20Lib for ERC20Lib.STORAGE;
+
+    ERC20Lib.STORAGE erc20data;
 
 /* Events */
     event Transfer(address indexed from, address indexed to, uint value);
@@ -61,13 +59,13 @@ contract ERC20Int {
 /* Modifiers */
 
     modifier isAvailable(uint _amount) {
-        require(_amount <= token.balanceOf(msg.sender));
+        require(_amount <= erc20data.balanceOf(msg.sender));
         _;
     }
 
     modifier isAllowed(address _from, uint _amount) {
-        require(_amount <= token.allowance(_from, msg.sender) &&
-           _amount <= token.balanceOf(_from));
+        require(_amount <= erc20data.allowance(_from, msg.sender) &&
+           _amount <= erc20data.balanceOf(_from));
         _;        
     }
 
@@ -75,7 +73,7 @@ contract ERC20Int {
 
     
     function StandardToken() {
-        token.init(INITIAL_SUPPLY);
+        erc20data.init(INITIAL_SUPPLY);
         }
 
     // Returns token name
@@ -88,28 +86,27 @@ contract ERC20Int {
     // function decimalPlaces() public returns(uint);
 
     function totalSupply() constant returns (uint) {
-        return token.totalSupply;
+        return erc20data.totalSupply();
         }
 
     function balanceOf(address who) constant returns (uint) {
-        return token.balanceOf(who);
+        return erc20data.balanceOf(who);
         }
 
     function allowance(address owner, address spender) constant returns (uint) {
-        return token.allowance(owner, spender);
+        return erc20data.allowance(owner, spender);
         }
 
     function transfer(address to, uint value) returns (bool ok) {
-        return token.transfer(to, value);
+        return erc20data.transfer(to, value);
         }
 
     function transferFrom(address from, address to, uint value) returns (bool ok) {
-        return token.transferFrom(from, to, value);
+        return erc20data.transferFrom(from, to, value);
         }
 
     function approve(address spender, uint value) returns (bool ok) {
-        return token.approve(spender, value);
+        return erc20data.approve(spender, value);
         }
-
-
+/* End of Contract ERC20 */
 }

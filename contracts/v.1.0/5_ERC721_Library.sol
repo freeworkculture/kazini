@@ -424,7 +424,7 @@ library ERC721Lib {
     * @param tokenId uint256 ID of the token to query the approval of
     * @return address currently approved for the given token ID
     */
-    function getApproved(STORAGE storage self, uint256 tokenId) public view returns (address) {
+    function getApproved(STORAGE storage self, uint256 tokenId) view returns (address) {
         require(_exists(self, tokenId));
         return self._tokenApprovals[tokenId];
     }
@@ -445,6 +445,10 @@ library ERC721Lib {
     {
         return self._operatorApprovals[owner][operator];
     }
+
+////////////////
+// Internal helper functions
+////////////////
 
     /**
     * @dev Returns whether the specified token exists

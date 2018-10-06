@@ -465,6 +465,18 @@ contract Able is BaseController {
         // require(verify(_sig,_v,_r,_s) == controller);        
         return setController();
     }
+
+    // /// @notice Changes the controller of the contract
+    // /// @param _newController The new controller of the contract
+    // function changeController(address _newController) public onlyController returns (bool) {
+    //     if (controller == _newController) {
+    //         revert();
+    //     } else {
+    //         setContrl(Able(_newController));
+    //         return setController();
+    //         }
+    // }
+
     ///////////////////
 
 
