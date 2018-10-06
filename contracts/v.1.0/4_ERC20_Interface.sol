@@ -72,8 +72,22 @@ contract ERC20 is BaseController {
 /* Funtions Public */
 
     
-    function StandardToken() {
-        erc20data.init(INITIAL_SUPPLY);
+    constructor (
+        Able _contrl,
+        string _tokenName,
+        string _tokenSymbol,
+        uint8 _decimalUnits,
+        address _parentToken,
+        uint _parentSnapShotBlock
+    ) {
+        erc20data.init(
+            _contrl,
+            _tokenName,
+            _tokenSymbol,
+            _decimalUnits,
+            _parentToken,
+            _parentSnapShotBlock
+            );
         }
 
     // Returns token name
@@ -86,15 +100,17 @@ contract ERC20 is BaseController {
     // function decimalPlaces() public returns(uint);
 
     function totalSupply() constant returns (uint) {
-        return erc20data.totalSupply();
+        // return erc20data.totalSupply();
+        return erc20data.totalSupplyAt(block.number);
         }
 
-    function balanceOf(address who) constant returns (uint) {
-        return erc20data.balanceOf(who);
+    function balanceOf(address _who) constant returns (uint) {
+        // return erc20data.balanceOf(_who);
+        return erc20data.balanceOfAt(_who, block.number);
         }
 
-    function allowance(address owner, address spender) constant returns (uint) {
-        return erc20data.allowance(owner, spender);
+    function allowance(address _owner, address _spender) constant returns (uint) {
+        return erc20data.allowance(_owner, _spender);
         }
 
     function transfer(address to, uint value) returns (bool ok) {

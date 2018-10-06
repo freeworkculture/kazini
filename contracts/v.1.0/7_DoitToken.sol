@@ -73,6 +73,7 @@ contract Campaign is TokenController, BaseController {
         address indexed _spender,
         uint256 _amount
         );
+    event ChangeToken(address indexed _previous, address indexed _current);
 
 /* Structs */
 
@@ -83,6 +84,9 @@ contract Campaign is TokenController, BaseController {
     ERC20Lib.STORAGE erc20data;
 
     Able controller;
+
+    // The factory used to create new clone tokens
+    ERC20Factory tokenFactory;
 
 /* Modifiers */
 
@@ -106,7 +110,7 @@ contract Campaign is TokenController, BaseController {
 /// @param _vaultAddress The address that will store the donated funds
 /// @param _tokenAddress Address of the token contract this contract controls
 
-    constructor(
+    constructor (
         uint _startFundingTime,
         uint _endFundingTime,
         uint _maximumFunding,
@@ -133,6 +137,16 @@ contract Campaign is TokenController, BaseController {
     function ()  payable {
         doPayment(msg.sender);
     }
+
+/////////////////
+// TokenController Access
+/////////////////
+
+    function changeToken(ERC20 _tokenAddress) public onlyController {
+        emit ChangeToken(address(tokenContract), address(_tokenAddress));
+        tokenContract = _tokenAddress;// The Deployed Token Contract
+}
+
 
 /////////////////
 // TokenController interface
@@ -168,6 +182,20 @@ contract Campaign is TokenController, BaseController {
     {
         return true;
     }
+
+////////////////
+// Query balance and totalSupply in History
+////////////////
+
+    function totalSupply(uint _blockNumber) constant returns (uint) {
+        // return erc20data.totalSupply();
+        return erc20data.totalSupplyAt(_blockNumber);
+        }
+
+    function balanceOf(address _who, uint _blockNumber) constant returns (uint) {
+        // return erc20data.balanceOf(_who);
+        return erc20data.balanceOfAt(_who, _blockNumber);
+        }
 
 ////////////////
 // Generate and destroy tokens
@@ -280,5 +308,126 @@ contract Campaign is TokenController, BaseController {
     /// @param _transfersEnabled True if transfers are allowed in the clone
     function enableTransfers(bool _transfersEnabled) public onlyController {
         erc20data.transfersEnabled = _transfersEnabled;
+    }
+
+////////////////
+// Clone Token Method
+////////////////
+
+    /// @notice Creates a new clone token with the initial distribution being
+    ///  this token at `_snapshotBlock`
+    /// @param _cloneTokenName Name of the clone token
+    /// @param _cloneDecimalUnits Number of decimals of the smallest unit
+    /// @param _cloneTokenSymbol Symbol of the clone token
+    /// @param _snapshotBlock Block when the distribution of the parent token is
+    ///  copied to set the initial distribution of the new clone token;
+    ///  if the block is zero than the actual block, the current block is used
+    /// @param _transfersEnabled True if transfers are allowed in the clone
+    /// @return The address of the new MiniMeToken Contract
+    function createCloneToken(
+        string _cloneTokenName,
+        uint8 _cloneDecimalUnits,
+        string _cloneTokenSymbol,
+        uint _snapshotBlock,
+        bool _transfersEnabled
+        ) public returns(address) {
+        if (_snapshotBlock == 0) _snapshotBlock = block.number;
+        ERC20 cloneToken = tokenFactory.createCloneToken(
+            _cloneTokenName,
+            _cloneTokenSymbol,
+            _cloneDecimalUnits,
+            this,
+            _snapshotBlock
+            );
+        // REVISIT !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        // cloneToken.setController();
+        changeToken(cloneToken);
+
+        // An event to make the token easy to find on the blockchain
+        emit NewCloneToken(address(cloneToken), _snapshotBlock);
+        return address(cloneToken);
+    }
+
+    /**
+    * @title TokenTimelock
+    * @dev TokenTimelock is a token holder contract that will allow a
+    * beneficiary to extract the tokens after a given release time
+    */
+    /**
+    * @return the token being held.
+    */
+    function vested(address _address) public view returns(uint, uint) {
+        return (erc20data.vested[_address][false], erc20data.vested[_address][true]);
+        }
+
+    // /**
+    // * @return the beneficiary of the tokens.
+    // */
+    // function beneficiary() public view returns(address) {
+    //     return _beneficiary;
+    //     }
+
+    // /**
+    // * @return the time when the tokens are released.
+    // */
+    // function releaseTime() public view returns(uint256) {
+    //     return _releaseTime;
+    //     }
+
+    // /**
+    // * @notice Transfers tokens held by timelock to beneficiary.
+    // */
+    // function release() public {
+    //     // solium-disable-next-line security/no-block-members
+    //     require(block.timestamp >= _releaseTime);
+
+    //     uint256 amount = _token.balanceOf(address(this));
+    //     require(amount > 0);
+
+    //     _token.safeTransfer(_beneficiary, amount);
+    //     }
+/* End of Contract DoitToken */
+}
+
+////////////////
+// MiniMeTokenFactory
+////////////////
+
+/// @dev This contract is used to generate clone contracts from a contract.
+///  In solidity this is the way to create a contract from a contract of the
+///  same class
+contract ERC20Factory {
+
+    /// @notice Update the DApp by creating a new token with new functionalities
+    ///  the msg.sender becomes the controller of this clone token
+    /// @param _parentToken Address of the token being cloned
+    /// @param _snapshotBlock Block of the parent token that will
+    ///  determine the initial distribution of the clone token
+    /// @param _tokenName Name of the new token
+    /// @param _decimalUnits Number of decimals of the new token
+    /// @param _tokenSymbol Token Symbol for the new token
+    /// @param _transfersEnabled If true, tokens will be able to be transferred
+    /// @return The address of the new token contract
+    function createCloneToken(
+        string _tokenName,
+        string _tokenSymbol,
+        uint8 _decimalUnits,
+        address _parentToken,
+        uint _snapshotBlock
+
+        // bool _transfersEnabled
+        ) public returns (ERC20) {
+            ERC20 newToken = new ERC20(
+                // this,
+                _tokenName,
+                _tokenSymbol,
+                _decimalUnits,
+                _parentToken,
+                _snapshotBlock
+                // _transfersEnabled
+                );
+        // REVISIT !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        // newToken.changeController(msg.sender);
+        return newToken;
     }
 }
