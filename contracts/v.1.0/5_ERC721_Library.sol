@@ -291,7 +291,7 @@ library ERC721Lib {
 
 /* Funtions */
 
-    function init(STORAGE storage self, ERC165Lib.STORAGE storage llib)
+    function init (STORAGE storage self, ERC165Lib.STORAGE storage llib)
         public
     {
         // register the supported interfaces to conform to ERC721 via ERC165

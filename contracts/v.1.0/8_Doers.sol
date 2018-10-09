@@ -1,27 +1,19 @@
 pragma solidity ^0.4.25;
+pragma experimental ABIEncoderV2;
+
+// Doers is a class library of natural or artificial entities within A multi-agent system (MAS).
+// The agents are collectively capable of reaching goals that are difficult to achieve by an
+// individual agent or monolithic system. The class can be added to, modified and reconstructed,
+// without the need for detailed rewriting.
+// The nature of an agent is:
+// An identity structure
+// A behaviour method
+// A capability model
+//
+
 import "./1_Kernel.sol";
 import "./2_OS_Library.sol";
-
-// Doers is a class library of natural or artificial entities within A multi-agent system (MAS).
-// The agents are collectively capable of reaching goals that are difficult to achieve by an
-// individual agent or monolithic system. The class can be added to, modified and reconstructed,
-// without the need for detailed rewriting.
-// The nature of an agent is:
-// An identity structure
-// A behaviour method
-// A capability model
-//
-
-
-// Doers is a class library of natural or artificial entities within A multi-agent system (MAS).
-// The agents are collectively capable of reaching goals that are difficult to achieve by an
-// individual agent or monolithic system. The class can be added to, modified and reconstructed,
-// without the need for detailed rewriting.
-// The nature of an agent is:
-// An identity structure
-// A behaviour method
-// A capability model
-//
+import "./6_ERC721_Interface.sol";
 
 // 5.2.3.13.  Trust Signature
 
@@ -46,6 +38,11 @@ import "./2_OS_Library.sol";
 
 library DoersLib {
 
+
+/* Using */
+
+
+
 /* Constant */
 
 
@@ -60,9 +57,10 @@ library DoersLib {
 
 /* State Variables */
 
-    struct DataStorage {
+    struct STORAGE {
 
         Creators creator;
+        // Userbase userbase;
         Userbase userbase;
         
         bytes32 MASK;
@@ -125,7 +123,7 @@ library DoersLib {
 /////////////////
 // function bytesToString(bytes32 _bytes) public constant returns (string) {
 
-    function updateIndex(DataStorage storage self) public returns (bool) {
+    function updateIndex(STORAGE storage self) public returns (bool) {
         uint8 kbase = uint8(UserDefined.KBase.DOCTORATE);
         while (self.bdi.beliefs.qualification[kbase].cAuthority == 0x0) {
             // merit == 0 ? bdi.beliefs.index = merit : merit --;
@@ -155,17 +153,17 @@ library DoersLib {
 // All ASSERTERS
 /////////////////
 
-    function iam(DataStorage storage self) view public returns (bool iam_) {
+    function iam(STORAGE storage self) view public returns (bool iam_) {
         return self.creator.iam();
         // Collector(creator.peana()).updateLog(keccak256("iam()"),iam);
         // return iam_;
     }
     
-    function index(DataStorage storage self) view public returns (uint8 index_) {
+    function index(STORAGE storage self) view public returns (uint8 index_) {
         return self.bdi.beliefs.merits.index;
     }
     
-    function merits(DataStorage storage self) 
+    function merits(STORAGE storage self) 
     view public returns (
             uint,
             bytes32,
@@ -181,7 +179,7 @@ library DoersLib {
             );
     }
     
-    function kbase(DataStorage storage self) view public returns (UserDefined.KBase kbase_) {
+    function kbase(STORAGE storage self) view public returns (UserDefined.KBase kbase_) {
             
         uint8 _kbase_ = uint8(UserDefined.KBase.DOCTORATE);
         while (self.bdi.beliefs.qualification[_kbase_].cAuthority == 0x0) {
@@ -193,22 +191,22 @@ library DoersLib {
         return UserDefined.KBase(_kbase_);
     }
     
-    function desire(DataStorage storage self, bytes1 _desire)
+    function desire(STORAGE storage self, bytes1 _desire)
     view public returns  (bytes32) {        
         return self.bdi.desires[_desire].goal;
     }
     
-    function intention(DataStorage storage self, bool _intention)
+    function intention(STORAGE storage self, bool _intention)
     view public returns  (bytes32) {
         return self.bdi.intentions[_intention].service;
     }
     
-    function intention(DataStorage storage self, bool _intention, UserDefined.IS _state)
+    function intention(STORAGE storage self, bool _intention, UserDefined.IS _state)
     public returns  (UserDefined.IS) {
         return self.bdi.intentions[_intention].state = _state;
     }
     
-    function flipIntention(DataStorage storage self)
+    function flipIntention(STORAGE storage self)
     public returns  (bool) {
         self.bdi.intentions[true].state = UserDefined.IS.RESERVED;
         self.bdi.intentions[true].service = self.bdi.intentions[false].service;
@@ -222,7 +220,7 @@ library DoersLib {
 // All GETTERS
 /////////////////
 
-    function getDoer(DataStorage storage self)
+    function getDoer(STORAGE storage self)
     view public returns  (
         bytes32 fPrint,
         bool iam_,
@@ -251,7 +249,7 @@ library DoersLib {
                 );
     }
 
-    function getBelief(DataStorage storage self, UserDefined.KBase _kbase)
+    function getBelief(STORAGE storage self, UserDefined.KBase _kbase)
     view public returns  (
     bytes32 country_,
     bytes32 cAuthority_,
@@ -267,7 +265,7 @@ library DoersLib {
             self.bdi.beliefs.qualification[uint8(_kbase)].score);
     }
 
-    function getDesire(DataStorage storage self, bytes1 _desire)
+    function getDesire(STORAGE storage self, bytes1 _desire)
     view public returns  (bytes32,bool) {
         // Collector(creator.peana()).updateLog(
         //     keccak256("getBelief(KBase)"),
@@ -278,7 +276,7 @@ library DoersLib {
             self.bdi.desires[_desire].status);
     }
 
-    function getIntention(DataStorage storage self, bool _intention)
+    function getIntention(STORAGE storage self, bool _intention)
     view public returns  (UserDefined.IS,bytes32,uint256) {
         // Collector(creator.peana()).updateLog(
         //     keccak256("getBelief(KBase)"),
@@ -295,18 +293,18 @@ library DoersLib {
 // All SETTERS
 /////////////////
 
-    function init(DataStorage storage self) public returns (bool) {
+    function init(STORAGE storage self) public returns (bool) {
         require(msg.sender == self.owner && !self.initialised);
         self.initialised = self.creator.initDoer();
         return self.initialised;
     }
 //
-    function sign(DataStorage storage self, address _address, bytes32 keyXOR) public returns (uint, bool signed) {
+    function sign(STORAGE storage self, address _address, bytes32 keyXOR) public returns (uint, bool signed) {
 
         // emit LogSigning(this, msg.sender, tx.origin, _address, keyXOR);
 
         if (Doers(_address) != msg.sender) {
-            signed = _address.call(bytes4(sha3("sign()")));
+            signed = _address.call(bytes4(keccak256("sign()")));
             require(signed);
             require(self.reputation.signer++ < 2^256 && self.ringlength > 0);
             return (self.reputation.signer,signed);
@@ -337,7 +335,7 @@ library DoersLib {
         }
     }
 
-    function sign(DataStorage storage self, bytes32 keyXOR) public returns (uint, bool signed) { // padd left before using bytes32(uint256(this) << 96)
+    function sign(STORAGE storage self, bytes32 keyXOR) public returns (uint, bool signed) { // padd left before using bytes32(uint256(this) << 96)
         require(msg.sender != self.owner);
         // bytes32 keyXOR = bytes32(uint256(this)) ^ bytes32(uint256(msg.sender));
         bytes memory callData = msg.data;
@@ -362,7 +360,7 @@ library DoersLib {
         return (self.ringlength,signed);
     }
 
-    function revoke(DataStorage storage self, address _address, bytes32 keyXOR) public returns (uint, bool revoked) { // pad left bytes32(uint256(this) << 96) before using
+    function revoke(STORAGE storage self, address _address, bytes32 keyXOR) public returns (uint, bool revoked) { // pad left bytes32(uint256(this) << 96) before using
         require(self.keyring.length > 0);
 
         bytes memory callData = msg.data;
@@ -378,7 +376,7 @@ library DoersLib {
             self.ringlength = 0;
             revoked = false;
         } else {
-            revoked = _address.call(bytes4(sha3("revoke()")));
+            revoked = _address.call(bytes4(keccak256("revoke()")));
             require(revoked);
             require(self.reputation.signer-- > 0);
             return (self.reputation.signer,revoked);
@@ -394,7 +392,7 @@ library DoersLib {
         return (self.ringlength,revoked);
     }
 
-    function revoke(DataStorage storage self, bytes32 keyXOR) public returns (uint, bool revoked) { // pad left bytes32(uint256(this) << 96) before using
+    function revoke(STORAGE storage self, bytes32 keyXOR) public returns (uint, bool revoked) { // pad left bytes32(uint256(this) << 96) before using
         require(self.keyring.length > 1 && msg.sender != self.owner);
         // bytes32 keyXOR = bytes32(uint256(this)) ^ bytes32(uint256(msg.sender));
         require (address(keyXOR) == address(self.keyring[self.keyIndex[keyXOR]]));
@@ -420,7 +418,7 @@ library DoersLib {
         return (self.ringlength,revoked);
     }
 
-    function trust(DataStorage storage self, UserDefined.Trust _level, bytes32 keyXOR) public returns (bool) {
+    function trust(STORAGE storage self, UserDefined.Trust _level, bytes32 keyXOR) public returns (bool) {
         require((self.keyring.length > 0) && (self.keyring.length < 2^256));
         
         uint num = self.keyIndex[keyXOR];
@@ -445,17 +443,17 @@ library DoersLib {
         return true;
     }
 
-    // function incSigns(DataStorage storage self, bytes32 _keyd) public returns (uint) {
+    // function incSigns(STORAGE storage self, bytes32 _keyd) public returns (uint) {
     //     require(self.reputation.signer++ < 2^256);
     //     return self.reputation.signer;
     // }
-    function decSigns(DataStorage storage self, bytes32 _keyd) public returns (uint) {
+    function decSigns(STORAGE storage self, bytes32 _keyd) public returns (uint) {
         require(self.reputation.signer-- > 0);
         return self.reputation.signer;
     }
 
     function setbdi(
-        DataStorage storage self, 
+        STORAGE storage self, 
         UserDefined.KBase _kbase,
         bytes32 _country,
         bytes32 _cAuthority,
@@ -487,7 +485,7 @@ library DoersLib {
     }
 
     function setbdi(
-        DataStorage storage self, 
+        STORAGE storage self, 
         uint _refMSD,
         uint _refRank,
         uint _refSigned,
@@ -514,7 +512,7 @@ library DoersLib {
         }
     }
 
-    function setbdi(DataStorage storage self, bytes32 _talent) public returns (bool) {
+    function setbdi(STORAGE storage self, bytes32 _talent) public returns (bool) {
         bytes32 callid = keccak256(msg.data);
         if(msg.sender == self.owner) {
             Doers(self.proxyBDI).setbdi(_talent);
@@ -539,14 +537,14 @@ library DoersLib {
             }
     }
 
-    function setbdi(DataStorage storage self, bytes1 _desire, UserDefined.Desire _goal) public {
+    function setbdi(STORAGE storage self, bytes1 _desire, UserDefined.Desire _goal) public {
         self.bdi.desires[_desire] = _goal;
         //  Collector(creator.peana()).updateLog(
         //     keccak256("setbdi(bytes1,Desire)"),
         //     true);
     }
 
-    function setbdi(DataStorage storage self, UserDefined.Intention _service) public {
+    function setbdi(STORAGE storage self, UserDefined.Intention _service) public {
         self.bdi.intentions[false] = _service;
         self.bdi.intentions[false].state = UserDefined.IS.INACTIVE;
         // Collector(creator.peana()).updateLog(
@@ -558,16 +556,628 @@ library DoersLib {
 /* End of Doers Library */
 }
 
-// Doers is a class library of natural or artificial entities within A multi-agent system (MAS).
-// The agents are collectively capable of reaching goals that are difficult to achieve by an
-// individual agent or monolithic system. The class can be added to, modified and reconstructed,
-// without the need for detailed rewriting.
-// The nature of an agent is:
-// An identity structure
-// A behaviour method
-// A capability model
-//
+//////////////////
+// Data Controller
+//////////////////
+/// @dev `Data` is a base level contract that is a `database controller` that can be
+///  later changed
+contract DataController is BaseController {
 
+/* State Variables */
+
+    // Database internal database;
+
+    Userbase internal userbase;
+
+/* Modifiers */
+
+    modifier onlyCreator {
+        require(userbase.isDoer(msg.sender) == IS.CREATOR);
+        _;
+    }
+
+    modifier onlyDoer {
+        require(userbase.isDoer(msg.sender) != IS.CREATOR);
+        _;
+    }
+
+/* Functions */
+
+    /// @notice `anybody` can Get the address of an existing contract frrom the controller.
+    function getDatabase() view public returns (Userbase) {
+        return userbase;   
+    }
+/* End of Contract DataController */
+}
+
+
+////////////////////
+// Userbase Contract
+////////////////////
+contract Userbase is BaseController {
+
+/* Constants */
+
+    bytes32 constant internal CONTRACTNAME = "USERBASE 0.0118";
+    uint8 constant public BASE = 2;
+
+/* Enums */
+
+
+/* Structs */
+
+
+/* State Variables */
+
+    uint public promiseCount;
+    uint public doerCount;						// !!! Can I call length of areDoers instead??!!!
+
+    uint internal talentK; 						// Total number of all identified talents
+    uint internal talentI;	  					// Total number of talents of all individuals
+    uint internal talentR;						// Total number of unique talents
+
+
+    mapping(bytes32 => uint) public talentF; 	// Frequency of occurence of a talent
+
+    mapping(address => Agent) public agents;
+
+    mapping(bytes32 => address) public uuids;
+
+    mapping(address => bytes32[]) public allPromises;
+
+/* Events */
+
+    event SetPlan(address indexed _from, address indexed _sender, address indexed _creator, bytes32 _intention, bytes32 _goal);
+
+/* Modifiers */
+
+    modifier onlyCreator {
+        require(agents[msg.sender].state == IS.CREATOR);
+        _;
+    }
+
+    modifier onlyDoer {
+        require (agents[msg.sender].state != IS.CREATOR);
+        _;
+    }
+
+    modifier onlyCurator {
+        require (agents[msg.sender].state == IS.CURATOR);
+        _;
+    }
+
+    modifier onlyTrustee {
+        require (agents[msg.sender].state == IS.ACTIVE);
+        _;
+    }
+
+    modifier onlyProver {
+        require (agents[msg.sender].state == IS.PROVER);
+        _;
+    }
+/* Functions */
+
+    constructor (Able _ctrl) public {
+        cName = CONTRACTNAME;
+        contrl = _ctrl;
+        owner = contrl.owner();
+        controller = contrl.controller();
+        emit ContractEvent(this,msg.sender,tx.origin);
+    }
+
+/////////////////
+// All ASSERTS
+/////////////////
+
+    function iam(address _address) view public returns (bool) {
+        require(agents[_address].active);
+        return true;
+    }
+
+    function iam(bytes32 _uuids) view external returns (bool) {
+        return iam(uuids[_uuids]);
+    }
+
+    function isDoer(address _address) view public returns (IS) { // Consider use of delegateCall
+        require(agents[_address].active);
+        return agents[_address].state;
+    }
+
+    function isDoer(bytes32 _uuids) view external returns (IS) { // Consider use of delegateCall
+        return isDoer(uuids[_uuids]);
+    }
+
+/////////////////
+// All GETTERS
+/////////////////
+
+    /// @notice Get the data of all Talents in the ecosystem.
+    /// @param _talent The talent whose frequency is being queried
+    //  @dev `anybody` can retrive the talent data in the contract
+    function getTalents(bytes32 _talent)
+    view external returns  (uint talentK_, uint talentI_, uint talentR_, uint talentF_) {
+        // check_condition ? true : false;
+        talentK_ = talentK;
+        talentI_ = talentI;
+        talentR_ = talentR;
+        talentF_= talentF[_talent];
+
+    }
+
+    /// @notice Get the number of doers that can be spawned by a Creators.
+    /// The query condition of the contract
+    //  @dev `anybody` can retrive the count data in the contract
+    function getAgent(address _address)
+    view public returns (bytes32 keyid_, IS state_, bool active_, uint myDoers_) {
+        return (
+            agents[_address].keyId,
+            agents[_address].state,
+            agents[_address].active,
+            agents[_address].myDoers);
+    }
+
+    function getAgent(bytes32 _uuid)
+    view external returns (address) { // Point this to oraclise service checking MSD on
+        return uuids[_uuid];	// https://pgp.cs.uu.nl/paths/4b6b34649d496584/to/4f723b7662e1f7b5.json
+    }
+
+/////////////////
+// All SETTERS
+/////////////////
+
+    /// @notice Get the initialisation data of a plan created by a Creator.
+    /// The query condition of the contract
+    //  @dev `anybody` can retrive the plan data in the contract Plan has five levels
+
+    /// @notice Get the initialisation data of a plan created by a Creator.
+    /// The query condition of the contract
+    //  @dev `anybody` can retrive the plan data in the contract Plan has five levels
+
+    function incTalent() payable public onlyDoer returns (bool) {
+        bytes32 _talent_;
+        (,,_talent_,,) = Doers(msg.sender).merits();
+        if (talentF[_talent_] == 0) {  // First time Doer
+            require(talentR++ < 2^256);
+            }
+        require(talentF[_talent_]++ < 2^256);
+        require(talentI++ < 2^256);
+        require(talentK++ < 2^256);
+    }
+
+    function decTalent() payable public onlyDoer returns (bool) {
+        bytes32 _talent_;
+        (,,_talent_,,) = Doers(msg.sender).merits();
+        require(talentF[_talent_]-- > 0);
+        if (talentF[_talent_] == 0) {  // First time Doer
+            require(talentR-- > 0);
+            }
+        require(talentI-- > 0);
+    }
+
+    function initCreator(address _address) public returns (bool) {
+        require(doerCount++ < 2^256);
+        bytes32 keyid_;
+        bytes32 uuid_;
+        agents[_address] = Agent({
+            keyId: keyid_,
+            state: IS.CREATOR,
+            active: true,
+            myDoers: 1
+            });
+        uuids[uuid_] = _address;
+        return agents[_address].active;
+    }
+
+    function initAgent(Doers _address) external onlyControlled returns (bool) {
+        require(doerCount++ < 2^256 && _address.ringLength() == 0); //(0) == 0x0);
+        bytes32 uuid_ = _address.uuId();
+        bytes32 keyid_ = _address.keyId();
+        require(keyid_ != 0x0 && uuid_ != 0x0 && this.getAgent(uuid_) == 0x0);
+        agents[_address] = Agent({
+            keyId: keyid_,
+            state: IS.INACTIVE,
+            active: true,
+            myDoers: 0
+            });
+        uuids[uuid_] = _address;
+        return agents[_address].active;
+    }
+
+    function incAgent(address _address) public { // Decrement a Creators Doers
+        require(agents[_address].myDoers++ < 2^256);
+    }
+
+    function decAgent(address _address) public { // Decrement a Creators Doers
+        require(agents[_address].myDoers-- > 0);
+    }
+
+    function setAgent(address _address, bytes32 _keyId)
+    external onlyControlled returns (bytes32) {
+        return agents[_address].keyId = _keyId;
+    }
+
+    function setAgent(address _address, IS _state)
+    external onlyControlled returns (IS) {
+        return agents[_address].state = _state;
+    }
+
+    function setAgent(address _address, bool _active)
+    external onlyControlled returns (bool) {
+        return agents[_address].active = _active;
+    }
+
+    function setAgent(address _address, uint _myDoers)
+    external onlyControlled returns (uint) {
+        return agents[_address].myDoers = _myDoers;
+    }
+
+    function setAllPromises(bytes32 _serviceId) external onlyControlled {
+        require(promiseCount++ < 2^256);
+        allPromises[tx.origin].push(_serviceId);
+    }
+
+/* End of Userbase */
+}
+
+
+// Generic Proxy Device
+contract ProxyData {
+    address internal proxied;
+}
+
+contract Proxy is ProxyData {
+    constructor(address _proxied) public {
+        proxied = _proxied;
+    }
+
+    function () public payable {
+        address addr = proxied;
+        assembly {
+            let freememstart := mload(0x40)
+            calldatacopy(freememstart, 0, calldatasize())
+            let success := delegatecall(not(0), addr, freememstart, calldatasize(), freememstart, 0)
+            returndatacopy(freememstart, 0, returndatasize())
+            switch success
+            case 0 { revert(freememstart, returndatasize()) }
+            default { return(freememstart, returndatasize()) }
+        }
+    }
+}
+
+contract DoersHeader is UserDefined {
+
+/* Using */
+
+    using StringsAndBytesLib for bytes32;
+
+    using ERC165Lib for ERC165Lib.STORAGE;
+
+    using ERC721Lib for ERC721Lib.STORAGE;
+
+    using ERC721MetadataLib for ERC721MetadataLib.STORAGE;
+
+    using ERC721EnumerableLib for ERC721EnumerableLib.STORAGE;
+    
+    using DoersLib for DoersLib.STORAGE;
+
+/* User Types */
+
+    enum BE {NULL, QUALIFICATION, EXPERIENCE, REPUTATION, TALENT}
+
+/* Events */
+
+    event ContractEvent(address indexed _this, address indexed _sender, address indexed _origin);
+    event LogKeyRing(uint _length, bytes32 _data, uint _index);
+    event LogSigning(address indexed _this, address indexed _sender, address indexed _origin, address _data, bytes32 _result);
+    event LogSigned(address indexed _this, address indexed _sender, address indexed _origin, bytes _data, bytes32 _result);
+    event LogTrusted(address indexed _this, address indexed _sender, address indexed _origin, bytes _data, bytes32 _result);
+    event LogRevoking(address indexed _this, address indexed _sender, address indexed _origin, bytes _data, bytes32 _result);
+    event LogSetbdi(address indexed _this, address indexed _sender, address indexed _origin, bytes32 _keyid, bytes32 _uuid, bytes32 _callid);
+
+}
+
+contract OwnableData {
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
+
+    address internal owner;
+
+    constructor(address _owner)
+        public
+    {
+        owner = _owner;
+    }
+}
+
+contract Ownable is OwnableData {
+    function setOwner(address newOwner)
+        public
+        onlyOwner
+    {
+        owner = newOwner;
+    }
+}
+
+contract UpdatableProxyData is ProxyData, OwnableData { }
+
+interface Update {
+    function implementationBefore() external view returns (address);
+    function implementationAfter() external view returns (address);
+    function migrateData() external;
+}
+
+contract UpdatableProxyShared is ProxyData, Ownable {
+    
+    function updateProxied(Update update)
+        public
+        onlyOwner
+    {
+        require(update.implementationBefore() == proxied);
+        proxied = update;
+        Update(this).migrateData();
+        proxied = update.implementationAfter();
+    }
+}
+
+contract UpdatableProxy is Proxy, UpdatableProxyShared {
+    constructor(address proxied, address owner)
+        public
+        Proxy(proxied)
+        OwnableData(owner)
+    {}
+}
+contract UpdatableProxyImplementation is UpdatableProxyShared {
+    constructor() public OwnableData(0) {}
+}
+
+contract TimedUpdatableProxyDataInternal is UpdatableProxyData {
+    uint internal updateAllowedStartTime;
+    Update internal plannedUpdate;
+}
+contract TimedUpdatableProxyData is UpdatableProxyData {
+    uint public updateAllowedStartTime;
+    Update public plannedUpdate;
+}
+contract TimedUpdatableProxyShared is UpdatableProxyShared, TimedUpdatableProxyData {
+    function planUpdate(Update update)
+        public
+        onlyOwner
+    {
+        plannedUpdate = update;
+        updateAllowedStartTime = now + 30 seconds;
+    }
+    function updateProxied(Update update)
+        public
+    {
+        require(
+            updateAllowedStartTime != 0 &&
+            now >= updateAllowedStartTime &&
+            update == plannedUpdate
+        );
+        super.updateProxied(update);
+        updateAllowedStartTime = 0;
+        plannedUpdate = Update(0);
+    }
+}
+contract TimedUpdatableProxy is UpdatableProxy, TimedUpdatableProxyShared {
+    constructor(address proxied, address owner)
+        public
+        UpdatableProxy(proxied, owner)
+    {}
+}
+contract TimedUpdatableProxyImplementation is TimedUpdatableProxyShared {
+    constructor() public OwnableData(0) {}
+}
+
+contract DoersDataInternal is UpdatableProxyData, DoersHeader {
+
+    bytes32 constant internal CONTRACTNAME = "DOER 0.0118";
+    uint8 constant internal rate = 10; // !!! GET THIS DATA FROM DATABASE
+    uint constant internal year = 31536000; // !!! GET THIS DATA FROM DATABASE
+    uint constant internal period = 31536000; // !!! GET THIS DATA FROM DATABASE
+
+
+/* Modifiers */
+
+    modifier onlyCreator {
+        require(creator.isCreator());
+        _;
+    }
+
+    modifier onlyDoer {
+        require (creator.isDoer());
+        _;
+    }
+
+    modifier onlyOwner {
+        require(creator.iam() && msg.sender == owner);
+        _;
+    }
+
+    modifier ProxyKey {
+        require(msg.sender == proxyKey);
+        _;
+    }
+
+    modifier ProxyBDI {
+        require(msg.sender == proxyKey || msg.sender == owner);
+        _;
+    }
+    
+    // modifier toPeana {
+    //     Collector(creator.peana()).sendLog(msg.sender,this,msg.data);
+    //     _;
+    // }
+
+/* State Variables */
+
+    ERC165Lib.STORAGE internal erc165Data;
+
+    ERC721Lib.STORAGE internal erc721Data;
+
+    ERC721MetadataLib.STORAGE internal erc721Metadata;
+
+    ERC721EnumerableLib.STORAGE internal erc721EnumerableData;
+
+    // DoersLib.STORAGE internal doersData;
+
+    Creators internal creator;
+    // Userbase userbase;
+    Userbase internal userbase;
+    
+    bytes32 internal MASK;
+
+    address internal owner;
+    address internal peana;
+    address internal proxyKey;
+    address internal proxyBDI;
+
+    bool internal initialised;
+    bytes32 internal KEYID;
+    bytes32 internal UUID;
+    uint internal promiseCount;
+    uint internal orderCount;
+    uint internal fulfillmentCount;
+
+    UserDefined.SomeDoer internal Iam;
+
+    UserDefined.BDI internal bdi;
+// 	mapping (bytes32 => bytes32) promises;
+    UserDefined.KBase internal Kbase;
+
+    uint8 BASE; // !!! GET THIS DATA FROM DATABASE
+
+
+    // mapping (bool => BE) callBackState;
+    // mapping (bytes32 => bool) callBackData;
+    mapping (bytes32 => mapping (bool => BE)) internal callBackState;
+
+    bytes32[] internal keyring;
+    uint internal ringlength;
+    UserDefined.Reputation internal reputation;
+
+    mapping (bytes32 => uint) internal keyIndex;
+
+    //Creators.Flag aflag;
+
+
+/* Events */
+    
+}
+
+contract DoersData is UpdatableProxyData, DoersHeader {
+
+    bytes32 constant internal CONTRACTNAME = "DOER 0.0118";
+    uint8 constant internal rate = 10; // !!! GET THIS DATA FROM DATABASE
+    uint constant internal year = 31536000; // !!! GET THIS DATA FROM DATABASE
+    uint constant internal period = 31536000; // !!! GET THIS DATA FROM DATABASE
+
+/* Modifiers */
+
+    modifier onlyCreator {
+        require(creator.isCreator());
+        _;
+    }
+
+    modifier onlyDoer {
+        require (creator.isDoer());
+        _;
+    }
+
+    modifier onlyOwner {
+        require(creator.iam() && msg.sender == owner);
+        _;
+    }
+
+    modifier ProxyKey {
+        require(msg.sender == proxyKey);
+        _;
+    }
+
+    modifier ProxyBDI {
+        require(msg.sender == proxyKey || msg.sender == owner);
+        _;
+    }
+    
+    // modifier toPeana {
+    //     Collector(creator.peana()).sendLog(msg.sender,this,msg.data);
+    //     _;
+    // }
+
+/* State Variables */
+
+    ERC165Lib.STORAGE erc165Data;
+
+    ERC721Lib.STORAGE erc721Data;
+
+    ERC721MetadataLib.STORAGE erc721Metadata;
+
+    ERC721EnumerableLib.STORAGE erc721EnumerableData;
+
+    DoersLib.STORAGE doersData;
+
+    Creators creator;
+    // Userbase userbase;
+    Userbase userbase;
+    
+    bytes32 MASK;
+
+    address owner;
+    address peana;
+    address proxyKey;
+    address proxyBDI;
+
+    bool initialised;
+    bytes32 KEYID;
+    bytes32 UUID;
+    uint promiseCount;
+    uint orderCount;
+    uint fulfillmentCount;
+
+    UserDefined.SomeDoer Iam;
+
+    UserDefined.BDI bdi;
+// 	mapping (bytes32 => bytes32) promises;
+    UserDefined.KBase Kbase;
+
+    uint8 BASE; // !!! GET THIS DATA FROM DATABASE
+
+
+    // mapping (bool => BE) callBackState;
+    // mapping (bytes32 => bool) callBackData;
+    mapping (bytes32 => mapping (bool => BE)) callBackState;
+
+    bytes32[] keyring;
+    uint ringlength;
+    UserDefined.Reputation reputation;
+
+    mapping (bytes32 => uint) keyIndex;
+
+    //Creators.Flag aflag;
+  
+}
+
+contract DoersProxy is Proxy, DoersDataInternal {
+
+    constructor (
+        address _proxied, 
+        address _owner, 
+        Creators _creator, 
+        SomeDoer _adoer
+        ) public Proxy(_proxied) OwnableData(_owner) {
+            require(true/*"!!!!!!!check that this doer is not yet in userbase!!!!!!!*/ );
+            creator = _creator;
+            owner = tx.origin;
+            MASK = _creator.DOER();
+            proxyKey = _creator.proxyKey();
+            proxyBDI = _creator.proxyBDI();
+            Iam = _adoer;
+            erc721Metadata.init(erc165Data, _adoer.fPrint.bytes32ToString(), _adoer.email.bytes32ToString());
+            emit ContractEvent(this, msg.sender, tx.origin);
+            }
+}
 
 // Doers is a class library of natural or artificial entities within A multi-agent system (MAS).
 // The agents are collectively capable of reaching goals that are difficult to achieve by an
@@ -600,90 +1210,41 @@ library DoersLib {
 // Beginning of Contract
 ///////////////////
 
-contract Doers is UserDefined {
-    
-    using DoersLib for DoersLib.DataStorage;
-    DoersLib.DataStorage data;
+contract Doers is UpdatableProxyImplementation, DoersData {
 
 /* Constant */
 
-/* User Types */
+// /* User Types */
 
-/* State Variables */
-
-/* Events */
-
-////////////////
-// Events
-////////////////
-    event ContractEvent(address indexed _this, address indexed _sender, address indexed _origin);
-// 	event ContractCallEvent(address indexed _this, address indexed _sender, address indexed _origin, bytes32 _data);
-// 	event QualificationEvent(address indexed _this, address indexed _sender, address indexed _origin, bytes16 _message, bytes _data);
-// 	event PlanEvent(address indexed _from, address indexed _to, uint256 _amount);
-//     event PromiseEvent(address indexed _from, address indexed _to, uint256 _amount);
-//     event Fulfill(address indexed _from, address indexed _to, uint256 _amount);
-// 	event LogNewOraclizeQuery(string description);
-//     event LogNewResult(bytes32 result, bytes proof);
-    event LogKeyRing(uint _length, bytes32 _data, uint _index);
-    event LogSigning(address indexed _this, address indexed _sender, address indexed _origin, address _data, bytes32 _result);
-    event LogSigned(address indexed _this, address indexed _sender, address indexed _origin, bytes _data, bytes32 _result);
-    event LogTrusted(address indexed _this, address indexed _sender, address indexed _origin, bytes _data, bytes32 _result);
-    event LogRevoking(address indexed _this, address indexed _sender, address indexed _origin, bytes _data, bytes32 _result);
-    event LogSetbdi(address indexed _this, address indexed _sender, address indexed _origin, bytes32 _keyid, bytes32 _uuid, bytes32 _callid);
-
-/* Modifiers */
-
-    modifier onlyCreator {
-        require(data.creator.isCreator());
-        _;
-    }
-
-    modifier onlyDoer {
-        require (data.creator.isDoer());
-        _;
-    }
-
-    modifier onlyOwner {
-        require(data.creator.iam() && msg.sender == data.owner);
-        _;
-    }
-
-    modifier ProxyKey {
-        require(msg.sender == data.proxyKey);
-        _;
-    }
-
-    modifier ProxyBDI {
-        require(msg.sender == data.proxyKey || msg.sender == data.owner);
-        _;
-    }
-    
-    modifier toPeana {
-        Collector(data.creator.peana()).sendLog(msg.sender,this,msg.data);
-        _;
-    }
+// /* Events */
 
 
 
 /* Functions */
 
-    function Doers(Creators _creator, SomeDoer _adoer) public {
-        data.creator = _creator;
-        data.owner = tx.origin;
-        data.peana = _creator.peana();
-        data.MASK = _creator.DOER();
-        data.proxyKey = _creator.proxyKey();
-        data.proxyBDI = _creator.proxyBDI();
-        data.Iam = _adoer;
-        emit ContractEvent(this, msg.sender, tx.origin);
-    }
+    // constructor (Creators _creator, SomeDoer _adoer) public {
+    //     init(Creators _creator, SomeDoer _adoer);
+    //     }
+
+    // function init(Creators _creator, SomeDoer _adoer) public {
+    //     // Enforce initialization behavior.
+    //     require(true/*"!!!!!!!check that this doer is not yet in userbase!!!!!!!*/ );
+    //     doersData.creator = _creator;
+    //     doersData.owner = tx.origin;
+    //     doersData.MASK = _creator.DOER();
+    //     doersData.proxyKey = _creator.proxyKey();
+    //     doersData.proxyBDI = _creator.proxyBDI();
+    //     doersData.Iam = _adoer;
+    //     erc721Metadata.init(erc165Data, _adoer.fPrint.bytes32ToString(), _adoer.email.bytes32ToString());
+    //     emit ContractEvent(this, msg.sender, tx.origin);
+    //     }
 
 /////////////////
 // ABLE COMPUTE
 /////////////////
     
     function updateIndex() internal returns (bool) {
-        return data.updateIndex();
+        return doersData.updateIndex();
 
         // Collector(creator.peana()).updateLog(keccak256("updateIndex()"),true);
 
@@ -694,24 +1255,24 @@ contract Doers is UserDefined {
 /////////////////
 
     function iam() view public returns (bool iam_) {
-        return data.iam();
+        return doersData.iam();
         // Collector(creator.peana()).updateLog(keccak256("iam()"),iam);
     }
     
     function index() view public returns (uint8 index_) {
-        return data.index();
+        return doersData.index();
     }
     
-    function ringlength() view public returns (uint ringlength_) {
-        return data.ringlength;
+    function ringLength() view public returns (uint ringlength_) {
+        return doersData.ringlength;
     }
     
-    function UUID() view public returns (bytes32 UUID_) {
-        return data.Iam.uuid;
+    function uuId() view public returns (bytes32 UUID_) {
+        return doersData.Iam.uuid;
     }
     
-    function KEYID() view public returns (bytes32 KEYID_) {
-        return data.Iam.keyid;
+    function keyId() view public returns (bytes32 KEYID_) {
+        return doersData.Iam.keyid;
     }
     
     function merits() 
@@ -722,32 +1283,32 @@ contract Doers is UserDefined {
         uint8 index_,
         bytes32 hash_) {
                 
-        return data.merits();
+        return doersData.merits();
         
     }
     
     function kbase() view public returns (KBase kbase_) {
-        return data.kbase();
+        return doersData.kbase();
     }
     
     function desire(bytes1 _desire)
     view external returns  (bytes32) {        
-        return data.desire(_desire);
+        return doersData.desire(_desire);
     }
     
     function intention(bool _intention)
     view external returns  (bytes32) {
-        return data.intention(_intention);
+        return doersData.intention(_intention);
     }
     
     function intention(bool _intention, IS _state)
     external returns  (IS) {
-        return data.intention(_intention,_state);
+        return doersData.intention(_intention,_state);
     }
     
     function flipIntention()
     external returns  (bool) {
-        return data.flipIntention();
+        return doersData.flipIntention();
     }
     
 
@@ -774,7 +1335,7 @@ contract Doers is UserDefined {
         //     keccak256(Iam.lName),
         //     keccak256(Iam.age),
         //     keccak256(Iam.data));
-        return data.getDoer();
+        return doersData.getDoer();
     }
 
     function getBelief(KBase _kbase)
@@ -787,7 +1348,7 @@ contract Doers is UserDefined {
         //     bdi.beliefs.qualification[uint8(_kbase)].country,
         //     bdi.beliefs.qualification[uint8(_kbase)].cAuthority,
         //     bdi.beliefs.qualification[uint8(_kbase)].score);
-        return data.getBelief(_kbase);
+        return doersData.getBelief(_kbase);
     }
 
     function getDesire(bytes1 _desire)
@@ -796,7 +1357,7 @@ contract Doers is UserDefined {
         //     keccak256("getBelief(KBase)"),
         //     bdi.desires[_desire].goal,
         //     bdi.desires[_desire].status);        
-        return data.getDesire(_desire);
+        return doersData.getDesire(_desire);
     }
 
     function getIntention(bool _intention)
@@ -806,7 +1367,7 @@ contract Doers is UserDefined {
         //     bdi.intentions[_intention].state,
         //     bdi.intentions[_intention].service,
         //     bdi.intentions[_intention].payout);
-        return data.getIntention(_intention);
+        return doersData.getIntention(_intention);
     }
 
 /////////////////
@@ -817,7 +1378,7 @@ contract Doers is UserDefined {
         // Collector(creator.peana()).updateLog(
         //     keccak256("getBelief(KBase)"),
         //     init);
-        return data.init();
+        return doersData.init();
     }
 //
     function sign(address _address) public onlyOwner returns (uint, bool signed) {
@@ -826,7 +1387,7 @@ contract Doers is UserDefined {
         
         emit LogSigning(this, msg.sender, tx.origin, _address, keyXOR);
 
-        return data.sign(_address, keyXOR);
+        return doersData.sign(_address, keyXOR);
 
             // Collector(creator.peana()).updateLog(
             // keccak256("sign(address)"),
@@ -840,14 +1401,14 @@ contract Doers is UserDefined {
     
         bytes32 keyXOR = bytes32(uint256(this)) ^ bytes32(uint256(msg.sender));
         
-        emit LogKeyRing(data.ringlength,data.keyring[data.keyIndex[keyXOR]],data.keyIndex[keyXOR]);
+        emit LogKeyRing(doersData.ringlength,doersData.keyring[doersData.keyIndex[keyXOR]],doersData.keyIndex[keyXOR]);
         // Collector(creator.peana()).updateLog(
         //     keccak256("sign()"),
         //     ringlength,
         //     keyring[keyIndex[keyXOR]],
         //     keyIndex[keyXOR],
         //     signed);
-        return data.sign(keyXOR);
+        return doersData.sign(keyXOR);
     }
 
     function revoke(address _address) external onlyDoer returns (uint, bool revoked) { // pad left bytes32(uint256(this) << 96) before using
@@ -856,14 +1417,14 @@ contract Doers is UserDefined {
         
         emit LogRevoking(this, msg.sender, tx.origin, msg.data, keyXOR);
 
-        emit LogKeyRing(data.ringlength,keyXOR,data.keyIndex[keyXOR]);
+        emit LogKeyRing(doersData.ringlength,keyXOR,doersData.keyIndex[keyXOR]);
         // Collector(creator.peana()).updateLog(
         //     keccak256("revoke(address)"),
         //     ringlength,
         //     keyXOR,
         //     keyIndex[keyXOR],
         //     revoked);
-        return data.revoke(_address, keyXOR);
+        return doersData.revoke(_address, keyXOR);
     }
 
     function revoke() external onlyDoer returns (uint, bool revoked) { // pad left bytes32(uint256(this) << 96) before using
@@ -872,14 +1433,14 @@ contract Doers is UserDefined {
         
         emit LogRevoking(this, msg.sender, tx.origin, msg.data, keyXOR);
 
-        emit LogKeyRing(data.ringlength,keyXOR,data.keyIndex[keyXOR]);
+        emit LogKeyRing(doersData.ringlength,keyXOR,doersData.keyIndex[keyXOR]);
         // Collector(creator.peana()).updateLog(
         //     keccak256("revoke()"),
         //     ringlength,
         //     keyXOR,
         //     keyIndex[keyXOR],
         //     revoked);
-        return data.revoke(keyXOR);
+        return doersData.revoke(keyXOR);
     }
 
     function trust(Trust _level) returns (bool) {
@@ -888,7 +1449,7 @@ contract Doers is UserDefined {
 
         emit LogTrusted(this, msg.sender, tx.origin, msg.data, keyXOR);
 
-        emit LogKeyRing(data.ringlength,data.keyring[data.keyIndex[keyXOR]],data.keyIndex[keyXOR]);
+        emit LogKeyRing(doersData.ringlength,doersData.keyring[doersData.keyIndex[keyXOR]],doersData.keyIndex[keyXOR]);
         // Collector(creator.peana()).updateLog(
         //     keccak256("trust(Trust)"),
         //     ringlength,
@@ -896,15 +1457,15 @@ contract Doers is UserDefined {
         //     keyIndex[keyXOR],
         //     true);
 
-        return data.trust(_level, keyXOR);
+        return doersData.trust(_level, keyXOR);
     }
 
     // function incSigns(bytes32 _keyd) external ProxyKey returns (uint) {
-    //     return data.incSigns(_keyd);
+    //     return doersData.incSigns(_keyd);
     // }
     
     function decSigns(bytes32 _keyd) external ProxyKey returns (uint) {
-        return data.decSigns(_keyd);
+        return doersData.decSigns(_keyd);
     }
 
     function setbdi(
@@ -915,7 +1476,7 @@ contract Doers is UserDefined {
         uint _year)
     external ProxyBDI returns(bool qualification_) {
         
-                return data.setbdi(
+                return doersData.setbdi(
                     _kbase,
                     _country,
                     _cAuthority,
@@ -934,7 +1495,7 @@ contract Doers is UserDefined {
         uint _refSigs,
         bytes32 _refTrust)
     external ProxyBDI returns (bool reputation_) {
-                return data.setbdi(
+                return doersData.setbdi(
                     _refMSD,
                     _refRank,
                     _refSigned,
@@ -949,7 +1510,7 @@ contract Doers is UserDefined {
 
     function setbdi(bytes32 _talent) external ProxyBDI returns (bool talent_) {
 
-        return data.setbdi(_talent);
+        return doersData.setbdi(_talent);
             // Collector(creator.peana()).updateLog(
             // keccak256("setbdi(bytes32)"),
             // index_);
@@ -957,15 +1518,21 @@ contract Doers is UserDefined {
 
     function setbdi(bytes1 _desire, Desire _goal) public onlyDoer {
         
-        return data.setbdi(_desire, _goal);
+        return doersData.setbdi(_desire, _goal);
         //  Collector(creator.peana()).updateLog(
         //     keccak256("setbdi(bytes1,Desire)"),
         //     true);
     }
 
-    function setbdi(Intention _service) public onlyDoer {
+    function setbdi(Intention _service, string _uri) public onlyDoer {
         
-        return data.setbdi(_service);
+        erc721EnumerableData._mint(erc721Data, this, _service.payout);
+
+        erc721Metadata._setTokenURI(erc721Data, _service.payout, _uri);
+        
+        return doersData.setbdi(_service);
+
+
         // Collector(creator.peana()).updateLog(
         //     keccak256("setbdi(bytes1,Desire)"),
         //     true);
@@ -981,11 +1548,16 @@ contract Doers is UserDefined {
 
 contract DoersFactory {
 
+/* Using */
+
+
 /* Constant */
 /* State Variables */
 
-    Userbase internal userbase;
-    Creators internal creator;
+    Able private contrl;
+    Userbase private userbase;
+    Creators private creator;
+    Doers private masterCopy; 
 
 /* Events */
 
@@ -994,16 +1566,18 @@ contract DoersFactory {
     
 /* Modifiers */
 
-    modifier toPeana {
-        Collector(creator.peana()).sendLog(msg.sender,this,msg.data);
-        _;
-    }
+    // modifier toPeana {
+    //     Collector(creator.peana()).sendLog(msg.sender,this,msg.data);
+    //     _;
+    // }
 
 /* Functions */
 
-    function DoersFactory (Userbase _userbase, Creators _creator) {
+    constructor (Able _contrl, Userbase _userbase, Creators _creator, Doers _masterCopy) public {
+        contrl = _contrl;
         userbase = _userbase;
         creator = _creator;
+        masterCopy = _masterCopy;
         emit ContractEvent(this,msg.sender,tx.origin);
     }
 
@@ -1019,10 +1593,11 @@ contract DoersFactory {
         bytes32 _data,
         uint _birth
         )
-        public returns (address) {
+        public returns (Doers doers) {
             userbase.decAgent(_introducer);
-            bytes32 uuidCheck = keccak256(_fPrint, _idNumber, _lName, _birth);
-            Doers newDoer = new Doers(creator, UserDefined.SomeDoer({
+            bytes32 uuidCheck = keccak256(abi.encodePacked(_fPrint, _idNumber, _lName, _birth));
+
+            doers = Doers(new DoersProxy(masterCopy, address(contrl), creator, UserDefined.SomeDoer({
                 fPrint: _fPrint,
                 idNumber: _idNumber,
                 email: _email,
@@ -1031,12 +1606,9 @@ contract DoersFactory {
                 uuid: uuidCheck,
                 keyid: _keyId,
                 data: _data,
-                age: _birth}));
-            emit LogNewDoer(this,msg.sender,tx.origin,address(newDoer));
-            // Collector(creator.peana()).updateLog(
-            // keccak256("setbdi(makeDoer(address,bytes32,bytes32,bytes32,bytes32,bytes32,bytes32,bytes32,uint)"),
-            // newDoer);
-            return newDoer;
+                age: _birth})));
+
+            emit LogNewDoer(this,msg.sender,tx.origin,address(doers));
     }
 
 /* End of DoersFactory Contract */
@@ -1048,6 +1620,10 @@ contract DoersFactory {
 ///////////////////
 
 contract Creators is DataController {
+
+/* Using */
+
+    
 
 /* Constant */
 /* State Variables */
@@ -1115,15 +1691,15 @@ contract Creators is DataController {
 
     // mapping (address => mapping (bool => bytes)) callData;
 
-    function Creators(Able _ctrl, Userbase _ubs) public {
+    constructor (Able _ctrl, Userbase _ubs) public {
         cName = CONTRACTNAME;
         contrl = _ctrl;
         userbase = _ubs;
         owner = contrl.owner();
         controller = contrl.controller();
-        proxyKey = new ProxyKey();
-        proxyBDI = new ProxyBDI();
-        ContractEvent(this,msg.sender,tx.origin);
+        // proxyKey = new ProxyKey();
+        // proxyBDI = new ProxyBDI();
+        emit ContractEvent(this,msg.sender,tx.origin);
     }
 
 /////////////////

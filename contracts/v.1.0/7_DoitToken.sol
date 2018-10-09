@@ -81,7 +81,7 @@ contract Campaign is TokenController, BaseController {
 
 /* State Valiables */
 
-    ERC20Lib.STORAGE erc20data;
+    ERC20Lib.STORAGE erc20Data;
 
     Able controller;
 
@@ -188,13 +188,13 @@ contract Campaign is TokenController, BaseController {
 ////////////////
 
     function totalSupply(uint _blockNumber) constant returns (uint) {
-        // return erc20data.totalSupply();
-        return erc20data.totalSupplyAt(_blockNumber);
+        // return erc20Data.totalSupply();
+        return erc20Data.totalSupplyAt(_blockNumber);
         }
 
     function balanceOf(address _who, uint _blockNumber) constant returns (uint) {
-        // return erc20data.balanceOf(_who);
-        return erc20data.balanceOfAt(_who, _blockNumber);
+        // return erc20Data.balanceOf(_who);
+        return erc20Data.balanceOfAt(_who, _blockNumber);
         }
 
 ////////////////
@@ -207,12 +207,12 @@ contract Campaign is TokenController, BaseController {
     /// @return True if the tokens are generated correctly
     function generateTokens(address _owner, uint _amount
     ) public onlyController returns (bool) {
-        uint curTotalSupply = erc20data.totalSupply();
+        uint curTotalSupply = erc20Data.totalSupply();
         require(curTotalSupply + _amount >= curTotalSupply); // Check for overflow
-        uint previousBalanceTo = erc20data.balanceOf(_owner);
+        uint previousBalanceTo = erc20Data.balanceOf(_owner);
         require(previousBalanceTo + _amount >= previousBalanceTo); // Check for overflow
-        erc20data.totalSupplyHistory.updateValueAtNow(curTotalSupply + _amount);
-        erc20data.balances2[_owner].updateValueAtNow(previousBalanceTo + _amount);
+        erc20Data.totalSupplyHistory.updateValueAtNow(curTotalSupply + _amount);
+        erc20Data.balances2[_owner].updateValueAtNow(previousBalanceTo + _amount);
         emit Transfer(0, _owner, _amount);
         return true;
     }
@@ -224,12 +224,12 @@ contract Campaign is TokenController, BaseController {
     /// @return True if the tokens are burned correctly
     function destroyTokens(address _owner, uint _amount
     ) onlyController public returns (bool) {
-        uint curTotalSupply = erc20data.totalSupply();
+        uint curTotalSupply = erc20Data.totalSupply();
         require(curTotalSupply >= _amount);
-        uint previousBalanceFrom = erc20data.balanceOf(_owner);
+        uint previousBalanceFrom = erc20Data.balanceOf(_owner);
         require(previousBalanceFrom >= _amount);
-        erc20data.totalSupplyHistory.updateValueAtNow(curTotalSupply - _amount);
-        erc20data.balances2[_owner].updateValueAtNow(previousBalanceFrom - _amount);
+        erc20Data.totalSupplyHistory.updateValueAtNow(curTotalSupply - _amount);
+        erc20Data.balances2[_owner].updateValueAtNow(previousBalanceFrom - _amount);
         emit Transfer(_owner, 0, _amount);
         return true;
     }
@@ -307,7 +307,7 @@ contract Campaign is TokenController, BaseController {
     /// @notice Enables token holders to transfer their tokens freely if true
     /// @param _transfersEnabled True if transfers are allowed in the clone
     function enableTransfers(bool _transfersEnabled) public onlyController {
-        erc20data.transfersEnabled = _transfersEnabled;
+        erc20Data.transfersEnabled = _transfersEnabled;
     }
 
 ////////////////
@@ -357,7 +357,7 @@ contract Campaign is TokenController, BaseController {
     * @return the token being held.
     */
     function vested(address _address) public view returns(uint, uint) {
-        return (erc20data.vested[_address][false], erc20data.vested[_address][true]);
+        return (erc20Data.vested[_address][false], erc20Data.vested[_address][true]);
         }
 
     // /**

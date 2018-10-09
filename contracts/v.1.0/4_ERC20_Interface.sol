@@ -39,7 +39,7 @@ contract ERC20 is BaseController {
 
     using ERC20Lib for ERC20Lib.STORAGE;
 
-    ERC20Lib.STORAGE erc20data;
+    ERC20Lib.STORAGE erc20Data;
 
 /* Events */
     event Transfer(address indexed from, address indexed to, uint value);
@@ -59,13 +59,13 @@ contract ERC20 is BaseController {
 /* Modifiers */
 
     modifier isAvailable(uint _amount) {
-        require(_amount <= erc20data.balanceOf(msg.sender));
+        require(_amount <= this.balanceOf(msg.sender));
         _;
     }
 
     modifier isAllowed(address _from, uint _amount) {
-        require(_amount <= erc20data.allowance(_from, msg.sender) &&
-           _amount <= erc20data.balanceOf(_from));
+        require(_amount <= this.allowance(_from, msg.sender) &&
+           _amount <= this.balanceOf(_from));
         _;        
     }
 
@@ -80,7 +80,7 @@ contract ERC20 is BaseController {
         address _parentToken,
         uint _parentSnapShotBlock
     ) {
-        erc20data.init(
+        erc20Data.init(
             _contrl,
             _tokenName,
             _tokenSymbol,
@@ -100,29 +100,29 @@ contract ERC20 is BaseController {
     // function decimalPlaces() public returns(uint);
 
     function totalSupply() constant returns (uint) {
-        // return erc20data.totalSupply();
-        return erc20data.totalSupplyAt(block.number);
+        // return erc20Data.totalSupply();
+        return erc20Data.totalSupplyAt(block.number);
         }
 
     function balanceOf(address _who) constant returns (uint) {
-        // return erc20data.balanceOf(_who);
-        return erc20data.balanceOfAt(_who, block.number);
+        // return erc20Data.balanceOf(_who);
+        return erc20Data.balanceOfAt(_who, block.number);
         }
 
     function allowance(address _owner, address _spender) constant returns (uint) {
-        return erc20data.allowance(_owner, _spender);
+        return erc20Data.allowance(_owner, _spender);
         }
 
     function transfer(address to, uint value) returns (bool ok) {
-        return erc20data.transfer(to, value);
+        return erc20Data.transfer(to, value);
         }
 
     function transferFrom(address from, address to, uint value) returns (bool ok) {
-        return erc20data.transferFrom(from, to, value);
+        return erc20Data.transferFrom(from, to, value);
         }
 
     function approve(address spender, uint value) returns (bool ok) {
-        return erc20data.approve(spender, value);
+        return erc20Data.approve(spender, value);
         }
 /* End of Contract ERC20 */
 }

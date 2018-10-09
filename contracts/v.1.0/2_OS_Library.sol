@@ -15,7 +15,7 @@
 * <http://www.gnu.org/licenses/>.
 */
 
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.25;
 
 /**
 * @title SafeMathLib
@@ -313,4 +313,177 @@ library ERC165Checker {
         }
         }
 /* End of Libray ERC165Checker */
+}
+
+/// Library to convert between types
+
+library StringsAndBytesLib {
+
+    function stringToBytes32(string memory source) public pure returns (bytes32 result) {
+        // require(bytes(source).length <= 32); // causes error
+        // but string have to be max 32 chars
+        // https://ethereum.stackexchange.com/questions/9603/understanding-mload-assembly-function
+        // http://solidity.readthedocs.io/en/latest/assembly.html
+        assembly {
+        result := mload(add(source, 32))
+        }
+    }//
+
+
+    function isStringEqualOrShorterThan(string memory str, uint256 length) public pure returns (bool){
+        return bytes(str).length <= length;
+    }//
+
+
+    /* bytes to string */
+    function bytesArrayToString(bytes memory _bytes) public pure returns (string) {
+        return string(_bytes);
+    } //
+
+    /* string to bytes */
+    function stringToBytesArray(string memory str) public pure returns (bytes){
+        return bytes(str);
+    } //
+
+    /* bytes32 (fixed-size array) to bytes (dynamically-sized array) */
+    function bytes32ToBytes(bytes32 _bytes32) public pure returns (bytes){
+        // string memory str = string(_bytes32);
+        // TypeError: Explicit type conversion not allowed from "bytes32" to "string storage pointer"
+        bytes memory bytesArray = new bytes(32);
+        for (uint256 i; i < 32; i++) {
+            bytesArray[i] = _bytes32[i];
+        }
+        return bytesArray;
+    }//
+
+    /* bytes32 to string */
+    // see also:
+    // https://ethereum.stackexchange.com/questions/2519/how-to-convert-a-bytes32-to-string
+    // https://ethereum.stackexchange.com/questions/1081/how-to-concatenate-a-bytes32-array-to-a-string
+    function bytes32ToString(bytes32 _bytes32) public pure returns (string){
+        bytes memory bytesArray = bytes32ToBytes(_bytes32);
+        return string(bytesArray);
+    }//
+
+
+    /* ethereum address to string */
+    // https://ethereum.stackexchange.com/questions/8346/convert-address-to-string
+    // https://ethereum.stackexchange.com/a/8447/1964
+    function addressToAsciiString(address _address) public pure returns (string) {
+        bytes memory s = new bytes(40);
+        for (uint i = 0; i < 20; i++) {
+            byte b = byte(uint8(uint(_address) / (2 ** (8 * (19 - i)))));
+            byte hi = byte(uint8(b) / 16);
+            byte lo = byte(uint8(b) - 16 * uint8(hi));
+            s[2 * i] = char(hi);
+            s[2 * i + 1] = char(lo);
+        }
+        return string(s);
+    } //
+    function char(byte b) public pure returns (byte c) {
+        if (b < 10) return byte(uint8(b) + 0x30);
+        else return byte(uint8(b) + 0x57);
+    }
+
+
+    function addressToString(address _address) public pure returns (string) {
+        return stringsConcatenation("0x", addressToAsciiString(_address));
+    }
+
+    function messageSenderAddressToString() public constant returns (string){
+        return addressToString(msg.sender);
+    }
+
+    /* --------------------- strings functions begin        */
+    /* --- https://github.com/Arachnid/solidity-stringutils */
+
+    struct slice {uint _len; uint _ptr;}
+
+    function memcpy(uint dest, uint src, uint len) private pure {
+        for (; len >= 32; len -= 32) {
+            assembly {
+            mstore(dest, mload(src))
+            }
+            dest += 32;
+            src += 32;
+        }
+        uint mask = 256 ** (32 - len) - 1;
+        assembly {
+        let srcpart := and(mload(src), not(mask))
+        let destpart := and(mload(dest), mask)
+        mstore(dest, or(destpart, srcpart))
+        }
+    }
+
+    /*
+     * @dev Returns a slice containing the entire string.
+     * @param self The string to make a slice from.
+     * @return A newly allocated slice containing the entire string.
+     */
+    function toSlice(string self) internal pure returns (slice) {
+        uint ptr;
+        assembly {
+        ptr := add(self, 0x20)
+        }
+        return slice(bytes(self).length, ptr);
+    }
+
+    /*
+     * @dev Returns a newly allocated string containing the concatenation of `self` and `other`.
+     * @param self The first slice to concatenate.
+     * @param other The second slice to concatenate.
+     * @return The concatenation of the two strings.
+     */
+    function concat(slice self, slice other) internal pure returns (string) {
+        string memory ret = new string(self._len + other._len);
+        uint retptr;
+        assembly {retptr := add(ret, 32)}
+        memcpy(retptr, self._ptr, self._len);
+        memcpy(retptr + self._len, other._ptr, other._len);
+        return ret;
+    }
+
+    /*
+     * @dev Joins an array of slices, using `self` as a delimiter, returning a newly allocated string.
+     * @param self The delimiter to use.
+     * @param parts A list of slices to join.
+     * @return A newly allocated string containing all the slices in `parts`, joined with `self`.
+     */
+    function join(slice self, slice[] parts) internal pure returns (string) {
+        if (parts.length == 0)
+        return "";
+        uint length = self._len * (parts.length - 1);
+        for (uint i = 0; i < parts.length; i++)
+        length += parts[i]._len;
+        string memory ret = new string(length);
+        uint retptr;
+        assembly {retptr := add(ret, 32)}
+        for (i = 0; i < parts.length; i++) {
+            memcpy(retptr, parts[i]._ptr, parts[i]._len);
+            retptr += parts[i]._len;
+            if (i < parts.length - 1) {
+                memcpy(retptr, self._ptr, self._len);
+                retptr += self._len;
+            }
+        }
+        return ret;
+    }
+    /* --------------------- strings -- end   */
+
+    function stringsConcatenation(string str1, string str2) public pure returns (string) {
+        return concat(toSlice(str1), toSlice(str2));
+    } //
+
+    function stringsJoin(string str1, string str2, string str3) public pure returns (string) {
+        slice memory delimiter = toSlice(" ");
+        // see: http://solidity.readthedocs.io/en/v0.4.15/types.html#arrays
+        // http://solidity.readthedocs.io/en/v0.4.15/types.html#allocating-memory-arrays
+        slice[] memory slicesArray = new slice[](3);
+        slicesArray[0] = toSlice(str1);
+        slicesArray[1] = toSlice(str2);
+        slicesArray[2] = toSlice(str3);
+        string memory result = join(delimiter, slicesArray);
+        return result;
+    }
+/* End of Library StringsAndBytesLib */
 }
