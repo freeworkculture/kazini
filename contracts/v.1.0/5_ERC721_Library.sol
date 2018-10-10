@@ -43,7 +43,7 @@ interface IERC165 {
 * @title ERC721 Non-Fungible Token Standard basic interface
 * @dev see https://github.com/ethereum/EIPs/blob/master/EIPS/eip-721.md
 */
-contract IERC721 is IERC165 {
+contract IERC721 /*is IERC165*/ {
 
     event Transfer(
         address indexed from,
@@ -148,13 +148,88 @@ contract IERC721Enumerable is IERC721 {
 /* End of Contract Interface IERC721Enumerable */
 }
 
-// /**
-// * @title ERC165
-// * @author Matt Condon (@shrugs)
-// * @dev Implements ERC165 using a lookup table.
-// */
-// library ERC165Lib {
+// // /**
+// // * @title ERC165
+// // * @author Matt Condon (@shrugs)
+// // * @dev Implements ERC165 using a lookup table.
+// // */
+// // library ERC165Lib {
 
+
+// /**
+// * @title ERC721 Non-Fungible Token Standard basic implementation
+// * @dev see https://github.com/ethereum/EIPs/blob/master/EIPS/eip-721.md
+// */
+// library ERC721Lib {
+
+// /* Using */
+
+
+// /* Events */
+
+//     // event ContractEvent(address indexed _this, address indexed _sender, address indexed _origin);
+
+// /* Structs */
+
+//     struct INTERFACE_STORAGE {
+//         /**
+//         * @dev a mapping of interface id to whether or not it's supported
+//         */
+//         mapping(bytes4 => bool) _supportedInterfaces;
+
+//     }
+
+// /* Constants */
+
+//     bytes4 private constant _InterfaceId_ERC165 = 0x01ffc9a7;
+//     /**
+//     * 0x01ffc9a7 ===
+//     *   bytes4(keccak256('supportsInterface(bytes4)'))
+//     */
+
+// /* State Variables */
+
+// /* Modifiers */
+
+// /* Function */
+    
+//     /**
+//     * @dev A contract implementing SupportsInterfaceWithLookup
+//     * implement ERC165 itself
+//     */
+//     // constructor()
+//     //     public
+//     // {
+//     //     _registerInterface(_InterfaceId_ERC165);
+//     // }
+
+//     function init(INTERFACE_STORAGE storage self, bytes4 _InterfaceId_) {
+
+//         _registerInterface(self, _InterfaceId_);
+
+//         emit ContractEvent(this,msg.sender,tx.origin);
+//     }
+
+//     /**
+//     * @dev implement supportsInterface(bytes4) using a lookup table
+//     */
+//     function supportsInterface(INTERFACE_STORAGE storage self, bytes4 interfaceId)
+//         external
+//         view
+//         returns (bool)
+//     {
+//         return self._supportedInterfaces[interfaceId];
+//     }
+
+//     /**
+//     * @dev private method for registering an interface
+//     */
+//     function _registerInterface(INTERFACE_STORAGE storage self, bytes4 interfaceId) {
+//         require(interfaceId != 0xffffffff);
+//         self._supportedInterfaces[interfaceId] = true;
+//     }
+// /* End of Library ERC165Lib */
+// // }
 
 /**
 * @title ERC721 Non-Fungible Token Standard basic implementation
@@ -164,86 +239,11 @@ library ERC721Lib {
 
 /* Using */
 
-
-/* Events */
-
-    // event ContractEvent(address indexed _this, address indexed _sender, address indexed _origin);
-
-/* Structs */
-
-    struct INTERFACE_STORAGE {
-        /**
-        * @dev a mapping of interface id to whether or not it's supported
-        */
-        mapping(bytes4 => bool) _supportedInterfaces;
-
-    }
-
-/* Constants */
-
-    bytes4 private constant _InterfaceId_ERC165 = 0x01ffc9a7;
-    /**
-    * 0x01ffc9a7 ===
-    *   bytes4(keccak256('supportsInterface(bytes4)'))
-    */
-
-/* State Variables */
-
-/* Modifiers */
-
-/* Function */
-    
-    /**
-    * @dev A contract implementing SupportsInterfaceWithLookup
-    * implement ERC165 itself
-    */
-    // constructor()
-    //     public
-    // {
-    //     _registerInterface(_InterfaceId_ERC165);
-    // }
-
-    function init(INTERFACE_STORAGE storage self, bytes4 _InterfaceId_) {
-
-        _registerInterface(self, _InterfaceId_);
-
-        emit ContractEvent(this,msg.sender,tx.origin);
-    }
-
-    /**
-    * @dev implement supportsInterface(bytes4) using a lookup table
-    */
-    function supportsInterface(INTERFACE_STORAGE storage self, bytes4 interfaceId)
-        external
-        view
-        returns (bool)
-    {
-        return self._supportedInterfaces[interfaceId];
-    }
-
-    /**
-    * @dev private method for registering an interface
-    */
-    function _registerInterface(INTERFACE_STORAGE storage self, bytes4 interfaceId) {
-        require(interfaceId != 0xffffffff);
-        self._supportedInterfaces[interfaceId] = true;
-    }
-/* End of Library ERC165Lib */
-// }
-
-// /**
-// * @title ERC721 Non-Fungible Token Standard basic implementation
-// * @dev see https://github.com/ethereum/EIPs/blob/master/EIPS/eip-721.md
-// */
-// library ERC721Lib {
-
-/* Using */
-
     using SafeMathLib for uint256;
 
     using AddressLib for address;
 
-    // using ERC172Lib for ERC172Lib.INTERFACE_STORAGE;
+    // using ERC165Lib for bytes4;
 
 /* Events */
 
@@ -350,14 +350,14 @@ library ERC721Lib {
 
 /* Funtions */
 
-    function init (STORAGE storage self, INTERFACE_STORAGE storage llib, bytes4 _InterfaceId_)
-        public
-    {
-        // register the supported interfaces to conform to ERC721 via ERC165
-        _registerInterface(llib, _InterfaceId_);
+    // function init (STORAGE storage self, INTERFACE_STORAGE storage llib, bytes4 _InterfaceId_)
+    //     public
+    // {
+    //     // register the supported interfaces to conform to ERC721 via ERC165
+    //     _registerInterface(llib, _InterfaceId_);
 
-        emit ContractEvent(this,msg.sender,tx.origin);
-    }
+    //     emit ContractEvent(this,msg.sender,tx.origin);
+    // }
 
     /**
     * @dev Gets the balance of the specified address
@@ -633,13 +633,13 @@ library ERC721Lib {
     }
 /* End of Library ERC721Lib */
 
-    function init(METADATA_STORAGE storage self, INTERFACE_STORAGE storage llib, bytes4 _InterfaceId_) {
+    // function init(METADATA_STORAGE storage self, INTERFACE_STORAGE storage llib, bytes4 _InterfaceId_) {
 
-        // register the supported interfaces to conform to ERC721 via ERC165
-        _registerInterface(llib, _InterfaceId_);
+    //     // register the supported interfaces to conform to ERC721 via ERC165
+    //     _registerInterface(llib, _InterfaceId_);
 
-        emit ContractEvent(this,msg.sender,tx.origin);
-    }
+    //     emit ContractEvent(this,msg.sender,tx.origin);
+    // }
 
     /**
     * @dev Gets the token name
@@ -716,13 +716,13 @@ library ERC721Lib {
     }
 /* End of Library ERC721MetadataLib */
 
-    function init(ENUMERABLE_STORAGE storage self, INTERFACE_STORAGE storage llib, bytes4 _InterfaceId_) public {
+    // function init(ENUMERABLE_STORAGE storage self, INTERFACE_STORAGE storage llib, bytes4 _InterfaceId_) public {
 
-        // register the supported interface to conform to ERC721 via ERC165
-        _registerInterface(llib, _InterfaceId_);
+    //     // register the supported interface to conform to ERC721 via ERC165
+    //     _registerInterface(llib, _InterfaceId_);
 
-        emit ContractEvent(this,msg.sender,tx.origin);
-    }
+    //     emit ContractEvent(this,msg.sender,tx.origin);
+    // }
 
     /**
     * @dev Gets the token ID at a given index of the tokens list of the requested owner

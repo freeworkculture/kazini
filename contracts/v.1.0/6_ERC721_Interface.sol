@@ -21,81 +21,83 @@ import "./1_Kernel.sol";
 import "./2_OS_Library.sol";
 import "./5_ERC721_Library.sol";
 
-/**
-* @title ERC165
-* @author Matt Condon (@shrugs)
-* @dev Implements ERC165 using a lookup table.
-*/
-contract ERC165 is IERC165 {
+// /**
+// * @title ERC165
+// * @author Matt Condon (@shrugs)
+// * @dev Implements ERC165 using a lookup table.
+// */
+// contract ERC165 is IERC165 {
 
-/* Using */
+// /* Using */
 
-    // using ERC172Lib for bytes4;
+//     // using ERC172Lib for bytes4;
 
-    using ERC721Lib for ERC721Lib.INTERFACE_STORAGE;
+//     using ERC721Lib for ERC721Lib.INTERFACE_STORAGE;
 
-/* Events */
+// /* Events */
 
-    event ContractEvent(address indexed _this, address indexed _sender, address indexed _origin);
+//     event ContractEvent(address indexed _this, address indexed _sender, address indexed _origin);
 
-/* Structs */
+// /* Structs */
 
-/* Constants */
+// /* Constants */
 
-    bytes4 private constant _InterfaceId_ERC165_ = 0x01ffc9a7;
-    /**
-    * 0x01ffc9a7 ===
-    *   bytes4(keccak256('supportsInterface(bytes4)'))
-    */
+//     bytes4 private constant _InterfaceId_ERC165_ = 0x01ffc9a7;
+//     /**
+//     * 0x01ffc9a7 ===
+//     *   bytes4(keccak256('supportsInterface(bytes4)'))
+//     */
 
-/* State Variables */
+// /* State Variables */
 
-    ERC721Lib.INTERFACE_STORAGE erc165data;
+//     ERC721Lib.INTERFACE_STORAGE erc165data;
 
-/* Modifiers */
+// /* Modifiers */
 
-/* Functions */
+// /* Functions */
 
-    /**
-    * @dev A contract implementing SupportsInterfaceWithLookup
-    * implement ERC165 itself
-    */
-    constructor()
-        public
-    {
-        erc165data.init(_InterfaceId_ERC165_);
+//     /**
+//     * @dev A contract implementing SupportsInterfaceWithLookup
+//     * implement ERC165 itself
+//     */
+//     constructor()
+//         public
+//     {
+//         erc165data.init(_InterfaceId_ERC165_);
 
-        // emit ContractEvent(this,msg.sender,tx.origin);
-    }
+//         // emit ContractEvent(this,msg.sender,tx.origin);
+//     }
 
-    /**
-    * @dev implement supportsInterface(bytes4) using a lookup table
-    */
-    function supportsInterface(bytes4 interfaceId)
-        external
-        view
-        returns (bool)
-    {
-        return erc165data.supportsInterface(interfaceId);
-    }
+//     /**
+//     * @dev implement supportsInterface(bytes4) using a lookup table
+//     */
+//     function supportsInterface(bytes4 interfaceId)
+//         external
+//         view
+//         returns (bool)
+//     {
+//         return erc165data.supportsInterface(interfaceId);
+//     }
 
-    /**
-    * @dev private method for registering an interface
-    */
-    function _registerInterface(bytes4 interfaceId)
-        public
-    {
-        return erc165data._registerInterface(interfaceId);
-    }
-}
+//     /**
+//     * @dev private method for registering an interface
+//     */
+//     function _registerInterface(bytes4 interfaceId)
+//         public
+//     {
+//         return erc165data._registerInterface(interfaceId);
+//     }
+// }
 
 /**
 * @title ERC721 Non-Fungible Token Standard basic implementation
 * @dev see https://github.com/ethereum/EIPs/blob/master/EIPS/eip-721.md
 */
-contract ERC721 is ERC165, IERC721, IERC721Metadata, IERC721Enumerable {
+contract ERC721 is BaseController, IERC721, IERC721Metadata, IERC721Enumerable {
 
 /* Using */
+
+    // using ERC165Lib for ERC165.STORAGE;
 
     using ERC721Lib for ERC721Lib.STORAGE;
 
@@ -148,6 +150,8 @@ contract ERC721 is ERC165, IERC721, IERC721Metadata, IERC721Enumerable {
 
 /* State Variables */
 
+    // ERC165.STORAGE erc165interface;
+    
     ERC721Lib.STORAGE erc721data;
     
     ERC721Lib.METADATA_STORAGE erc721metadata;
@@ -162,15 +166,24 @@ contract ERC721 is ERC165, IERC721, IERC721Metadata, IERC721Enumerable {
     * @dev Constructor function
     */
     constructor(string name, string symbol) public {
+        
+        
 
         // register the supported interfaces to conform to ERC721 via ERC165
-        erc721data.init(erc165data, _InterfaceId_ERC721);
+        // erc165interface.init(erc165data, _InterfaceId_ERC721);
+       _InterfaceId_._registerInterface(_ERC721_RECEIVED);
 
         // register the supported interfaces to conform to ERC721 via ERC165
-        erc721metadata.init(erc165data, _InterfaceId_ERC721Metadata, name, symbol);
+        // erc165interface.init(erc165data, _InterfaceId_ERC721);
+       _InterfaceId_._registerInterface(_InterfaceId_ERC721);
+
+        // register the supported interfaces to conform to ERC721 via ERC165
+        // erc721metadata.init(erc165data, _InterfaceId_ERC721Metadata, name, symbol);
+        _InterfaceId_._registerInterface(_InterfaceId_ERC721Metadata);
         
         // register the supported interface to conform to ERC721 via ERC165
-        erc721enumerabledata.init(erc165data, _InterfaceId_ERC721Enumerable);
+        // erc721enumerabledata.init(erc165data, _InterfaceId_ERC721Enumerable);
+        _InterfaceId_._registerInterface(_InterfaceId_ERC721Enumerable);
 
         // emit ContractEvent(this,msg.sender,tx.origin);
     }

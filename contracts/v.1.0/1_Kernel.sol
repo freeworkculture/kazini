@@ -220,6 +220,87 @@ contract UserDefined {
     }
 }
 
+// /**
+// * @title ERC165
+// * @author Matt Condon (@shrugs)
+// * @dev Implements ERC165 using a lookup table.
+// */
+library ERC165Lib {
+
+/* Using */
+
+/* Events */
+
+    event ContractEvent(address indexed _this, address indexed _sender, address indexed _origin);
+
+/* Structs */
+
+    struct STORAGE {
+        /**
+        * @dev a mapping of interface id to whether or not it's supported
+        */
+        mapping(bytes4 => bool) _supportedInterfaces;
+
+    }
+
+/* Constants */
+
+    bytes4 private constant _InterfaceId_ERC165 = 0x01ffc9a7;
+    /**
+    * 0x01ffc9a7 ===
+    *   bytes4(keccak256('supportsInterface(bytes4)'))
+    */
+
+/* State Variables */
+
+/* Modifiers */
+
+/* Function */
+    
+    /**
+    * @dev A contract implementing SupportsInterfaceWithLookup
+    * implement ERC165 itself
+    */
+    // constructor()
+    //     public
+    // {
+    //     _registerInterface(_InterfaceId_ERC165);
+    // }
+
+    function init(STORAGE storage self, bytes4 _InterfaceId_) {
+
+        _registerInterface(self, _InterfaceId_);
+
+        emit ContractEvent(this,msg.sender,tx.origin);
+    }
+
+    /**
+    * @dev implement supportsInterface(bytes4) using a lookup table
+    */
+    function supportsInterface(STORAGE storage self, bytes4 interfaceId)
+        external
+        view
+        returns (bool)
+    {
+        emit ContractEvent(this,msg.sender,tx.origin);
+
+        return self._supportedInterfaces[interfaceId];
+    }
+
+    /**
+    * @dev private method for registering an interface
+    */
+    function _registerInterface(STORAGE storage self, bytes4 interfaceId) {
+        
+        require(interfaceId != 0xffffffff);
+
+        self._supportedInterfaces[interfaceId] = true;
+
+        emit ContractEvent(this,msg.sender,tx.origin);
+    }
+/* End of Library ERC165Lib */
+}
+
 /* Constant */
 /* State Variables */
 /* Events */
@@ -234,12 +315,17 @@ contract UserDefined {
 ///  later changed
 contract BaseController is UserDefined {
 
+/* Using */
+
+    using ERC165Lib for ERC165Lib.STORAGE;
+
 /* Constants */
 
     bytes32 constant public VERSION = "BaseController 0.2.3";
 
 /* State Variables */
 
+    ERC165Lib.STORAGE _InterfaceId_;
     Able public contrl;
     address public owner;
     address public controller;
@@ -396,6 +482,7 @@ contract BaseController is UserDefined {
 /* End of BaseController */
 }
 
+
 ////////////////
 // Able Contract
 ////////////////
@@ -404,7 +491,7 @@ contract Able is BaseController {
 /* Constants */
 // !!! ******** FOR TEST ONLY CHANGE TO ACTUAL 40 BYTES FPRINT ***********
     bytes32 constant public KEYID = 0x9BCB2540EBAC30FC9E9EFF3D259B64A2;
-    bytes32 constant internal CONTRACTNAME = "Able";
+    bytes4 constant internal CONTRACTNAME = "Able";
 
 /* State Variables */
     
@@ -428,8 +515,7 @@ contract Able is BaseController {
         cName = CONTRACTNAME;
         contracts[this] = cName;
         owner = msg.sender;
-        //	database = Database(makeContract("database"));
-        //  userbase = Userbase(makeContract("userbase"));
+        _InterfaceId_._registerInterface(CONTRACTNAME);
         emit ContractEvent(this,msg.sender,tx.origin);
     }
 
