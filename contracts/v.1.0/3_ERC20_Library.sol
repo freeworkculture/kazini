@@ -158,7 +158,7 @@ library ERC20Lib {
 
         // timestamp when token release is enabled
         // && beneficiary of tokens after they are released
-        mapping (address => mapping (bool => uint256)) vested;
+        mapping (address => mapping (bool => uint256)) vestedToken;
 
         } struct  Checkpoint {
             
@@ -311,7 +311,7 @@ library ERC20Lib {
            require((_to != 0) && (_to != address(this)));
 
            // Check if the account is vested
-           require (self.vested[_from][true] >= _amount);
+           require (self.vestedToken[_from][true] >= _amount);
 
            // If the amount being transfered is more than the balance of the
            //  account the transfer throws
@@ -464,7 +464,7 @@ library ERC20Lib {
     * @return Returns amount of tokens held by timelock to beneficiarys.
     */
     function vested(STORAGE storage self, address _address) public view returns(uint, uint) {
-        return (self.vested[_address][true], self.vested[_address][false]);
+        return (self.vestedToken[_address][true], self.vestedToken[_address][false]);
         }
 
     /**
@@ -472,12 +472,12 @@ library ERC20Lib {
     * @return The amount of cleared and uncleared effects.
     */
     function vest(STORAGE storage self, address _address,uint256 _amount) public returns(uint256) {
-        return self.vested[_address][false] += _amount;
+        return self.vestedToken[_address][false] += _amount;
         }
 
     function unvest(STORAGE storage self, address _address, uint256 _amount) public returns(uint256) {
-        require ((self.vested[_address][false] -= _amount) > 0);
-        return self.vested[_address][true] += _amount;
+        require ((self.vestedToken[_address][false] -= _amount) > 0);
+        return self.vestedToken[_address][true] += _amount;
         }
 
     // /**

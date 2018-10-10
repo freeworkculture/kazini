@@ -117,6 +117,7 @@ contract UserDefined {
         IS state;
         bytes32 service;
         uint256 payout;
+        string uri;
     }
 
     /// @notice `Creator && Doer lookup` is the type that defines a strategy model of an actual agent

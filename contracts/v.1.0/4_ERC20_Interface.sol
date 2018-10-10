@@ -51,10 +51,10 @@ contract ERC20 is BaseController {
 
 /* State Variables */
 
-    string public name = "SimpleToken";
-    string public symbol = "SIM";
-    uint public decimals = 18;
-    uint public INITIAL_SUPPLY = 10000;
+    // string public name = "SimpleToken";
+    // string public symbol = "SIM";
+    // uint public decimals = 18;
+    // uint public INITIAL_SUPPLY = 10000;
 
 /* Modifiers */
 
@@ -91,37 +91,43 @@ contract ERC20 is BaseController {
         }
 
     // Returns token name
-    // function name() public view returns(string);
+    function name() public view returns(string name) {
+        return erc20Data.name;
+    }
 
     // Returns token symbol
-    // function symbol() public view returns(string);
+    function symbol() public view returns(string symbol) {
+        return erc20Data.symbol;
+    }
 
     // Returns decimal places designated for unit of token.
-    // function decimalPlaces() public returns(uint);
+    function decimalPlaces() public returns(uint8 decimals) {
+        return erc20Data.decimals;
+    }
 
-    function totalSupply() constant returns (uint) {
+    function totalSupply() constant returns (uint256 totalSupply) {
         // return erc20Data.totalSupply();
         return erc20Data.totalSupplyAt(block.number);
         }
 
-    function balanceOf(address _who) constant returns (uint) {
+    function balanceOf(address _who) constant returns (uint256 balance) {
         // return erc20Data.balanceOf(_who);
         return erc20Data.balanceOfAt(_who, block.number);
         }
 
-    function allowance(address _owner, address _spender) constant returns (uint) {
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
         return erc20Data.allowance(_owner, _spender);
         }
 
-    function transfer(address to, uint value) returns (bool ok) {
+    function transfer(address to, uint value) returns (bool success) {
         return erc20Data.transfer(to, value);
         }
 
-    function transferFrom(address from, address to, uint value) returns (bool ok) {
+    function transferFrom(address from, address to, uint value) returns (bool success) {
         return erc20Data.transferFrom(from, to, value);
         }
 
-    function approve(address spender, uint value) returns (bool ok) {
+    function approve(address spender, uint value) returns (bool success) {
         return erc20Data.approve(spender, value);
         }
 /* End of Contract ERC20 */

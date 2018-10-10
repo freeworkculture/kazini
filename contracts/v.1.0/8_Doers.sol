@@ -850,13 +850,13 @@ contract DoersHeader is UserDefined {
 
     using StringsAndBytesLib for bytes32;
 
-    using ERC165Lib for ERC165Lib.STORAGE;
+    using ERC721Lib for ERC721Lib.INTERFACE_STORAGE;
 
     using ERC721Lib for ERC721Lib.STORAGE;
 
-    using ERC721MetadataLib for ERC721MetadataLib.STORAGE;
+    using ERC721Lib for ERC721Lib.METADATA_STORAGE;
 
-    using ERC721EnumerableLib for ERC721EnumerableLib.STORAGE;
+    using ERC721Lib for ERC721Lib.ENUMERABLE_STORAGE;
     
     using DoersLib for DoersLib.STORAGE;
 
@@ -1013,13 +1013,7 @@ contract DoersDataInternal is UpdatableProxyData, DoersHeader {
 
 /* State Variables */
 
-    ERC165Lib.STORAGE internal erc165Data;
-
-    ERC721Lib.STORAGE internal erc721Data;
-
-    ERC721MetadataLib.STORAGE internal erc721Metadata;
-
-    ERC721EnumerableLib.STORAGE internal erc721EnumerableData;
+    ERC721 mpsr;
 
     // DoersLib.STORAGE internal doersData;
 
@@ -1108,13 +1102,7 @@ contract DoersData is UpdatableProxyData, DoersHeader {
 
 /* State Variables */
 
-    ERC165Lib.STORAGE erc165Data;
-
-    ERC721Lib.STORAGE erc721Data;
-
-    ERC721MetadataLib.STORAGE erc721Metadata;
-
-    ERC721EnumerableLib.STORAGE erc721EnumerableData;
+    ERC721 mpsr;
 
     DoersLib.STORAGE doersData;
 
@@ -1166,6 +1154,7 @@ contract DoersProxy is Proxy, DoersDataInternal {
         address _owner, 
         Creators _creator, 
         SomeDoer _adoer
+        
         ) public Proxy(_proxied) OwnableData(_owner) {
             require(true/*"!!!!!!!check that this doer is not yet in userbase!!!!!!!*/ );
             creator = _creator;
@@ -1174,7 +1163,6 @@ contract DoersProxy is Proxy, DoersDataInternal {
             proxyKey = _creator.proxyKey();
             proxyBDI = _creator.proxyBDI();
             Iam = _adoer;
-            erc721Metadata.init(erc165Data, _adoer.fPrint.bytes32ToString(), _adoer.email.bytes32ToString());
             emit ContractEvent(this, msg.sender, tx.origin);
             }
 }
@@ -1238,6 +1226,22 @@ contract Doers is UpdatableProxyImplementation, DoersData {
     //     erc721Metadata.init(erc165Data, _adoer.fPrint.bytes32ToString(), _adoer.email.bytes32ToString());
     //     emit ContractEvent(this, msg.sender, tx.origin);
     //     }
+
+    /**
+    * @dev Gets the token name
+    * @return string representing the token name
+    */
+    function name() external view returns (string) {
+        return Iam.email.bytes32ToString();
+        }
+
+    /**
+    * @dev Gets the token symbol
+    * @return string representing the token symbol
+    */
+    function symbol() external view returns (string) {
+        return Iam.fPrint.bytes32ToString();
+        }
 
 /////////////////
 // ABLE COMPUTE
@@ -1524,12 +1528,10 @@ contract Doers is UpdatableProxyImplementation, DoersData {
         //     true);
     }
 
-    function setbdi(Intention _service, string _uri) public onlyDoer {
+    function setbdi(Intention _service) public onlyDoer {
         
-        erc721EnumerableData._mint(erc721Data, this, _service.payout);
-
-        erc721Metadata._setTokenURI(erc721Data, _service.payout, _uri);
-        
+        ERC721(mpsr).mintWithTokenURI(this, _service.payout, _service.uri);
+      
         return doersData.setbdi(_service);
 
 

@@ -207,12 +207,12 @@ contract Campaign is TokenController, BaseController {
     /// @return True if the tokens are generated correctly
     function generateTokens(address _owner, uint _amount
     ) public onlyController returns (bool) {
-        uint curTotalSupply = erc20Data.totalSupply();
+        uint curTotalSupply = erc20Data.totalSupplyAt(block.number);
         require(curTotalSupply + _amount >= curTotalSupply); // Check for overflow
-        uint previousBalanceTo = erc20Data.balanceOf(_owner);
+        uint previousBalanceTo = erc20Data.balanceOfAt(_owner, block.number);
         require(previousBalanceTo + _amount >= previousBalanceTo); // Check for overflow
         erc20Data.totalSupplyHistory.updateValueAtNow(curTotalSupply + _amount);
-        erc20Data.balances2[_owner].updateValueAtNow(previousBalanceTo + _amount);
+        erc20Data.balances[_owner].updateValueAtNow(previousBalanceTo + _amount);
         emit Transfer(0, _owner, _amount);
         return true;
     }
@@ -224,12 +224,12 @@ contract Campaign is TokenController, BaseController {
     /// @return True if the tokens are burned correctly
     function destroyTokens(address _owner, uint _amount
     ) onlyController public returns (bool) {
-        uint curTotalSupply = erc20Data.totalSupply();
+        uint curTotalSupply = erc20Data.totalSupplyAt(block.number);
         require(curTotalSupply >= _amount);
-        uint previousBalanceFrom = erc20Data.balanceOf(_owner);
+        uint previousBalanceFrom = erc20Data.balanceOfAt(_owner, block.number);
         require(previousBalanceFrom >= _amount);
         erc20Data.totalSupplyHistory.updateValueAtNow(curTotalSupply - _amount);
-        erc20Data.balances2[_owner].updateValueAtNow(previousBalanceFrom - _amount);
+        erc20Data.balances[_owner].updateValueAtNow(previousBalanceFrom - _amount);
         emit Transfer(_owner, 0, _amount);
         return true;
     }
@@ -325,14 +325,16 @@ contract Campaign is TokenController, BaseController {
     /// @param _transfersEnabled True if transfers are allowed in the clone
     /// @return The address of the new MiniMeToken Contract
     function createCloneToken(
+        Able _contrl,
         string _cloneTokenName,
-        uint8 _cloneDecimalUnits,
         string _cloneTokenSymbol,
+        uint8 _cloneDecimalUnits,
         uint _snapshotBlock,
         bool _transfersEnabled
         ) public returns(address) {
         if (_snapshotBlock == 0) _snapshotBlock = block.number;
         ERC20 cloneToken = tokenFactory.createCloneToken(
+            _contrl,
             _cloneTokenName,
             _cloneTokenSymbol,
             _cloneDecimalUnits,
@@ -357,7 +359,7 @@ contract Campaign is TokenController, BaseController {
     * @return the token being held.
     */
     function vested(address _address) public view returns(uint, uint) {
-        return (erc20Data.vested[_address][false], erc20Data.vested[_address][true]);
+        return erc20Data.vested(_address);
         }
 
     // /**
@@ -409,6 +411,7 @@ contract ERC20Factory {
     /// @param _transfersEnabled If true, tokens will be able to be transferred
     /// @return The address of the new token contract
     function createCloneToken(
+        Able _contrl,
         string _tokenName,
         string _tokenSymbol,
         uint8 _decimalUnits,
@@ -418,7 +421,7 @@ contract ERC20Factory {
         // bool _transfersEnabled
         ) public returns (ERC20) {
             ERC20 newToken = new ERC20(
-                // this,
+                _contrl,
                 _tokenName,
                 _tokenSymbol,
                 _decimalUnits,
