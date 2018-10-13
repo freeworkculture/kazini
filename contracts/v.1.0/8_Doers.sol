@@ -153,8 +153,9 @@ library DoersLib {
 // All ASSERTERS
 /////////////////
 
-    function iam(STORAGE storage self) view public returns (bool iam_) {
-        return self.creator.iam();
+    function iam(STORAGE storage self) view public returns (bool iam_, UserDefined.IS _state) {
+        // return self.creator.iam();
+        return self.userbase.iam(msg.sender);
         // Collector(creator.peana()).updateLog(keccak256("iam()"),iam);
         // return iam_;
     }
@@ -238,9 +239,10 @@ library DoersLib {
             //     keccak256(Iam.lName),
             //     keccak256(Iam.age),
             //     keccak256(Iam.data));
+            (iam_,) = iam(self);
             return(
                 self.Iam.fPrint,
-                iam(self),
+                iam_,
                 self.Iam.email,
                 self.Iam.fName,
                 self.Iam.lName,
@@ -443,10 +445,11 @@ library DoersLib {
         return true;
     }
 
-    // function incSigns(STORAGE storage self, bytes32 _keyd) public returns (uint) {
-    //     require(self.reputation.signer++ < 2^256);
-    //     return self.reputation.signer;
-    // }
+    function incSigns(STORAGE storage self, bytes32 _keyd) public returns (uint) {
+        require(self.reputation.signer++ < 2^256);
+        return self.reputation.signer;
+    }
+
     function decSigns(STORAGE storage self, bytes32 _keyd) public returns (uint) {
         require(self.reputation.signer-- > 0);
         return self.reputation.signer;
@@ -572,12 +575,12 @@ contract DataController is BaseController {
 /* Modifiers */
 
     modifier onlyCreator {
-        require(userbase.isDoer(msg.sender) == IS.CREATOR);
+        require(userbase.iam(msg.sender, IS.CREATOR));
         _;
     }
 
     modifier onlyDoer {
-        require(userbase.isDoer(msg.sender) != IS.CREATOR);
+        require(!userbase.iam(msg.sender, IS.CREATOR));
         _;
     }
 
@@ -669,23 +672,28 @@ contract Userbase is BaseController {
 // All ASSERTS
 /////////////////
 
-    function iam(address _address) view public returns (bool) {
+    function iam(address _address, IS _state) view public returns (bool _check) {
         require(agents[_address].active);
-        return true;
+        return agents[_address].state == _state ? _check = true : _check = false;
     }
 
-    function iam(bytes32 _uuids) view external returns (bool) {
-        return iam(uuids[_uuids]);
-    }
-
-    function isDoer(address _address) view public returns (IS) { // Consider use of delegateCall
+    function iam(address _address) view public returns (bool, IS) {
         require(agents[_address].active);
-        return agents[_address].state;
+        return (true, agents[_address].state);
     }
 
-    function isDoer(bytes32 _uuids) view external returns (IS) { // Consider use of delegateCall
-        return isDoer(uuids[_uuids]);
-    }
+    // function iam(bytes32 _uuids) view external returns (bool) {
+    //     return iam(uuids[_uuids]);
+    // }
+
+    // function isDoer(address _address) view public returns (IS) { // Consider use of delegateCall
+    //     require(agents[_address].active);
+    //     return agents[_address].state;
+    // }
+
+    // function isDoer(bytes32 _uuids) view external returns (IS) { // Consider use of delegateCall
+    //     return isDoer(uuids[_uuids]);
+    // }
 
 /////////////////
 // All GETTERS
@@ -850,8 +858,6 @@ contract DoersHeader is UserDefined {
 
     using StringsAndBytesLib for bytes32;
 
-    using ERC721Lib for ERC721Lib.INTERFACE_STORAGE;
-
     using ERC721Lib for ERC721Lib.STORAGE;
 
     using ERC721Lib for ERC721Lib.METADATA_STORAGE;
@@ -863,6 +869,42 @@ contract DoersHeader is UserDefined {
 /* User Types */
 
     enum BE {NULL, QUALIFICATION, EXPERIENCE, REPUTATION, TALENT}
+
+/* Constants */
+
+    // Equals to `bytes4(keccak256("onERC721Received(address,address,uint256,bytes)"))`
+    // which can be also obtained as `IERC721Receiver(0).onERC721Received.selector`
+    bytes4 private constant _ERC721_RECEIVED = 0x150b7a02;
+
+    bytes4 private constant _InterfaceId_ERC721 = 0x80ac58cd;
+    /*
+    * 0x80ac58cd ===
+    *   bytes4(keccak256('balanceOf(address)')) ^
+    *   bytes4(keccak256('ownerOf(uint256)')) ^
+    *   bytes4(keccak256('approve(address,uint256)')) ^
+    *   bytes4(keccak256('getApproved(uint256)')) ^
+    *   bytes4(keccak256('setApprovalForAll(address,bool)')) ^
+    *   bytes4(keccak256('isApprovedForAll(address,address)')) ^
+    *   bytes4(keccak256('transferFrom(address,address,uint256)')) ^
+    *   bytes4(keccak256('safeTransferFrom(address,address,uint256)')) ^
+    *   bytes4(keccak256('safeTransferFrom(address,address,uint256,bytes)'))
+    */
+
+    bytes4 private constant _InterfaceId_ERC721Metadata = 0x5b5e139f;
+    /**
+    * 0x5b5e139f ===
+    *   bytes4(keccak256('name()')) ^
+    *   bytes4(keccak256('symbol()')) ^
+    *   bytes4(keccak256('tokenURI(uint256)'))
+    */
+
+    bytes4 private constant _InterfaceId_ERC721Enumerable = 0x780e9d63;
+    /**
+    * 0x780e9d63 ===
+    *   bytes4(keccak256('totalSupply()')) ^
+    *   bytes4(keccak256('tokenOfOwnerByIndex(address,uint256)')) ^
+    *   bytes4(keccak256('tokenByIndex(uint256)'))
+    */
 
 /* Events */
 
@@ -978,55 +1020,20 @@ contract DoersDataInternal is UpdatableProxyData, DoersHeader {
     uint constant internal year = 31536000; // !!! GET THIS DATA FROM DATABASE
     uint constant internal period = 31536000; // !!! GET THIS DATA FROM DATABASE
 
-    // Equals to `bytes4(keccak256("onERC721Received(address,address,uint256,bytes)"))`
-    // which can be also obtained as `IERC721Receiver(0).onERC721Received.selector`
-    bytes4 private constant _ERC721_RECEIVED = 0x150b7a02;
-
-    bytes4 private constant _InterfaceId_ERC721 = 0x80ac58cd;
-    /*
-    * 0x80ac58cd ===
-    *   bytes4(keccak256('balanceOf(address)')) ^
-    *   bytes4(keccak256('ownerOf(uint256)')) ^
-    *   bytes4(keccak256('approve(address,uint256)')) ^
-    *   bytes4(keccak256('getApproved(uint256)')) ^
-    *   bytes4(keccak256('setApprovalForAll(address,bool)')) ^
-    *   bytes4(keccak256('isApprovedForAll(address,address)')) ^
-    *   bytes4(keccak256('transferFrom(address,address,uint256)')) ^
-    *   bytes4(keccak256('safeTransferFrom(address,address,uint256)')) ^
-    *   bytes4(keccak256('safeTransferFrom(address,address,uint256,bytes)'))
-    */
-
-    bytes4 private constant _InterfaceId_ERC721Metadata = 0x5b5e139f;
-    /**
-    * 0x5b5e139f ===
-    *   bytes4(keccak256('name()')) ^
-    *   bytes4(keccak256('symbol()')) ^
-    *   bytes4(keccak256('tokenURI(uint256)'))
-    */
-
-    bytes4 private constant _InterfaceId_ERC721Enumerable = 0x780e9d63;
-    /**
-    * 0x780e9d63 ===
-    *   bytes4(keccak256('totalSupply()')) ^
-    *   bytes4(keccak256('tokenOfOwnerByIndex(address,uint256)')) ^
-    *   bytes4(keccak256('tokenByIndex(uint256)'))
-    */
-
-
 /* Modifiers */
 
     modifier onlyCreator {
-        require(creator.isCreator());
+        require(userbase.iam(msg.sender, IS.CREATOR));
         _;
     }
 
     modifier onlyDoer {
-        require (creator.isDoer());
+        require(!userbase.iam(msg.sender, IS.CREATOR));
         _;
     }
 
     modifier onlyOwner {
-        require(creator.iam() && msg.sender == owner);
+        require(!userbase.iam(msg.sender, IS.CREATOR) && msg.sender == owner);
         _;
     }
 
@@ -1102,54 +1109,20 @@ contract DoersData is UpdatableProxyData, DoersHeader {
     uint constant internal year = 31536000; // !!! GET THIS DATA FROM DATABASE
     uint constant internal period = 31536000; // !!! GET THIS DATA FROM DATABASE
 
-    // Equals to `bytes4(keccak256("onERC721Received(address,address,uint256,bytes)"))`
-    // which can be also obtained as `IERC721Receiver(0).onERC721Received.selector`
-    bytes4 private constant _ERC721_RECEIVED = 0x150b7a02;
-
-    bytes4 private constant _InterfaceId_ERC721 = 0x80ac58cd;
-    /*
-    * 0x80ac58cd ===
-    *   bytes4(keccak256('balanceOf(address)')) ^
-    *   bytes4(keccak256('ownerOf(uint256)')) ^
-    *   bytes4(keccak256('approve(address,uint256)')) ^
-    *   bytes4(keccak256('getApproved(uint256)')) ^
-    *   bytes4(keccak256('setApprovalForAll(address,bool)')) ^
-    *   bytes4(keccak256('isApprovedForAll(address,address)')) ^
-    *   bytes4(keccak256('transferFrom(address,address,uint256)')) ^
-    *   bytes4(keccak256('safeTransferFrom(address,address,uint256)')) ^
-    *   bytes4(keccak256('safeTransferFrom(address,address,uint256,bytes)'))
-    */
-
-    bytes4 private constant _InterfaceId_ERC721Metadata = 0x5b5e139f;
-    /**
-    * 0x5b5e139f ===
-    *   bytes4(keccak256('name()')) ^
-    *   bytes4(keccak256('symbol()')) ^
-    *   bytes4(keccak256('tokenURI(uint256)'))
-    */
-
-    bytes4 private constant _InterfaceId_ERC721Enumerable = 0x780e9d63;
-    /**
-    * 0x780e9d63 ===
-    *   bytes4(keccak256('totalSupply()')) ^
-    *   bytes4(keccak256('tokenOfOwnerByIndex(address,uint256)')) ^
-    *   bytes4(keccak256('tokenByIndex(uint256)'))
-    */
-
 /* Modifiers */
 
     modifier onlyCreator {
-        require(creator.isCreator());
+        require(userbase.iam(msg.sender, IS.CREATOR));
         _;
     }
 
     modifier onlyDoer {
-        require (creator.isDoer());
+        require(!userbase.iam(msg.sender, IS.CREATOR));
         _;
     }
 
     modifier onlyOwner {
-        require(creator.iam() && msg.sender == owner);
+        require(!userbase.iam(msg.sender, IS.CREATOR) && msg.sender == owner);
         _;
     }
 
@@ -1311,6 +1284,81 @@ contract Doers is UpdatableProxyImplementation, DoersData {
         return Iam.fPrint.bytes32ToString();
         }
 
+    function balanceOf(address owner) public view returns (uint256 balance) {
+        require(owner == address(this));
+        return mpsr.balanceOf(this);
+    }
+
+    function ownerOf(uint256 tokenId) public view returns (address owner) {
+        require(msg.sender == address(this));
+        return mpsr.ownerOf(tokenId);
+    }
+
+    function safeTransferFrom(
+        address from,
+        address to,
+        uint256 tokenId,
+        bytes data
+    )
+        public {
+            require(from == address(this));
+            mpsr.safeTransferFrom(from, to, tokenId, data);
+        }
+
+    function safeTransferFrom(address from, address to, uint256 tokenId)
+        public {
+            require(from == address(this));
+            mpsr.safeTransferFrom(from, to, tokenId);
+        }
+        
+    function transferFrom(address from, address to, uint256 tokenId) public {
+        require(from == address(this));
+        mpsr.transferFrom(from, to, tokenId);
+    }
+
+    function approve(address to, uint256 tokenId) public {
+        
+        mpsr.approve(to, tokenId);
+    }
+
+    function getApproved(uint256 tokenId)
+        public view returns (address operator) {
+            return getApproved(tokenId);
+        }
+
+    function setApprovalForAll(address operator, bool _approved) public {
+        setApprovalForAll(operator, _approved);
+    }
+
+    function isApprovedForAll(address owner, address operator)
+        public view returns (bool) {
+            require(owner == address(this));
+            return mpsr.isApprovedForAll(owner, operator);
+        }
+
+    function tokenURI(uint256 tokenId) public view returns (string) {
+        return mpsr.tokenURI(tokenId);
+    }
+
+    function totalSupply() public view returns (uint256) {
+        return mpsr.totalSupply();
+    }
+    function tokenOfOwnerByIndex(
+        address owner,
+        uint256 index
+    )
+        public
+        view
+        returns (uint256 tokenId) {
+            require(owner == address(this));
+            return mpsr.tokenOfOwnerByIndex(owner, index);
+        }
+
+    function tokenByIndex(uint256 index) public view returns (uint256) {
+        return mpsr.tokenByIndex(index);
+    }
+
+
 /////////////////
 // ABLE COMPUTE
 /////////////////
@@ -1326,7 +1374,7 @@ contract Doers is UpdatableProxyImplementation, DoersData {
 // All ASSERTERS
 /////////////////
 
-    function iam() view public returns (bool iam_) {
+    function iam() view public returns (bool iam_, IS _state) {
         return doersData.iam();
         // Collector(creator.peana()).updateLog(keccak256("iam()"),iam);
     }
@@ -1780,33 +1828,33 @@ contract Creators is DataController {
         return contrl.KEYID();
     }
 
-    function Iam() view public returns (IS) {
-        return userbase.isDoer(msg.sender);
-    }
+    // function Iam() view public returns (IS) {
+    //     return userbase.isDoer(msg.sender);
+    // }
 
-    function iam() view public returns (bool) {
+    function iam() view public returns (bool, IS) {
         return userbase.iam(msg.sender);
     }
 
-    function isDoer() public view returns (bool) { // Consider use of delegateCall
-        require (userbase.isDoer(msg.sender) != IS.CREATOR);
-        return true;
-    }	// https://pgp.cs.uu.nl/paths/4b6b34649d496584/to/4f723b7662e1f7b5.json
+    // function isDoer() public view returns (bool) { // Consider use of delegateCall
+    //     require (userbase.isDoer(msg.sender) != IS.CREATOR);
+    //     return true;
+    // }	// https://pgp.cs.uu.nl/paths/4b6b34649d496584/to/4f723b7662e1f7b5.json
 
-    function isDoer(bytes32 _keyid) public view returns (bool isDoer) { // Consider use of delegateCall
-        require (userbase.isDoer(userbase.getAgent(_keyid)) != IS.CREATOR);
-        return true;
-    }	// https://pgp.cs.uu.nl/paths/4b6b34649d496584/to/4f723b7662e1f7b5.json
+    // function isDoer(bytes32 _keyid) public view returns (bool isDoer) { // Consider use of delegateCall
+    //     require (userbase.isDoer(userbase.getAgent(_keyid)) != IS.CREATOR);
+    //     return true;
+    // }	// https://pgp.cs.uu.nl/paths/4b6b34649d496584/to/4f723b7662e1f7b5.json
 
-    function isCreator() view external returns  (bool isCreator) { // Point this to oraclise service checking MSD on
-        require (userbase.isDoer(msg.sender) == IS.CREATOR);
-        return true;
-    } 	// https://pgp.cs.uu.nl/paths/4b6b34649d496584/to/4f723b7662e1f7b5.json
+    // function isCreator() view external returns  (bool isCreator) { // Point this to oraclise service checking MSD on
+    //     require (userbase.isDoer(msg.sender) == IS.CREATOR);
+    //     return true;
+    // } 	// https://pgp.cs.uu.nl/paths/4b6b34649d496584/to/4f723b7662e1f7b5.json
 
-    function isCreator(bytes32 _keyid) view external returns  (bool isCreator) { // Point this to oraclise service checking MSD on
-        require (userbase.isDoer(userbase.getAgent(_keyid)) == IS.CREATOR);
-        return true;
-    } 	// https://pgp.cs.uu.nl/paths/4b6b34649d496584/to/4f723b7662e1f7b5.json
+    // function isCreator(bytes32 _keyid) view external returns  (bool isCreator) { // Point this to oraclise service checking MSD on
+    //     require (userbase.isDoer(userbase.getAgent(_keyid)) == IS.CREATOR);
+    //     return true;
+    // } 	// https://pgp.cs.uu.nl/paths/4b6b34649d496584/to/4f723b7662e1f7b5.json
 
 // 	function isPlanning(bytes32 _intention) view external returns  (uint256) {
 //         return userbase.isPlanning(_intention);
@@ -1833,13 +1881,13 @@ contract Creators is DataController {
 // All SETTERS
 /////////////////
 
-    function initDoer() returns (bool) {
-        return userbase.initAgent(Doers(msg.sender));
-    }
+    // function initDoer() returns (bool) {
+    //     return userbase.initAgent(Doers(msg.sender));
+    // }
 
     function flipTo(address _address)
     external onlyOwner returns (IS) {
-        if (userbase.isDoer(_address) != IS.CREATOR) {
+        if (!userbase.iam(msg.sender, IS.CREATOR)) {
             return userbase.setAgent(_address, IS.CREATOR);
         } else {
             return userbase.setAgent(_address, IS.INACTIVE);
@@ -1848,7 +1896,7 @@ contract Creators is DataController {
 
     function numberOf(address _address, uint _allowed)
     external onlyOwner returns (uint) {
-        require(userbase.isDoer(_address) == IS.CREATOR);
+        require(userbase.iam(msg.sender, IS.CREATOR));
         return userbase.setAgent(_address, _allowed);
     }
 
@@ -1865,7 +1913,9 @@ contract Creators is DataController {
 
     function reset(address _address, bytes32 _keyid)
     external onlyOwner returns (bytes32) {
-        require(userbase.iam(_address));
+        bool active_;
+        (active_,) = userbase.iam(_address);
+        require(active_);
         userbase.setAgent(_address, IS.INACTIVE);
         return userbase.setAgent(_address, _keyid);
     }

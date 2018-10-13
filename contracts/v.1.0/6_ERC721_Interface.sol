@@ -321,45 +321,6 @@ contract ERC721 is BaseController, IERC721, IERC721Metadata, IERC721Enumerable {
     }
 
 /* End of Contract ERC721 */ 
-// }
-
-
-// contract ERC721Metadata is ERC165, ERC721, IERC721Metadata {
-
-// /* Using */
-
-//     using ERC721MetadataLib for ERC721MetadataLib.STORAGE;
-
-// /* Events */
-
-// /* Structs */
-
-// /* Constants */
-
-//     bytes4 private constant _InterfaceId_ERC721Metadata = 0x5b5e139f;
-//     /**
-//     * 0x5b5e139f ===
-//     *   bytes4(keccak256('name()')) ^
-//     *   bytes4(keccak256('symbol()')) ^
-//     *   bytes4(keccak256('tokenURI(uint256)'))
-//     */
-
-// /* State Variables */
-
-//     ERC721MetadataLib.STORAGE erc721metadata;
-
-// /* Modifiers */
-
-// /* Functions */
-
-//     /**
-//     * @dev Constructor function
-//     */
-//     constructor(string name, string symbol) public {
-
-//         // register the supported interfaces to conform to ERC721 via ERC165
-//         erc721metadata.init(erc165data, _InterfaceId_ERC721Metadata, name, symbol);
-//         }
 
     /**
     * @dev Gets the token name
@@ -424,35 +385,6 @@ contract ERC721 is BaseController, IERC721, IERC721Metadata, IERC721Enumerable {
         }
 
 /* End of Contract ERC721Metadata */
-// }
-
-// contract ERC721Enumerable is ERC165, ERC721, IERC721Enumerable {
-
-// /* Using */
-
-//     using ERC721EnumerableLib for ERC721EnumerableLib.STORAGE;
-
-// /* Events */
-
-// /* Structs */
-
-// /* Constants */
-
-//     bytes4 private constant _InterfaceId_ERC721Enumerable = 0x780e9d63;
-//     /**
-//     * 0x780e9d63 ===
-//     *   bytes4(keccak256('totalSupply()')) ^
-//     *   bytes4(keccak256('tokenOfOwnerByIndex(address,uint256)')) ^
-//     *   bytes4(keccak256('tokenByIndex(uint256)'))
-//     */
-
-// /* State Variables */
-
-//     ERC721EnumerableLib.STORAGE erc721enumerabledata;
-
-// /* Modifiers */
-
-// /* Functions */
 
 //     /**
 //     * @dev Constructor function
