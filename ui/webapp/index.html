@@ -1,0 +1,134 @@
+<html>
+<head>
+<!--Include ethers.js lib-->
+<!--<script type="text/javascript" src="web3.min.js"></script>-->
+<script charset="utf-8"
+        src="ethers-v4.min.js"
+        type="text/javascript">
+</script>
+<script type="text/javascript">
+  function testETH(){
+    console.log('starting...');
+    // const ethers = require('ethers');
+
+    // You can use any standard network name
+    //  - "homestead"
+    //  - "rinkeby"
+    //  - "ropsten"
+    //  - "kovan"
+
+    let provider = ethers.getDefaultProvider('ropsten');
+
+    
+    var blockData;
+
+    var blockNum = provider.getBlockNumber().then((blockNumber) => {
+      
+      blockNum = blockNumber;
+      console.log("Current block number: " + blockNumber);
+      });
+
+    provider.getBlock(blockNum).then((block) => {
+
+      blockData = block;
+      console.log("Current block data: " + block);
+      });
+
+
+    var account = "0x5947795096F0a6468eF3a6d725203a32F55e87B3";
+    var balance;
+    
+    provider.getBalance(account).then((amount) => {
+
+      // balance is a BigNumber (in wei); format is as a sting (in ether)
+      balance = ethers.utils.formatEther(amount);
+          
+      console.log('account: ' + account);
+      console.log('balance: ' + balance);
+
+      document.getElementById('account').innerText = account;
+      document.getElementById('balance').innerText = balance;
+
+      });
+
+// The ERC-20 ABI
+var abi = [
+  "function balanceOf(address owner) view returns (uint)",
+  "function transfer(address to, uint amount)",
+  "function name() public view returns(string name)",
+  "function symbol() public view returns(string symbol)",
+  "function decimalPlaces() public returns(uint8 decimals)",
+  "function totalSupply() constant returns (uint256 totalSupply)",
+  "function balanceOf(address _who) constant returns (uint256 balance)",
+  "function allowance(address _owner, address _spender) constant returns (uint256 remaining)",
+  "function transfer(address to, uint value) returns (bool success)",
+  "function transferFrom(address from, address to, uint value) returns (bool success)",
+  "function approve(address spender, uint value) returns (bool success)",
+
+  "event Transfer(address indexed from, address indexed to, uint amount)"
+];
+
+let privateKey = "0x3141592653589793238462643383279502884197169399375105820974944592"
+
+// Load our wallet and connect to the provider
+var wallet = new ethers.Wallet(privateKey, provider);
+var kazini = new ethers.Wallet(privateKey, provider);
+
+// Connect to "Pi Day N00b token" Contract (ERC-20 compliant)
+var address = "0xa754838f282290f9107b79902ad83ab327efaafb";
+var contract = new ethers.Contract(address, abi, wallet);
+
+// Listen for Transfer events (triggered after the transaction)
+contract.ontransfer = function(from, to, amount) {
+    var text = ethers.utils.formatEther(amount);
+    console.log("Transfer");
+    console.log("  From:   ", from);
+    console.log("  To:     ", to);
+    console.log("  Amount: ", text);
+
+    // Transfer
+    //  From:   0x59DEa134510ebce4a0c7146595dc8A61Eb9D0D79
+    //  To:     0x851b9167B7cbf772D38eFaf89705b35022880A07
+    //  Amount: 1.0
+}
+
+// Get the balance of the wallet before the transfer
+contract.balanceOf(wallet.address).then(function(balance) {
+    var text = ethers.utils.formatEther(balance);
+    console.log("Balance Before:", text);
+    // Balance Before: 3.141592653589793238
+})
+
+// Get the balance of the wallet before the transfer
+contract.allowance(kazini.account, wallet.address).then(function(allowance) {
+    var text = ethers.utils.formatEther(allowance);
+    console.log("Balance Before:", text);
+    // Balance Before: 3.141592653589793238
+})
+
+let transactionCountPromise = wallet.getTransactionCount();
+
+transactionCountPromise.then((transactionCount) => {
+  console.log(transactionCount);
+
+  document.getElementById('transactions').innerText = text;
+});
+
+
+let balancePromise = wallet.getBalance();
+
+balancePromise.then((balance) => {
+    console.log(balance);
+});
+
+
+}
+</script>
+</head>
+<body onload="testETH()">
+    <h1>My first Ethereum Webpage</h1>
+    Account:<div id="account"></div>
+    Balance:<div id="balance"></div>
+    Allowance:<div id="balance"></div>
+</body>
+</html>

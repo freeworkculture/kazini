@@ -1,0 +1,55 @@
+<head>
+  <title>nobel</title>
+</head>
+
+<body>
+	<div class="row">
+    		<div class="medium-10 medium-offset-1">
+		<h1> validator! </h1>
+		{{> Smsg}}
+      		</div>
+   	 </div>
+</body>
+
+
+<template name="Smsg">
+
+  <div class="medium-4 columns">
+    <h3>Sign message</h3>
+    <p><input type="text" id="msgToSign" placeholder="Message to sign"></p>
+    <a href="#" class="button" id="signMsg">Sign message</a>
+    <p class="textWrap">Signed message: {{signedmsg}}</p>
+  </div>
+
+  <div class="medium-4 columns">
+    <h3>Verify message</h3>
+    <p><input type="text" id="signedMsg" placeholder="Signed message"></p>
+    <p><input type="text" id="originalMsg" placeholder="Original message"></p>
+    
+    <a href="#" class="button" id="checkAddress">Check signer address</a>
+    <p class="textWrap">{{address}}</p>
+  </div>
+
+	<div class="medium-3 columns">
+		<p>testnet VS livenet</p>
+		<div class="switch large">
+ 		<input class="switch-input" id="network" type="checkbox">
+  		<label class="switch-paddle" for="network">
+    		<span class="show-for-sr">testnet VS livenet</span>
+    		<span class="switch-active" aria-hidden="true" id="switchLive">live</span>
+		<span class="switch-inactive" aria-hidden="true" id="switchTest">test</span>
+  		</label>
+		</div>
+
+                <p>constant VS transaction</p>
+                <div class="switch large">
+                <input class="switch-input" id="transaction" type="checkbox">
+                <label class="switch-paddle" for="transaction">
+                <span class="show-for-sr">constant VS transaction</span>
+                <span class="switch-active" aria-hidden="true" id="switchTx">TX</span>
+                <span class="switch-inactive" aria-hidden="true" id="switchConst">const</span>
+                </label>
+                </div>
+	</div>
+
+</template>

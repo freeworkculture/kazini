@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min.js"></script>
+<script src="//api.bitrix24.com/api/v1/"></script>
+</head>
+<body>
+</body>
+</html>
+<script type="text/javascript">
+
+// BX24.callMethod(
+
+    // 'entity.add', 
+    // {
+    //     'ENTITY': 'menu', 
+    //     'NAME': 'menu_new', 
+    //     'ACCESS': {U1:'W',AU:'R'}
+    // },
+    // function(result)
+    // {
+    //     if(result.error())
+    //         console.error("Storage is not created " + result.error());
+    //     else
+    //         console.info("Storage is created with ID " + result.data());
+    //     },
+
+
+//     'entity.item.add',
+//     {
+//         ENTITY: 'menu',
+//         DATE_ACTIVE_FROM: new Date(),
+//         DETAIL_PICTURE: ' ',
+//         NAME: 'Hello, world!',
+//         PROPERTY_VALUES: {
+//             test: 11,
+//             test1: 22,
+//             test_file: ' '
+//         },
+//         SECTION: 219
+//     },
+//     function(result)
+//     {
+//         if(result.error())
+//             console.error("item is not added " + result.error());
+//         else
+//             console.info("item is added with ID " + result.data());
+//         },
+// );
+
+    BX24.callMethod(
+        
+    'entity.item.get', 
+    {
+        SECTION: 219,
+        ENTITY: 'menu_new',
+        SORT: {DATE_ACTIVE_FROM: 'ASC', ID: 'ASC'},
+        FILTER: {
+            '>=DATE_ACTIVE_FROM': new Date(),
+            '<DATE_ACTIVE_FROM': new Date()
+        }
+        }, $.proxy(this.buildData, this));
+        // }, function(result) {
+        //     console.info("item is fetched " + result.data());
+        // });
+
+    BX24.callMethod(
+        
+    'entity.item.get',
+    {
+        ENTITY: 'menu_new',
+        SORT: {DATE_ACTIVE_FROM: 'ASC', ID: 'ASC'},
+        FILTER: {
+            '1':{
+                'LOGIC':'OR',
+                'PROPERTY_MYPROP1':'value1',
+                'PROPERTY_MYPROP2':'value2'
+            }
+        }
+    },
+    function(result)
+    {
+        if(result.error())
+            console.error("item is not fetched " + result.error());
+        else
+            console.info("item is fetched " + result.data());
+        },
+);
+
+</script>

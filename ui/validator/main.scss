@@ -1,0 +1,13 @@
+/* CSS declarations go here */
+
+@import '{zurb:foundation-sites}/scss/foundation';
+@include foundation-everything;
+
+
+.textWrap{
+
+	word-wrap: break-word;
+
+}
+
+

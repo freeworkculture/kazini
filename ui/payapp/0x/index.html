@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+        Access-Control-Allow-Origin
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min.js"></script>
+<script src="//api.bitrix24.com/api/v1/"></script>
+<script type="text/javascript" src="./lib/index.min.js"></script>
+</head>
+<body>
+</body>
+</html>
+<script type="text/javascript">
+
+var myFormData = {
+    key1: exchangeAddress,
+    key2: makerAddress,
+    key3: takerAddress,
+    key4: senderAddress,
+    key5: feeRecipientAddress,
+    key6: expirationTimeSecond,
+    key7: salt,
+    key8: makerAssetAmount,
+    key9: takerAssetAmount,
+    key10: makerAssetData,
+    key11: takerAssetData,
+    key12: makerFee,
+    key13: takerFee,
+};
+
+var fd = new FormData();
+for (var key in myFormData) {
+    console.log(key, myFormData[key]);
+    fd.append(key, myFormData[key]);
+}
+
+function form (req, res) {
+    console.log('form results: ' + req);
+}
+
+/* Scenario 1: 
+    1. Tx1: <BX24/KaziniPaymentHandler create invoice> doer generates invoice to client
+    2. Tx2: <KaziniPays> client uses KaziniHandler link to pay invoice
+    3. Tx3: <mpsr cert 1> doer creates mpsr notice of invoice income, grants to self and transfers to Kazini
+    4. Tx4: <relayer> doer (maker) creates order for ERC721 (invoice) asset, validates order
+    5. Tx5: <relayer> verifies order and adds it to order book
+    6. Tx6: <mpsr cert 2> client creates mpsr notice of either {sales income, inventory} grants to self and transfers to Kazini
+    7. Tx7: <relayer> client (taker), signs order and fillorder parameters of transaction function
+    8. Tx7: <relayer> Kazini (3rd party) executes transaction call on behalf of client (taker), for invoice amount to doer address (maker), 
+    */
+</script>

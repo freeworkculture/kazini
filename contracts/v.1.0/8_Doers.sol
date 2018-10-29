@@ -32,532 +32,6 @@ import "./6_ERC721_Interface.sol";
 //    greater indicate complete trust.  Implementations SHOULD emit values
 //    of 60 for partial trust and 120 for complete trust.
 
-///////////////////
-// Beginning of Contract
-///////////////////
-
-library DoersLib {
-
-
-/* Using */
-
-
-
-/* Constant */
-
-
-    bytes32 constant internal CONTRACTNAME = "DOER 0.0118";
-    uint8 constant internal rate = 10; // !!! GET THIS DATA FROM DATABASE
-    uint constant internal year = 31536000; // !!! GET THIS DATA FROM DATABASE
-    uint constant internal period = 31536000; // !!! GET THIS DATA FROM DATABASE
-
-/* User Types */
-
-    enum BE {NULL, QUALIFICATION, EXPERIENCE, REPUTATION, TALENT}
-
-/* State Variables */
-
-    struct STORAGE {
-
-        Creators creator;
-        // Userbase userbase;
-        Userbase userbase;
-        
-        bytes32 MASK;
-    
-        address owner;
-        address peana;
-        address proxyKey;
-        address proxyBDI;
-    
-        bool initialised;
-        bytes32 KEYID;
-        bytes32 UUID;
-        uint promiseCount;
-        uint orderCount;
-        uint fulfillmentCount;
-    
-        UserDefined.SomeDoer Iam;
-    
-        UserDefined.BDI bdi;
-    // 	mapping (bytes32 => bytes32) promises;
-        UserDefined.KBase Kbase;
-    
-        uint8 BASE; // !!! GET THIS DATA FROM DATABASE
-
-    
-        // mapping (bool => BE) callBackState;
-        // mapping (bytes32 => bool) callBackData;
-        mapping (bytes32 => mapping (bool => BE)) callBackState;
-    
-        bytes32[] keyring;
-        uint ringlength;
-        UserDefined.Reputation reputation;
-    
-        mapping (bytes32 => uint) keyIndex;
-    
-        //Creators.Flag aflag;
-
-    }
-
-/* Events */
-
-////////////////
-// Events
-////////////////
-    event ContractEvent(address indexed _this, address indexed _sender, address indexed _origin);
-    event LogKeyRing(uint _length, bytes32 _data, uint _index);
-    event LogSigning(address indexed _this, address indexed _sender, address indexed _origin, address _data, bytes32 _result);
-    event LogSigned(address indexed _this, address indexed _sender, address indexed _origin, bytes _data, bytes32 _result);
-    event LogTrusted(address indexed _this, address indexed _sender, address indexed _origin, bytes _data, bytes32 _result);
-    event LogRevoking(address indexed _this, address indexed _sender, address indexed _origin, bytes _data, bytes32 _result);
-    event LogSetbdi(address indexed _this, address indexed _sender, address indexed _origin, bytes32 _keyid, bytes32 _uuid, bytes32 _callid);
-
-/* Modifiers */
-
-/* Functions */
-
-
-/////////////////
-// ABLE COMPUTE
-/////////////////
-// function bytesToString(bytes32 _bytes) public constant returns (string) {
-
-    function updateIndex(STORAGE storage self) public returns (bool) {
-        uint8 kbase = uint8(UserDefined.KBase.DOCTORATE);
-        while (self.bdi.beliefs.qualification[kbase].cAuthority == 0x0) {
-            // merit == 0 ? bdi.beliefs.index = merit : merit --;
-            if (kbase == 0) {
-                self.bdi.beliefs.merits.index = 1;
-                return false;}
-            kbase--;
-        }
-
-        uint8 T = uint8(self.bdi.beliefs.merits.talent);
-        uint8 R = uint8(self.bdi.beliefs.merits.reputation);
-        uint8 Q = kbase;
-        uint8 q;
-        if ((block.timestamp - self.bdi.beliefs.merits.experience) > year) {
-            // !!! Maybe subtract Reputation and Talent first here before proceeding
-            q = (Q * ((1 + rate/100) ^ uint8(self.bdi.beliefs.merits.experience / period)));
-            } else {
-            q = Q;
-            }
-        self.BASE = T + R + q;
-
-        // Collector(creator.peana()).updateLog(keccak256("updateIndex()"),true);
-
-    }
-
-/////////////////
-// All ASSERTERS
-/////////////////
-
-    function iam(STORAGE storage self) view public returns (bool iam_, UserDefined.IS _state) {
-        // return self.creator.iam();
-        return self.userbase.iam(msg.sender);
-        // Collector(creator.peana()).updateLog(keccak256("iam()"),iam);
-        // return iam_;
-    }
-    
-    function index(STORAGE storage self) view public returns (uint8 index_) {
-        return self.bdi.beliefs.merits.index;
-    }
-    
-    function merits(STORAGE storage self) 
-    view public returns (
-            uint,
-            bytes32,
-            bytes32,
-            uint8,
-            bytes32) {
-        return (
-            self.bdi.beliefs.merits.experience,
-            self.bdi.beliefs.merits.reputation,
-            self.bdi.beliefs.merits.talent,
-            self.bdi.beliefs.merits.index,
-            self.bdi.beliefs.merits.hash
-            );
-    }
-    
-    function kbase(STORAGE storage self) view public returns (UserDefined.KBase kbase_) {
-            
-        uint8 _kbase_ = uint8(UserDefined.KBase.DOCTORATE);
-        while (self.bdi.beliefs.qualification[_kbase_].cAuthority == 0x0) {
-            // merit == 0 ? bdi.beliefs.index = merit : merit --;
-            if (_kbase_ == 0) {
-                return UserDefined.KBase.PRIMARY;}
-            _kbase_--;
-        }
-        return UserDefined.KBase(_kbase_);
-    }
-    
-    function desire(STORAGE storage self, bytes1 _desire)
-    view public returns  (bytes32) {        
-        return self.bdi.desires[_desire].goal;
-    }
-    
-    function intention(STORAGE storage self, bool _intention)
-    view public returns  (bytes32) {
-        return self.bdi.intentions[_intention].service;
-    }
-    
-    function intention(STORAGE storage self, bool _intention, UserDefined.IS _state)
-    public returns  (UserDefined.IS) {
-        return self.bdi.intentions[_intention].state = _state;
-    }
-    
-    function flipIntention(STORAGE storage self)
-    public returns  (bool) {
-        self.bdi.intentions[true].state = UserDefined.IS.RESERVED;
-        self.bdi.intentions[true].service = self.bdi.intentions[false].service;
-        delete self.bdi.intentions[false];
-        return true;
-    }
-    
-
-
-/////////////////
-// All GETTERS
-/////////////////
-
-    function getDoer(STORAGE storage self)
-    view public returns  (
-        bytes32 fPrint,
-        bool iam_,
-        bytes32 email,
-        bytes32 fName,
-        bytes32 lName,
-        uint age,
-        bytes32 data) {
-            // Collector(creator.peana()).updateLog(
-            //     keccak256("getDoer()"),
-            //     keccak256(Iam.fPrint),
-            //     keccak256(this.iam()),
-            //     keccak256(Iam.email),
-            //     keccak256(Iam.fName),
-            //     keccak256(Iam.lName),
-            //     keccak256(Iam.age),
-            //     keccak256(Iam.data));
-            (iam_,) = iam(self);
-            return(
-                self.Iam.fPrint,
-                iam_,
-                self.Iam.email,
-                self.Iam.fName,
-                self.Iam.lName,
-                self.Iam.age,
-                self.Iam.data
-                );
-    }
-
-    function getBelief(STORAGE storage self, UserDefined.KBase _kbase)
-    view public returns  (
-    bytes32 country_,
-    bytes32 cAuthority_,
-    bytes32 score_) {
-        // Collector(creator.peana()).updateLog(
-        //     keccak256("getBelief(KBase)"),
-        //     bdi.beliefs.qualification[uint8(_kbase)].country,
-        //     bdi.beliefs.qualification[uint8(_kbase)].cAuthority,
-        //     bdi.beliefs.qualification[uint8(_kbase)].score);
-        return (
-            self.bdi.beliefs.qualification[uint8(_kbase)].country,
-            self.bdi.beliefs.qualification[uint8(_kbase)].cAuthority,
-            self.bdi.beliefs.qualification[uint8(_kbase)].score);
-    }
-
-    function getDesire(STORAGE storage self, bytes1 _desire)
-    view public returns  (bytes32,bool) {
-        // Collector(creator.peana()).updateLog(
-        //     keccak256("getBelief(KBase)"),
-        //     bdi.desires[_desire].goal,
-        //     bdi.desires[_desire].status);        
-        return (
-            self.bdi.desires[_desire].goal,
-            self.bdi.desires[_desire].status);
-    }
-
-    function getIntention(STORAGE storage self, bool _intention)
-    view public returns  (UserDefined.IS,bytes32,uint256) {
-        // Collector(creator.peana()).updateLog(
-        //     keccak256("getBelief(KBase)"),
-        //     bdi.intentions[_intention].state,
-        //     bdi.intentions[_intention].service,
-        //     bdi.intentions[_intention].payout);
-        return (
-            self.bdi.intentions[_intention].state,
-            self.bdi.intentions[_intention].service,
-            self.bdi.intentions[_intention].payout);
-    }
-
-/////////////////
-// All SETTERS
-/////////////////
-
-    function init(STORAGE storage self) public returns (bool) {
-        require(msg.sender == self.owner && !self.initialised);
-        self.initialised = self.creator.initDoer();
-        return self.initialised;
-    }
-//
-    function sign(STORAGE storage self, address _address, bytes32 keyXOR) public returns (uint, bool signed) {
-
-        // emit LogSigning(this, msg.sender, tx.origin, _address, keyXOR);
-
-        if (Doers(_address) != msg.sender) {
-            signed = _address.call(bytes4(keccak256("sign()")));
-            require(signed);
-            require(self.reputation.signer++ < 2^256 && self.ringlength > 0);
-            return (self.reputation.signer,signed);
-        } else {
-            
-            bytes memory callData = msg.data;
-            // emit LogSigned(this, msg.sender, tx.origin, callData, keyXOR);
-            if (self.keyring.length == 0) {
-                self.ringlength = self.keyring.push(keyXOR | self.MASK);
-                require(self.reputation.signer++ < 2^256);
-                signed = false;
-            } else {
-                require(address(self.keyring[0]) != address(keyXOR));
-                self.keyring[0] = (keyXOR | self.MASK);
-                signed = true;
-            }
-            self.keyIndex[keyXOR] = 0;
-            // emit LogKeyRing(self.ringlength,self.keyring[self.keyIndex[keyXOR]],self.keyIndex[keyXOR]);
-
-            // Collector(creator.peana()).updateLog(
-            // keccak256("sign(address)"),
-            // ringlength,
-            // keyring[keyIndex[keyXOR]],
-            // keyIndex[keyXOR],
-            // signed);
-
-            return (self.ringlength,signed);
-        }
-    }
-
-    function sign(STORAGE storage self, bytes32 keyXOR) public returns (uint, bool signed) { // padd left before using bytes32(uint256(this) << 96)
-        require(msg.sender != self.owner);
-        // bytes32 keyXOR = bytes32(uint256(this)) ^ bytes32(uint256(msg.sender));
-        bytes memory callData = msg.data;
-        // emit LogSigned(this, msg.sender, tx.origin, callData, keyXOR);
-
-        require(self.keyring.length > 0 && self.keyring.length < 2^256);
-        require(self.keyIndex[keyXOR] == 0);
-
-        self.keyIndex[keyXOR] = (self.keyring.push(keyXOR | self.MASK) -1);
-        self.ringlength = self.keyring.length;
-        self.reputation.signee = self.ringlength;
-        // Doers(proxyKey).incSigns(keyXOR << 32);
-        signed = true;
-
-        emit LogKeyRing(self.ringlength,self.keyring[self.keyIndex[keyXOR]],self.keyIndex[keyXOR]);
-        // Collector(creator.peana()).updateLog(
-        //     keccak256("sign()"),
-        //     ringlength,
-        //     keyring[keyIndex[keyXOR]],
-        //     keyIndex[keyXOR],
-        //     signed);
-        return (self.ringlength,signed);
-    }
-
-    function revoke(STORAGE storage self, address _address, bytes32 keyXOR) public returns (uint, bool revoked) { // pad left bytes32(uint256(this) << 96) before using
-        require(self.keyring.length > 0);
-
-        bytes memory callData = msg.data;
-        emit LogRevoking(this, msg.sender, tx.origin, callData, keyXOR);
-
-        if (self.keyring.length == 1) {	//	a ^ b; == key; //	key ^ a == b
-            
-            require (address(keyXOR) == address(self.keyring[self.keyIndex[keyXOR]]));
-            self.keyIndex[keyXOR] = 2^256;
-            delete self.keyring;
-            delete self.reputation.signee;
-            require(self.reputation.signer-- > 0);
-            self.ringlength = 0;
-            revoked = false;
-        } else {
-            revoked = _address.call(bytes4(keccak256("revoke()")));
-            require(revoked);
-            require(self.reputation.signer-- > 0);
-            return (self.reputation.signer,revoked);
-        }
-
-        emit LogKeyRing(self.ringlength,keyXOR,self.keyIndex[keyXOR]);
-        // Collector(creator.peana()).updateLog(
-        //     keccak256("revoke(address)"),
-        //     ringlength,
-        //     keyXOR,
-        //     keyIndex[keyXOR],
-        //     revoked);
-        return (self.ringlength,revoked);
-    }
-
-    function revoke(STORAGE storage self, bytes32 keyXOR) public returns (uint, bool revoked) { // pad left bytes32(uint256(this) << 96) before using
-        require(self.keyring.length > 1 && msg.sender != self.owner);
-        // bytes32 keyXOR = bytes32(uint256(this)) ^ bytes32(uint256(msg.sender));
-        require (address(keyXOR) == address(self.keyring[self.keyIndex[keyXOR]]));
-        bytes memory callData = msg.data;
-        emit LogRevoking(this, msg.sender, tx.origin, callData, keyXOR);
-
-        self.keyring[self.keyIndex[keyXOR]] = self.keyring[self.keyring.length -1];
-        self.keyIndex[((self.keyring[self.keyring.length -1] << 96) >> 96)] = self.keyIndex[keyXOR];
-        delete self.keyring[self.keyring.length -1];
-        self.ringlength = self.keyring.length;
-        delete self.keyIndex[keyXOR];
-        self.reputation.signee = self.ringlength;
-        Doers(self.proxyKey).decSigns(keyXOR << 32);
-        revoked == true;
-
-        emit LogKeyRing(self.ringlength,keyXOR,self.keyIndex[keyXOR]);
-        // Collector(creator.peana()).updateLog(
-        //     keccak256("revoke()"),
-        //     ringlength,
-        //     keyXOR,
-        //     keyIndex[keyXOR],
-        //     revoked);
-        return (self.ringlength,revoked);
-    }
-
-    function trust(STORAGE storage self, UserDefined.Trust _level, bytes32 keyXOR) public returns (bool) {
-        require((self.keyring.length > 0) && (self.keyring.length < 2^256));
-        
-        uint num = self.keyIndex[keyXOR];
-        require (address(keyXOR) == address(self.keyring[num]));
-        keyXOR = self.keyring[num];
-        bytes memory callData = msg.data;
-        emit LogTrusted(this, msg.sender, tx.origin, callData, keyXOR);
-        // if (((keyXOR >> 192) << 240) > (creator.trust(_level) << 48)) {
-        //     keyXOR &= 0xffffffffffff00ffffffffffffffffffffffffffffffffffffffffffffffffff;   // RESET THE TRUST FLAG FIRST
-        // }
-        keyXOR &= 0xffffffffffff00ffffffffffffffffffffffffffffffffffffffffffffffffff;   // RESET THE TRUST FLAG FIRST
-        keyXOR |= self.creator.trust(_level);    // NO ADDING UP, JUST SET CUMULATIVE VALUE
-        self.keyring[num] = keyXOR;
-        emit LogKeyRing(self.ringlength,self.keyring[self.keyIndex[keyXOR]],self.keyIndex[keyXOR]);
-        // Collector(creator.peana()).updateLog(
-        //     keccak256("trust(Trust)"),
-        //     ringlength,
-        //     keyring[keyIndex[keyXOR]],
-        //     keyIndex[keyXOR],
-        //     true);
-
-        return true;
-    }
-
-    function incSigns(STORAGE storage self, bytes32 _keyd) public returns (uint) {
-        require(self.reputation.signer++ < 2^256);
-        return self.reputation.signer;
-    }
-
-    function decSigns(STORAGE storage self, bytes32 _keyd) public returns (uint) {
-        require(self.reputation.signer-- > 0);
-        return self.reputation.signer;
-    }
-
-    function setbdi(
-        STORAGE storage self, 
-        UserDefined.KBase _kbase,
-        bytes32 _country,
-        bytes32 _cAuthority,
-        bytes32 _score,
-        uint _year)
-    public returns(bool) {
-        bytes32 callid = keccak256(msg.data);
-        if(msg.sender == self.owner) {
-            Doers(self.proxyBDI).setbdi(_kbase,_country,_cAuthority,_score,_year);
-            self.callBackState[callid][false] = BE.QUALIFICATION;
-            emit LogSetbdi(this,msg.sender,tx.origin,self.Iam.keyid,self.Iam.uuid,callid);
-            } else {
-            require(self.callBackState[callid][false] == BE.QUALIFICATION);
-            if (_kbase == UserDefined.KBase.BACHELOR) {		// exclude Bachelors from prerequisite of having a License
-                require(self.bdi.beliefs.qualification[uint8(UserDefined.KBase.SECONDARY)].cAuthority != 0x0);
-                } else {
-                require(self.bdi.beliefs.qualification[uint8(_kbase) - 1].cAuthority != 0x0);
-                }
-            // IF (TO UPDATE)
-            self.bdi.beliefs.qualification[uint8(_kbase)] = UserDefined.Qualification({country: _country, cAuthority: _cAuthority, score: _score});
-            self.bdi.beliefs.merits.experience = _year;
-            self.callBackState[callid][true] = self.callBackState[callid][false];
-            delete self.callBackState[callid][false];
-            // index_ = updateIndex(self);
-            // Collector(creator.peana()).updateLog(
-            // keccak256("setbdi(KBase,bytes32,bytes32,bytes32,uint)"),
-            // index_);
-        }
-    }
-
-    function setbdi(
-        STORAGE storage self, 
-        uint _refMSD,
-        uint _refRank,
-        uint _refSigned,
-        uint _refSigs,
-        bytes32 _refTrust)
-    public returns (bool) {
-        bytes32 callid = keccak256(msg.data);
-        if(msg.sender == self.owner) {
-            Doers(self.proxyBDI).setbdi(_refMSD,_refRank,_refSigs,_refSigned,_refTrust);
-            self.callBackState[callid][false] = BE.REPUTATION;
-            emit LogSetbdi(this,msg.sender,tx.origin,self.Iam.keyid,self.Iam.uuid,callid);
-            } else {
-            require(self.callBackState[callid][false] == BE.REPUTATION);
-            self.reputation.refMSD = _refMSD;
-            self.reputation.refRank = _refRank;
-            self.reputation.refTrust = _refTrust;
-            self.bdi.beliefs.merits.reputation = _refTrust;
-            self.callBackState[callid][true] = self.callBackState[callid][false];
-            delete self.callBackState[callid][false];
-            // index_ = updateIndex(self);
-            // Collector(creator.peana()).updateLog(
-            // keccak256("setbdi(uint,uint,uint,uint,uint)"),
-            // index_);
-        }
-    }
-
-    function setbdi(STORAGE storage self, bytes32 _talent) public returns (bool) {
-        bytes32 callid = keccak256(msg.data);
-        if(msg.sender == self.owner) {
-            Doers(self.proxyBDI).setbdi(_talent);
-            self.callBackState[callid][false] = BE.TALENT;
-            emit LogSetbdi(this,msg.sender,tx.origin,self.Iam.keyid,self.Iam.uuid,callid);
-            } else {
-            require(self.callBackState[callid][false] == BE.TALENT);
-            if (self.bdi.beliefs.merits.talent == 0x0) {
-                self.bdi.beliefs.merits.talent = _talent;
-                Userbase(self.userbase).incTalent();
-            } else {
-                Userbase(self.userbase).decTalent();
-                self.bdi.beliefs.merits.talent = _talent;
-                Userbase(self.userbase).incTalent();
-            }
-            self.callBackState[callid][true] = self.callBackState[callid][false];
-            delete self.callBackState[callid][false];
-            // index_ = updateIndex(self);
-            // Collector(creator.peana()).updateLog(
-            // keccak256("setbdi(bytes32)"),
-            // index_);
-            }
-    }
-
-    function setbdi(STORAGE storage self, bytes1 _desire, UserDefined.Desire _goal) public {
-        self.bdi.desires[_desire] = _goal;
-        //  Collector(creator.peana()).updateLog(
-        //     keccak256("setbdi(bytes1,Desire)"),
-        //     true);
-    }
-
-    function setbdi(STORAGE storage self, UserDefined.Intention _service) public {
-        self.bdi.intentions[false] = _service;
-        self.bdi.intentions[false].state = UserDefined.IS.INACTIVE;
-        // Collector(creator.peana()).updateLog(
-        //     keccak256("setbdi(bytes1,Desire)"),
-        //     true);
-    }
-
-
-/* End of Doers Library */
-}
 
 //////////////////
 // Data Controller
@@ -829,96 +303,8 @@ contract Userbase is BaseController {
 
 
 // Generic Proxy Device
-contract ProxyData {
-    address internal proxied;
-}
-
-contract Proxy is ProxyData {
-    constructor(address _proxied) public {
-        proxied = _proxied;
-    }
-
-    function () public payable {
-        address addr = proxied;
-        assembly {
-            let freememstart := mload(0x40)
-            calldatacopy(freememstart, 0, calldatasize())
-            let success := delegatecall(not(0), addr, freememstart, calldatasize(), freememstart, 0)
-            returndatacopy(freememstart, 0, returndatasize())
-            switch success
-            case 0 { revert(freememstart, returndatasize()) }
-            default { return(freememstart, returndatasize()) }
-        }
-    }
-}
-
-contract DoersHeader is UserDefined {
-
-/* Using */
-
-    using StringsAndBytesLib for bytes32;
-
-    using ERC721Lib for ERC721Lib.STORAGE;
-
-    using ERC721Lib for ERC721Lib.METADATA_STORAGE;
-
-    using ERC721Lib for ERC721Lib.ENUMERABLE_STORAGE;
-    
-    using DoersLib for DoersLib.STORAGE;
-
-/* User Types */
-
-    enum BE {NULL, QUALIFICATION, EXPERIENCE, REPUTATION, TALENT}
-
-/* Constants */
-
-    // Equals to `bytes4(keccak256("onERC721Received(address,address,uint256,bytes)"))`
-    // which can be also obtained as `IERC721Receiver(0).onERC721Received.selector`
-    bytes4 private constant _ERC721_RECEIVED = 0x150b7a02;
-
-    bytes4 private constant _InterfaceId_ERC721 = 0x80ac58cd;
-    /*
-    * 0x80ac58cd ===
-    *   bytes4(keccak256('balanceOf(address)')) ^
-    *   bytes4(keccak256('ownerOf(uint256)')) ^
-    *   bytes4(keccak256('approve(address,uint256)')) ^
-    *   bytes4(keccak256('getApproved(uint256)')) ^
-    *   bytes4(keccak256('setApprovalForAll(address,bool)')) ^
-    *   bytes4(keccak256('isApprovedForAll(address,address)')) ^
-    *   bytes4(keccak256('transferFrom(address,address,uint256)')) ^
-    *   bytes4(keccak256('safeTransferFrom(address,address,uint256)')) ^
-    *   bytes4(keccak256('safeTransferFrom(address,address,uint256,bytes)'))
-    */
-
-    bytes4 private constant _InterfaceId_ERC721Metadata = 0x5b5e139f;
-    /**
-    * 0x5b5e139f ===
-    *   bytes4(keccak256('name()')) ^
-    *   bytes4(keccak256('symbol()')) ^
-    *   bytes4(keccak256('tokenURI(uint256)'))
-    */
-
-    bytes4 private constant _InterfaceId_ERC721Enumerable = 0x780e9d63;
-    /**
-    * 0x780e9d63 ===
-    *   bytes4(keccak256('totalSupply()')) ^
-    *   bytes4(keccak256('tokenOfOwnerByIndex(address,uint256)')) ^
-    *   bytes4(keccak256('tokenByIndex(uint256)'))
-    */
-
-/* Events */
-
-    event ContractEvent(address indexed _this, address indexed _sender, address indexed _origin);
-    event LogKeyRing(uint _length, bytes32 _data, uint _index);
-    event LogSigning(address indexed _this, address indexed _sender, address indexed _origin, address _data, bytes32 _result);
-    event LogSigned(address indexed _this, address indexed _sender, address indexed _origin, bytes _data, bytes32 _result);
-    event LogTrusted(address indexed _this, address indexed _sender, address indexed _origin, bytes _data, bytes32 _result);
-    event LogRevoking(address indexed _this, address indexed _sender, address indexed _origin, bytes _data, bytes32 _result);
-    event LogSetbdi(address indexed _this, address indexed _sender, address indexed _origin, bytes32 _keyid, bytes32 _uuid, bytes32 _callid);
-
-}
-
 contract OwnableData {
+    
     modifier onlyOwner() {
         require(msg.sender == owner);
         _;
@@ -934,6 +320,7 @@ contract OwnableData {
 }
 
 contract Ownable is OwnableData {
+    
     function setOwner(address newOwner)
         public
         onlyOwner
@@ -942,15 +329,37 @@ contract Ownable is OwnableData {
     }
 }
 
-contract UpdatableProxyData is ProxyData, OwnableData { }
+contract ProxyData {
+    address internal proxied;
+}
+
+contract Proxy is ProxyData {
+    constructor(address _proxied) public {
+        proxied = _proxied;
+    }
+
+    function() public payable {
+        bool success = proxied.delegatecall(msg.data);
+        assembly {
+            let freememstart := mload(0x40)
+            returndatacopy(freememstart, 0, returndatasize())
+            switch success
+            case 0 { revert(freememstart, returndatasize()) }
+            default { return(freememstart, returndatasize()) }
+        }
+    }
+}
+
+contract UpdatableProxyData is ProxyData, OwnableData {}
 
 interface Update {
+    
     function implementationBefore() external view returns (address);
     function implementationAfter() external view returns (address);
     function migrateData() external;
 }
 
-contract UpdatableProxyShared is ProxyData, Ownable {
+contract UpdatableProxyShared is ProxyData, OwnableData (0) {
     
     function updateProxied(Update update)
         public
@@ -964,25 +373,33 @@ contract UpdatableProxyShared is ProxyData, Ownable {
 }
 
 contract UpdatableProxy is Proxy, UpdatableProxyShared {
+    
     constructor(address proxied, address owner)
         public
         Proxy(proxied)
         OwnableData(owner)
     {}
 }
+
 contract UpdatableProxyImplementation is UpdatableProxyShared {
+    
     constructor() public OwnableData(0) {}
 }
 
 contract TimedUpdatableProxyDataInternal is UpdatableProxyData {
+    
     uint internal updateAllowedStartTime;
     Update internal plannedUpdate;
 }
+
 contract TimedUpdatableProxyData is UpdatableProxyData {
+    
     uint public updateAllowedStartTime;
     Update public plannedUpdate;
 }
+
 contract TimedUpdatableProxyShared is UpdatableProxyShared, TimedUpdatableProxyData {
+    
     function planUpdate(Update update)
         public
         onlyOwner
@@ -990,6 +407,7 @@ contract TimedUpdatableProxyShared is UpdatableProxyShared, TimedUpdatableProxyD
         plannedUpdate = update;
         updateAllowedStartTime = now + 30 seconds;
     }
+    
     function updateProxied(Update update)
         public
     {
@@ -1003,22 +421,59 @@ contract TimedUpdatableProxyShared is UpdatableProxyShared, TimedUpdatableProxyD
         plannedUpdate = Update(0);
     }
 }
+
 contract TimedUpdatableProxy is UpdatableProxy, TimedUpdatableProxyShared {
+    
     constructor(address proxied, address owner)
         public
         UpdatableProxy(proxied, owner)
     {}
 }
+
 contract TimedUpdatableProxyImplementation is TimedUpdatableProxyShared {
+    
     constructor() public OwnableData(0) {}
 }
 
-contract DoersDataInternal is UpdatableProxyData, DoersHeader {
+
+contract DoersHeader is UserDefined {
+
+/* Using */
+
+    using StringsAndBytesLib for bytes32;
+
+/* User Types */
+
+    enum BE {NULL, QUALIFICATION, EXPERIENCE, REPUTATION, TALENT}
+    
+    ERC721 mpsr;
+    Creators creator;
+    Userbase userbase;
+    
+    address owner;
+    address proxyKey;
+
+/* Constants */
+
+    // Equals to `bytes4(keccak256("onERC721Received(address,address,uint256,bytes)"))`
+    // which can be also obtained as `IERC721Receiver(0).onERC721Received.selector`
+    bytes4 private constant _ERC721_RECEIVED = 0x150b7a02;
 
     bytes32 constant internal CONTRACTNAME = "DOER 0.0118";
     uint8 constant internal rate = 10; // !!! GET THIS DATA FROM DATABASE
     uint constant internal year = 31536000; // !!! GET THIS DATA FROM DATABASE
     uint constant internal period = 31536000; // !!! GET THIS DATA FROM DATABASE
+
+/* Events */
+
+    event ContractEvent(address indexed _this, address indexed _sender, address indexed _origin);
+    event LogKeyRing(uint _length, bytes32 _data, uint _index);
+    event LogSigning(address indexed _this, address indexed _sender, address indexed _origin, address _data, bytes32 _result);
+    event LogSigned(address indexed _this, address indexed _sender, address indexed _origin, bytes _data, bytes32 _result);
+    event LogTrusted(address indexed _this, address indexed _sender, address indexed _origin, bytes _data, bytes32 _result);
+    event LogRevoking(address indexed _this, address indexed _sender, address indexed _origin, bytes _data, bytes32 _result);
+    event LogSetbdi(address indexed _this, address indexed _sender, address indexed _origin, bytes32 _keyid, bytes32 _uuid, bytes32 _callid);
+
 
 /* Modifiers */
 
@@ -1051,22 +506,18 @@ contract DoersDataInternal is UpdatableProxyData, DoersHeader {
     //     Collector(creator.peana()).sendLog(msg.sender,this,msg.data);
     //     _;
     // }
+    
+    
+}
+
+
+contract DoersDataInternal is TimedUpdatableProxyData, DoersHeader {
 
 /* State Variables */
 
-    ERC721 mpsr;
-
-    // DoersLib.STORAGE internal doersData;
-
-    Creators internal creator;
-    // Userbase userbase;
-    Userbase internal userbase;
-    
     bytes32 internal MASK;
 
-    address internal owner;
     address internal peana;
-    address internal proxyKey;
     address internal proxyBDI;
 
     bool internal initialised;
@@ -1102,60 +553,12 @@ contract DoersDataInternal is UpdatableProxyData, DoersHeader {
     
 }
 
-contract DoersData is UpdatableProxyData, DoersHeader {
-
-    bytes32 constant internal CONTRACTNAME = "DOER 0.0118";
-    uint8 constant internal rate = 10; // !!! GET THIS DATA FROM DATABASE
-    uint constant internal year = 31536000; // !!! GET THIS DATA FROM DATABASE
-    uint constant internal period = 31536000; // !!! GET THIS DATA FROM DATABASE
-
-/* Modifiers */
-
-    modifier onlyCreator {
-        require(userbase.iam(msg.sender, IS.CREATOR));
-        _;
-    }
-
-    modifier onlyDoer {
-        require(!userbase.iam(msg.sender, IS.CREATOR));
-        _;
-    }
-
-    modifier onlyOwner {
-        require(!userbase.iam(msg.sender, IS.CREATOR) && msg.sender == owner);
-        _;
-    }
-
-    modifier ProxyKey {
-        require(msg.sender == proxyKey);
-        _;
-    }
-
-    modifier ProxyBDI {
-        require(msg.sender == proxyKey || msg.sender == owner);
-        _;
-    }
-    
-    // modifier toPeana {
-    //     Collector(creator.peana()).sendLog(msg.sender,this,msg.data);
-    //     _;
-    // }
+contract DoersData is TimedUpdatableProxyData, DoersHeader {
 
 /* State Variables */
-
-    ERC721 mpsr;
-
-    DoersLib.STORAGE doersData;
-
-    Creators creator;
-    // Userbase userbase;
-    Userbase userbase;
     
     bytes32 MASK;
-
-    address owner;
     address peana;
-    address proxyKey;
     address proxyBDI;
 
     bool initialised;
@@ -1193,12 +596,13 @@ contract DoersProxy is Proxy, DoersDataInternal {
     constructor (
         address _proxied, 
         address _owner, 
-        Creators _creator, 
+        Creators _creator,
+        ERC721 _erc721, 
         SomeDoer _adoer
-        
         ) public Proxy(_proxied) OwnableData(_owner) {
             require(true/*"!!!!!!!check that this doer is not yet in userbase!!!!!!!*/ );
             creator = _creator;
+            mpsr = _erc721;
             owner = tx.origin;
             MASK = _creator.DOER();
             proxyKey = _creator.proxyKey();
@@ -1239,7 +643,7 @@ contract DoersProxy is Proxy, DoersDataInternal {
 // Beginning of Contract
 ///////////////////
 
-contract Doers is UpdatableProxyImplementation, DoersData {
+contract Doers is TimedUpdatableProxyImplementation, DoersData {
 
 /* Constant */
 
@@ -1251,22 +655,9 @@ contract Doers is UpdatableProxyImplementation, DoersData {
 
 /* Functions */
 
-    // constructor (Creators _creator, SomeDoer _adoer) public {
-    //     init(Creators _creator, SomeDoer _adoer);
-    //     }
-
-    // function init(Creators _creator, SomeDoer _adoer) public {
-    //     // Enforce initialization behavior.
-    //     require(true/*"!!!!!!!check that this doer is not yet in userbase!!!!!!!*/ );
-    //     doersData.creator = _creator;
-    //     doersData.owner = tx.origin;
-    //     doersData.MASK = _creator.DOER();
-    //     doersData.proxyKey = _creator.proxyKey();
-    //     doersData.proxyBDI = _creator.proxyBDI();
-    //     doersData.Iam = _adoer;
-    //     erc721Metadata.init(erc165Data, _adoer.fPrint.bytes32ToString(), _adoer.email.bytes32ToString());
-    //     emit ContractEvent(this, msg.sender, tx.origin);
-    //     }
+/////////////////
+// ERC721 Methods
+/////////////////
 
     /**
     * @dev Gets the token name
@@ -1363,72 +754,264 @@ contract Doers is UpdatableProxyImplementation, DoersData {
 // ABLE COMPUTE
 /////////////////
     
-    function updateIndex() internal returns (bool) {
-        return doersData.updateIndex();
+    function updateIndex() public returns (bool) {
+        uint8 kbase = uint8(UserDefined.KBase.DOCTORATE);
+        while (bdi.beliefs.qualification[kbase].cAuthority == 0x0) {
+            // merit == 0 ? bdi.beliefs.index = merit : merit --;
+            if (kbase == 0) {
+                bdi.beliefs.merits.index = 1;
+                return false;}
+            kbase--;
+        }
+
+        uint8 T = uint8(bdi.beliefs.merits.talent);
+        uint8 R = uint8(bdi.beliefs.merits.reputation);
+        uint8 Q = kbase;
+        uint8 q;
+        if ((block.timestamp - bdi.beliefs.merits.experience) > year) {
+            // !!! Maybe subtract Reputation and Talent first here before proceeding
+            q = (Q * ((1 + rate/100) ^ uint8(bdi.beliefs.merits.experience / period)));
+            } else {
+            q = Q;
+            }
+        BASE = T + R + q;
 
         // Collector(creator.peana()).updateLog(keccak256("updateIndex()"),true);
 
     }
+//
+    function sign(address _address, bytes32 keyXOR) public returns (uint, bool signed) {
+
+        // emit LogSigning(this, msg.sender, tx.origin, _address, keyXOR);
+
+        if (Doers(_address) != msg.sender) {
+            signed = _address.call(bytes4(keccak256("sign()")));
+            require(signed);
+            require(reputation.signer++ < 2^256 && ringlength > 0);
+            return (reputation.signer,signed);
+        } else {
+            
+            bytes memory callData = msg.data;
+            // emit LogSigned(this, msg.sender, tx.origin, callData, keyXOR);
+            if (keyring.length == 0) {
+                ringlength = keyring.push(keyXOR | MASK);
+                require(reputation.signer++ < 2^256);
+                signed = false;
+            } else {
+                require(address(keyring[0]) != address(keyXOR));
+                keyring[0] = (keyXOR | MASK);
+                signed = true;
+            }
+            keyIndex[keyXOR] = 0;
+            // emit LogKeyRing(ringlength,keyring[keyIndex[keyXOR]],keyIndex[keyXOR]);
+
+            // Collector(creator.peana()).updateLog(
+            // keccak256("sign(address)"),
+            // ringlength,
+            // keyring[keyIndex[keyXOR]],
+            // keyIndex[keyXOR],
+            // signed);
+
+            return (ringlength,signed);
+        }
+    }
+
+    function sign(bytes32 keyXOR) public returns (uint, bool signed) { // padd left before using bytes32(uint256(this) << 96)
+        require(msg.sender != owner);
+        // bytes32 keyXOR = bytes32(uint256(this)) ^ bytes32(uint256(msg.sender));
+        bytes memory callData = msg.data;
+        // emit LogSigned(this, msg.sender, tx.origin, callData, keyXOR);
+
+        require(keyring.length > 0 && keyring.length < 2^256);
+        require(keyIndex[keyXOR] == 0);
+
+        keyIndex[keyXOR] = (keyring.push(keyXOR | MASK) -1);
+        ringlength = keyring.length;
+        reputation.signee = ringlength;
+        // Doers(proxyKey).incSigns(keyXOR << 32);
+        signed = true;
+
+        emit LogKeyRing(ringlength,keyring[keyIndex[keyXOR]],keyIndex[keyXOR]);
+        // Collector(creator.peana()).updateLog(
+        //     keccak256("sign()"),
+        //     ringlength,
+        //     keyring[keyIndex[keyXOR]],
+        //     keyIndex[keyXOR],
+        //     signed);
+        return (ringlength,signed);
+    }
+
+    function revoke(address _address, bytes32 keyXOR) public returns (uint, bool revoked) { // pad left bytes32(uint256(this) << 96) before using
+        require(keyring.length > 0);
+
+        bytes memory callData = msg.data;
+        emit LogRevoking(this, msg.sender, tx.origin, callData, keyXOR);
+
+        if (keyring.length == 1) {	//	a ^ b; == key; //	key ^ a == b
+            
+            require (address(keyXOR) == address(keyring[keyIndex[keyXOR]]));
+            keyIndex[keyXOR] = 2^256;
+            delete keyring;
+            delete reputation.signee;
+            require(reputation.signer-- > 0);
+            ringlength = 0;
+            revoked = false;
+        } else {
+            revoked = _address.call(bytes4(keccak256("revoke()")));
+            require(revoked);
+            require(reputation.signer-- > 0);
+            return (reputation.signer,revoked);
+        }
+
+        emit LogKeyRing(ringlength,keyXOR,keyIndex[keyXOR]);
+        // Collector(creator.peana()).updateLog(
+        //     keccak256("revoke(address)"),
+        //     ringlength,
+        //     keyXOR,
+        //     keyIndex[keyXOR],
+        //     revoked);
+        return (ringlength,revoked);
+    }
+
+    function revoke(bytes32 keyXOR) public returns (uint, bool revoked) { // pad left bytes32(uint256(this) << 96) before using
+        require(keyring.length > 1 && msg.sender != owner);
+        // bytes32 keyXOR = bytes32(uint256(this)) ^ bytes32(uint256(msg.sender));
+        require (address(keyXOR) == address(keyring[keyIndex[keyXOR]]));
+        bytes memory callData = msg.data;
+        emit LogRevoking(this, msg.sender, tx.origin, callData, keyXOR);
+
+        keyring[keyIndex[keyXOR]] = keyring[keyring.length -1];
+        keyIndex[((keyring[keyring.length -1] << 96) >> 96)] = keyIndex[keyXOR];
+        delete keyring[keyring.length -1];
+        ringlength = keyring.length;
+        delete keyIndex[keyXOR];
+        reputation.signee = ringlength;
+        Doers(proxyKey).decSigns(keyXOR << 32);
+        revoked == true;
+
+        emit LogKeyRing(ringlength,keyXOR,keyIndex[keyXOR]);
+        // Collector(creator.peana()).updateLog(
+        //     keccak256("revoke()"),
+        //     ringlength,
+        //     keyXOR,
+        //     keyIndex[keyXOR],
+        //     revoked);
+        return (ringlength,revoked);
+    }
+
+    function trust(UserDefined.Trust _level, bytes32 keyXOR) public returns (bool) {
+        require((keyring.length > 0) && (keyring.length < 2^256));
+        
+        uint num = keyIndex[keyXOR];
+        require (address(keyXOR) == address(keyring[num]));
+        keyXOR = keyring[num];
+        bytes memory callData = msg.data;
+        emit LogTrusted(this, msg.sender, tx.origin, callData, keyXOR);
+        // if (((keyXOR >> 192) << 240) > (creator.trust(_level) << 48)) {
+        //     keyXOR &= 0xffffffffffff00ffffffffffffffffffffffffffffffffffffffffffffffffff;   // RESET THE TRUST FLAG FIRST
+        // }
+        keyXOR &= 0xffffffffffff00ffffffffffffffffffffffffffffffffffffffffffffffffff;   // RESET THE TRUST FLAG FIRST
+        keyXOR |= creator.trust(_level);    // NO ADDING UP, JUST SET CUMULATIVE VALUE
+        keyring[num] = keyXOR;
+        emit LogKeyRing(ringlength,keyring[keyIndex[keyXOR]],keyIndex[keyXOR]);
+        // Collector(creator.peana()).updateLog(
+        //     keccak256("trust(Trust)"),
+        //     ringlength,
+        //     keyring[keyIndex[keyXOR]],
+        //     keyIndex[keyXOR],
+        //     true);
+
+        return true;
+    }
+
+    function incSigns(bytes32 _keyd) public returns (uint) {
+        require(reputation.signer++ < 2^256);
+        return reputation.signer;
+    }
+
+    function decSigns(bytes32 _keyd) public returns (uint) {
+        require(reputation.signer-- > 0);
+        return reputation.signer;
+    }
+
 
 /////////////////
 // All ASSERTERS
 /////////////////
 
-    function iam() view public returns (bool iam_, IS _state) {
-        return doersData.iam();
+    function iam() view public returns (bool iam_, UserDefined.IS _state) {
+        // return creator.iam();
+        return userbase.iam(msg.sender);
         // Collector(creator.peana()).updateLog(keccak256("iam()"),iam);
+        // return iam_;
     }
     
     function index() view public returns (uint8 index_) {
-        return doersData.index();
+        return bdi.beliefs.merits.index;
     }
     
     function ringLength() view public returns (uint ringlength_) {
-        return doersData.ringlength;
+        return ringlength;
     }
     
     function uuId() view public returns (bytes32 UUID_) {
-        return doersData.Iam.uuid;
+        return Iam.uuid;
     }
     
     function keyId() view public returns (bytes32 KEYID_) {
-        return doersData.Iam.keyid;
+        return Iam.keyid;
     }
     
     function merits() 
     view public returns (
-        uint experience_,
-        bytes32 reputation_,
-        bytes32 talent_,
-        uint8 index_,
-        bytes32 hash_) {
-                
-        return doersData.merits();
-        
+            uint,
+            bytes32,
+            bytes32,
+            uint8,
+            bytes32) {
+        return (
+            bdi.beliefs.merits.experience,
+            bdi.beliefs.merits.reputation,
+            bdi.beliefs.merits.talent,
+            bdi.beliefs.merits.index,
+            bdi.beliefs.merits.hash
+            );
     }
     
-    function kbase() view public returns (KBase kbase_) {
-        return doersData.kbase();
+    function kbase() view public returns (UserDefined.KBase kbase_) {
+            
+        uint8 _kbase_ = uint8(UserDefined.KBase.DOCTORATE);
+        while (bdi.beliefs.qualification[_kbase_].cAuthority == 0x0) {
+            // merit == 0 ? bdi.beliefs.index = merit : merit --;
+            if (_kbase_ == 0) {
+                return UserDefined.KBase.PRIMARY;}
+            _kbase_--;
+        }
+        return UserDefined.KBase(_kbase_);
     }
     
     function desire(bytes1 _desire)
-    view external returns  (bytes32) {        
-        return doersData.desire(_desire);
+    view public returns  (bytes32) {        
+        return bdi.desires[_desire].goal;
     }
     
     function intention(bool _intention)
-    view external returns  (bytes32) {
-        return doersData.intention(_intention);
+    view public returns  (bytes32) {
+        return bdi.intentions[_intention].service;
     }
     
-    function intention(bool _intention, IS _state)
-    external returns  (IS) {
-        return doersData.intention(_intention,_state);
+    function intention(bool _intention, UserDefined.IS _state)
+    public returns  (UserDefined.IS) {
+        return bdi.intentions[_intention].state = _state;
     }
     
     function flipIntention()
-    external returns  (bool) {
-        return doersData.flipIntention();
+    public returns  (bool) {
+        bdi.intentions[true].state = UserDefined.IS.RESERVED;
+        bdi.intentions[true].service = bdi.intentions[false].service;
+        ERC721(mpsr).mintWithTokenURI(this, bdi.intentions[true].payout, bdi.intentions[true].uri);
+        delete bdi.intentions[false];
+        return true;
     }
     
 
@@ -1438,28 +1021,37 @@ contract Doers is UpdatableProxyImplementation, DoersData {
 /////////////////
 
     function getDoer()
-    view external returns  (
-    bytes32 fPrint,
-    bool iam_,
-    bytes32 email,
-    bytes32 fName,
-    bytes32 lName,
-    uint age,
-    bytes32 data_) {
-        // Collector(creator.peana()).updateLog(
-        //     keccak256("getDoer()"),
-        //     keccak256(Iam.fPrint),
-        //     keccak256(this.iam()),
-        //     keccak256(Iam.email),
-        //     keccak256(Iam.fName),
-        //     keccak256(Iam.lName),
-        //     keccak256(Iam.age),
-        //     keccak256(Iam.data));
-        return doersData.getDoer();
+    view public returns  (
+        bytes32 fPrint,
+        bool iam_,
+        bytes32 email,
+        bytes32 fName,
+        bytes32 lName,
+        uint age,
+        bytes32 data) {
+            // Collector(creator.peana()).updateLog(
+            //     keccak256("getDoer()"),
+            //     keccak256(Iam.fPrint),
+            //     keccak256(this.iam()),
+            //     keccak256(Iam.email),
+            //     keccak256(Iam.fName),
+            //     keccak256(Iam.lName),
+            //     keccak256(Iam.age),
+            //     keccak256(Iam.data));
+            (iam_,) = iam();
+            return(
+                Iam.fPrint,
+                iam_,
+                Iam.email,
+                Iam.fName,
+                Iam.lName,
+                Iam.age,
+                Iam.data
+                );
     }
 
-    function getBelief(KBase _kbase)
-    view external returns  (
+    function getBelief(UserDefined.KBase _kbase)
+    view public returns  (
     bytes32 country_,
     bytes32 cAuthority_,
     bytes32 score_) {
@@ -1468,144 +1060,69 @@ contract Doers is UpdatableProxyImplementation, DoersData {
         //     bdi.beliefs.qualification[uint8(_kbase)].country,
         //     bdi.beliefs.qualification[uint8(_kbase)].cAuthority,
         //     bdi.beliefs.qualification[uint8(_kbase)].score);
-        return doersData.getBelief(_kbase);
+        return (
+            bdi.beliefs.qualification[uint8(_kbase)].country,
+            bdi.beliefs.qualification[uint8(_kbase)].cAuthority,
+            bdi.beliefs.qualification[uint8(_kbase)].score);
     }
 
     function getDesire(bytes1 _desire)
-    view external returns  (bytes32,bool) {
+    view public returns  (bytes32,bool) {
         // Collector(creator.peana()).updateLog(
         //     keccak256("getBelief(KBase)"),
         //     bdi.desires[_desire].goal,
         //     bdi.desires[_desire].status);        
-        return doersData.getDesire(_desire);
+        return (
+            bdi.desires[_desire].goal,
+            bdi.desires[_desire].status);
     }
 
     function getIntention(bool _intention)
-    view external returns  (IS,bytes32,uint256) {
+    view public returns  (UserDefined.IS,bytes32,uint256) {
         // Collector(creator.peana()).updateLog(
         //     keccak256("getBelief(KBase)"),
         //     bdi.intentions[_intention].state,
         //     bdi.intentions[_intention].service,
         //     bdi.intentions[_intention].payout);
-        return doersData.getIntention(_intention);
+        return (
+            bdi.intentions[_intention].state,
+            bdi.intentions[_intention].service,
+            bdi.intentions[_intention].payout);
     }
 
 /////////////////
 // All SETTERS
 /////////////////
 
-    function init() external returns  (bool) {
-        // Collector(creator.peana()).updateLog(
-        //     keccak256("getBelief(KBase)"),
-        //     init);
-        return doersData.init();
-    }
-//
-    function sign(address _address) public onlyOwner returns (uint, bool signed) {
-
-        bytes32 keyXOR = bytes32(uint256(_address)) ^ bytes32(uint256(msg.sender));
-        
-        emit LogSigning(this, msg.sender, tx.origin, _address, keyXOR);
-
-        return doersData.sign(_address, keyXOR);
-
-            // Collector(creator.peana()).updateLog(
-            // keccak256("sign(address)"),
-            // ringlength,
-            // keyring[keyIndex[keyXOR]],
-            // keyIndex[keyXOR],
-            // signed);
-    }
-
-    function sign() external onlyDoer returns (uint, bool signed) { // padd left before using bytes32(uint256(this) << 96)
-    
-        bytes32 keyXOR = bytes32(uint256(this)) ^ bytes32(uint256(msg.sender));
-        
-        emit LogKeyRing(doersData.ringlength,doersData.keyring[doersData.keyIndex[keyXOR]],doersData.keyIndex[keyXOR]);
-        // Collector(creator.peana()).updateLog(
-        //     keccak256("sign()"),
-        //     ringlength,
-        //     keyring[keyIndex[keyXOR]],
-        //     keyIndex[keyXOR],
-        //     signed);
-        return doersData.sign(keyXOR);
-    }
-
-    function revoke(address _address) external onlyDoer returns (uint, bool revoked) { // pad left bytes32(uint256(this) << 96) before using
-
-        bytes32 keyXOR = bytes32(uint256(this)) ^ bytes32(uint256(msg.sender));
-        
-        emit LogRevoking(this, msg.sender, tx.origin, msg.data, keyXOR);
-
-        emit LogKeyRing(doersData.ringlength,keyXOR,doersData.keyIndex[keyXOR]);
-        // Collector(creator.peana()).updateLog(
-        //     keccak256("revoke(address)"),
-        //     ringlength,
-        //     keyXOR,
-        //     keyIndex[keyXOR],
-        //     revoked);
-        return doersData.revoke(_address, keyXOR);
-    }
-
-    function revoke() external onlyDoer returns (uint, bool revoked) { // pad left bytes32(uint256(this) << 96) before using
-
-        bytes32 keyXOR = bytes32(uint256(this)) ^ bytes32(uint256(msg.sender));
-        
-        emit LogRevoking(this, msg.sender, tx.origin, msg.data, keyXOR);
-
-        emit LogKeyRing(doersData.ringlength,keyXOR,doersData.keyIndex[keyXOR]);
-        // Collector(creator.peana()).updateLog(
-        //     keccak256("revoke()"),
-        //     ringlength,
-        //     keyXOR,
-        //     keyIndex[keyXOR],
-        //     revoked);
-        return doersData.revoke(keyXOR);
-    }
-
-    function trust(Trust _level) returns (bool) {
-        
-        bytes32 keyXOR = bytes32(uint256(this)) ^ bytes32(uint256(msg.sender));
-
-        emit LogTrusted(this, msg.sender, tx.origin, msg.data, keyXOR);
-
-        emit LogKeyRing(doersData.ringlength,doersData.keyring[doersData.keyIndex[keyXOR]],doersData.keyIndex[keyXOR]);
-        // Collector(creator.peana()).updateLog(
-        //     keccak256("trust(Trust)"),
-        //     ringlength,
-        //     keyring[keyIndex[keyXOR]],
-        //     keyIndex[keyXOR],
-        //     true);
-
-        return doersData.trust(_level, keyXOR);
-    }
-
-    // function incSigns(bytes32 _keyd) external ProxyKey returns (uint) {
-    //     return doersData.incSigns(_keyd);
-    // }
-    
-    function decSigns(bytes32 _keyd) external ProxyKey returns (uint) {
-        return doersData.decSigns(_keyd);
-    }
-
     function setbdi(
-        KBase _kbase,
+        UserDefined.KBase _kbase,
         bytes32 _country,
         bytes32 _cAuthority,
         bytes32 _score,
         uint _year)
-    external ProxyBDI returns(bool qualification_) {
-        
-                return doersData.setbdi(
-                    _kbase,
-                    _country,
-                    _cAuthority,
-                    _score,
-                    _year
-                    );
+    public returns(bool) {
+        bytes32 callid = keccak256(msg.data);
+        if(msg.sender == owner) {
+            Doers(proxyBDI).setbdi(_kbase,_country,_cAuthority,_score,_year);
+            callBackState[callid][false] = BE.QUALIFICATION;
+            emit LogSetbdi(this,msg.sender,tx.origin,Iam.keyid,Iam.uuid,callid);
+            } else {
+            require(callBackState[callid][false] == BE.QUALIFICATION);
+            if (_kbase == UserDefined.KBase.BACHELOR) {		// exclude Bachelors from prerequisite of having a License
+                require(bdi.beliefs.qualification[uint8(UserDefined.KBase.SECONDARY)].cAuthority != 0x0);
+                } else {
+                require(bdi.beliefs.qualification[uint8(_kbase) - 1].cAuthority != 0x0);
+                }
+            // IF (TO UPDATE)
+            bdi.beliefs.qualification[uint8(_kbase)] = UserDefined.Qualification({country: _country, cAuthority: _cAuthority, score: _score});
+            bdi.beliefs.merits.experience = _year;
+            callBackState[callid][true] = callBackState[callid][false];
+            delete callBackState[callid][false];
+            // index_ = updateIndex(self);
             // Collector(creator.peana()).updateLog(
             // keccak256("setbdi(KBase,bytes32,bytes32,bytes32,uint)"),
             // index_);
+        }
     }
 
     function setbdi(
@@ -1614,48 +1131,66 @@ contract Doers is UpdatableProxyImplementation, DoersData {
         uint _refSigned,
         uint _refSigs,
         bytes32 _refTrust)
-    external ProxyBDI returns (bool reputation_) {
-                return doersData.setbdi(
-                    _refMSD,
-                    _refRank,
-                    _refSigned,
-                    _refSigs,
-                    _refTrust
-                    );
-                    
+    public returns (bool) {
+        bytes32 callid = keccak256(msg.data);
+        if(msg.sender == owner) {
+            Doers(proxyBDI).setbdi(_refMSD,_refRank,_refSigs,_refSigned,_refTrust);
+            callBackState[callid][false] = BE.REPUTATION;
+            emit LogSetbdi(this,msg.sender,tx.origin,Iam.keyid,Iam.uuid,callid);
+            } else {
+            require(callBackState[callid][false] == BE.REPUTATION);
+            reputation.refMSD = _refMSD;
+            reputation.refRank = _refRank;
+            reputation.refTrust = _refTrust;
+            bdi.beliefs.merits.reputation = _refTrust;
+            callBackState[callid][true] = callBackState[callid][false];
+            delete callBackState[callid][false];
+            // index_ = updateIndex(self);
             // Collector(creator.peana()).updateLog(
             // keccak256("setbdi(uint,uint,uint,uint,uint)"),
             // index_);
+        }
     }
 
-    function setbdi(bytes32 _talent) external ProxyBDI returns (bool talent_) {
-
-        return doersData.setbdi(_talent);
+    function setbdi(bytes32 _talent) public returns (bool) {
+        bytes32 callid = keccak256(msg.data);
+        if(msg.sender == owner) {
+            Doers(proxyBDI).setbdi(_talent);
+            callBackState[callid][false] = BE.TALENT;
+            emit LogSetbdi(this,msg.sender,tx.origin,Iam.keyid,Iam.uuid,callid);
+            } else {
+            require(callBackState[callid][false] == BE.TALENT);
+            if (bdi.beliefs.merits.talent == 0x0) {
+                bdi.beliefs.merits.talent = _talent;
+                Userbase(userbase).incTalent();
+            } else {
+                Userbase(userbase).decTalent();
+                bdi.beliefs.merits.talent = _talent;
+                Userbase(userbase).incTalent();
+            }
+            callBackState[callid][true] = callBackState[callid][false];
+            delete callBackState[callid][false];
+            // index_ = updateIndex(self);
             // Collector(creator.peana()).updateLog(
             // keccak256("setbdi(bytes32)"),
             // index_);
+            }
     }
 
-    function setbdi(bytes1 _desire, Desire _goal) public onlyDoer {
-        
-        return doersData.setbdi(_desire, _goal);
+    function setbdi(bytes1 _desire, UserDefined.Desire _goal) public {
+        bdi.desires[_desire] = _goal;
         //  Collector(creator.peana()).updateLog(
         //     keccak256("setbdi(bytes1,Desire)"),
         //     true);
     }
 
-    function setbdi(Intention _service) public onlyDoer {
-        
-        ERC721(mpsr).mintWithTokenURI(this, _service.payout, _service.uri);
-      
-        return doersData.setbdi(_service);
-
-
+    function setbdi(UserDefined.Intention _service) public {
+        bdi.intentions[false] = _service;
+        bdi.intentions[false].state = UserDefined.IS.INACTIVE;
         // Collector(creator.peana()).updateLog(
         //     keccak256("setbdi(bytes1,Desire)"),
         //     true);
     }
-
 
 /* End of Doers Contract */
 }
@@ -1675,6 +1210,7 @@ contract DoersFactory {
     Able private contrl;
     Userbase private userbase;
     Creators private creator;
+    ERC721 private erc721;
     Doers private masterCopy; 
 
 /* Events */
@@ -1691,10 +1227,11 @@ contract DoersFactory {
 
 /* Functions */
 
-    constructor (Able _contrl, Userbase _userbase, Creators _creator, Doers _masterCopy) public {
+    constructor (Able _contrl, Userbase _userbase, Creators _creator, ERC721 _erc721, Doers _masterCopy) public {
         contrl = _contrl;
         userbase = _userbase;
         creator = _creator;
+        erc721  = _erc721;
         masterCopy = _masterCopy;
         emit ContractEvent(this,msg.sender,tx.origin);
     }
@@ -1715,7 +1252,7 @@ contract DoersFactory {
             userbase.decAgent(_introducer);
             bytes32 uuidCheck = keccak256(abi.encodePacked(_fPrint, _idNumber, _lName, _birth));
 
-            doers = Doers(new DoersProxy(masterCopy, address(contrl), creator, UserDefined.SomeDoer({
+            doers = Doers(new DoersProxy(masterCopy, address(contrl), creator, erc721, UserDefined.SomeDoer({
                 fPrint: _fPrint,
                 idNumber: _idNumber,
                 email: _email,
@@ -1731,6 +1268,69 @@ contract DoersFactory {
 
 /* End of DoersFactory Contract */
 
+}
+
+contract Doers2DataInternal is DoersDataInternal {
+    
+    bool internal capped;
+}
+
+contract Doers2Data is DoersData {
+    
+    bool public capped;
+}
+
+contract Doers2Proxy is DoersProxy, Doers2DataInternal {
+    
+    constructor (
+        address _proxied, 
+        address _owner, 
+        Creators _creator,
+        ERC721 _erc721, 
+        SomeDoer _adoer
+        ) public Proxy(_proxied) OwnableData(_owner)
+        DoersProxy(
+            _proxied,
+            _owner,
+            _creator,
+            _erc721,
+            _adoer
+            ) {
+                //// changes initialised here
+                capped = true;
+            }
+
+}
+
+contract Doers2 is TimedUpdatableProxyImplementation, DoersData {}
+
+contract Doers2Update is DoersDataInternal, Doers2DataInternal, Update {
+    
+    Doers internal doers;
+    Doers2 internal doers2;
+    
+    constructor(Doers _doers, Doers2 _doers2)
+        public
+        OwnableData(0)
+    {
+        doers = _doers;
+        doers2 = _doers2;
+    }
+    
+    function implementationBefore() external view returns (address)
+    {
+        return doers;
+    }
+    
+    function implementationAfter() external view returns (address) {
+        return doers2;
+    }
+    
+    function migrateData() external {
+        capped = true;
+    }
+/* Doers Update Contract */
+    
 }
 
 ///////////////////

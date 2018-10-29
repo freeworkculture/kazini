@@ -1,0 +1,16 @@
+// Create the order
+const order: Order = {
+    exchangeAddress,
+    makerAddress: maker,
+    takerAddress: NULL_ADDRESS,
+    senderAddress: NULL_ADDRESS,
+    feeRecipientAddress: NULL_ADDRESS,
+    expirationTimeSeconds: randomExpiration,
+    salt: generatePseudoRandomSalt(),
+    makerAssetAmount,
+    takerAssetAmount,
+    makerAssetData,
+    takerAssetData,
+    makerFee: ZERO,
+    takerFee: ZERO,
+};

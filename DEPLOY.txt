@@ -1,0 +1,77 @@
+creation of library browser/1_Kernel.sol:ERC165Lib pending...
+https://ropsten.etherscan.io/tx/0x0266a5d180366832e5d2346cc8ee3d98adeea957035d6f7aafeb37cb10ea292d
+creation of Able pending...
+[block:4273035 txIndex:2]from:0x594...e87b3to:ERC165Lib.(constructor)value:0 weidata:0x610...d0029logs:0hash:0x026...a292d
+Debug
+ status 	0x1 Transaction mined and execution succeed
+ transaction hash 	0x0266a5d180366832e5d2346cc8ee3d98adeea957035d6f7aafeb37cb10ea292d
+ from 	0x5947795096f0a6468ef3a6d725203a32f55e87b3
+ to 	ERC165Lib.(constructor)
+ gas 	192772 gas
+        
+ transaction cost 	192772 gas 
+ hash 	0x0266a5d180366832e5d2346cc8ee3d98adeea957035d6f7aafeb37cb10ea292d
+ input 	0x610...d0029
+ decoded input 	{}
+ decoded output 	 - 
+ logs 	[]
+ value 	0 wei
+        
+https://ropsten.etherscan.io/tx/0xb7e192844de44822802ca288f84a9816a6b91b871ab8bf9ac588bc14246ff8fc
+[block:4273040 txIndex:5]from:0x594...e87b3to:Able.(constructor)value:0 weidata:0x608...40029logs:2hash:0xb7e...ff8fc
+Debug
+ status 	0x1 Transaction mined and execution succeed
+ transaction hash 	0xb7e192844de44822802ca288f84a9816a6b91b871ab8bf9ac588bc14246ff8fc
+ from 	0x5947795096f0a6468ef3a6d725203a32f55e87b3
+ to 	Able.(constructor)
+ gas 	850948 gas
+        
+ transaction cost 	850948 gas 
+ hash 	0xb7e192844de44822802ca288f84a9816a6b91b871ab8bf9ac588bc14246ff8fc
+ input 	0x608...40029
+ decoded input 	{}
+ decoded output 	 - 
+ logs 	[
+	{
+		"from": "0x7e0b146b7ed79af82af87cbff7e9717ea9e22e7f",
+		"topic": "0xf538d33cf0aeab2f474d1ec307854fed7e411946cb8e4239785e4f7d2c424047",
+		"event": "ContractEvent",
+		"args": {
+			"0": "0x7e0b146B7Ed79aF82Af87CBfF7E9717EA9E22E7f",
+			"1": "0x5947795096F0a6468eF3a6d725203a32F55e87B3",
+			"2": "0x5947795096F0a6468eF3a6d725203a32F55e87B3",
+			"_this": "0x7e0b146B7Ed79aF82Af87CBfF7E9717EA9E22E7f",
+			"_sender": "0x5947795096F0a6468eF3a6d725203a32F55e87B3",
+			"_origin": "0x5947795096F0a6468eF3a6d725203a32F55e87B3",
+			"length": 3
+		}
+	},
+	{
+		"from": "0x7e0b146b7ed79af82af87cbff7e9717ea9e22e7f",
+		"topic": "0xf538d33cf0aeab2f474d1ec307854fed7e411946cb8e4239785e4f7d2c424047",
+		"event": "ContractEvent",
+		"args": {
+			"0": "0x7e0b146B7Ed79aF82Af87CBfF7E9717EA9E22E7f",
+			"1": "0x5947795096F0a6468eF3a6d725203a32F55e87B3",
+			"2": "0x5947795096F0a6468eF3a6d725203a32F55e87B3",
+			"_this": "0x7e0b146B7Ed79aF82Af87CBfF7E9717EA9E22E7f",
+			"_sender": "0x5947795096F0a6468eF3a6d725203a32F55e87B3",
+			"_origin": "0x5947795096F0a6468eF3a6d725203a32F55e87B3",
+			"length": 3
+		}
+	}
+]
+ value 	0 wei
+        
+
+KERNEL
+https://ropsten.etherscan.io/tx/0x0266a5d180366832e5d2346cc8ee3d98adeea957035d6f7aafeb37cb10ea292d
+
+ABLE
+https://ropsten.etherscan.io/tx/0xb7e192844de44822802ca288f84a9816a6b91b871ab8bf9ac588bc14246ff8fc
+
+ERC20
+https://ropsten.etherscan.io/tx/0x6e4800d5733caeb0e5b5d85efeea920d30d5cff40544f13f41590a971f9c3d07
+
+
+"0x7e0b146b7ed79af82af87cbff7e9717ea9e22e7f", "TOAST", "TST", 18, "0x0", 0
