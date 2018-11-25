@@ -1,0 +1,27 @@
+{
+  "name": "cote-workshop",
+  "version": "0.13.1",
+  "description": "A microservices case study with cote",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:dashersw/cote-workshop.git"
+  },
+  "author": "Armagan Amcalar <armagan@amcalar.com>",
+  "license": "MIT",
+  "dependencies": {
+    "body-parser": "^1.18.3",
+    "cote": "0.17.0",
+    "express": "^4.16.3",
+    "orm": "^5.0.2",
+    "pg": "^7.4.3",
+    "redbird": "^0.7.0",
+    "socket.io": "^2.1.1",
+    "sqlite3": "^4.0.1"
+  },
+  "scripts": {
+    "test": "ava --verbose --timeout=60000"
+  },
+  "devDependencies": {
+    "ava": "^0.20.0"
+  }
+}

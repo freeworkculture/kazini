@@ -1,0 +1,106 @@
+{
+  "_from": "@0x/order-utils@^3.0.2",
+  "_id": "@0x/order-utils@3.0.2",
+  "_inBundle": false,
+  "_integrity": "sha512-E/BmZXgqSzG/E8FuA7WMw5hPJNUEWbodPU5ONi6bkaQgKxvUw5ZObMyQKT4QMgsaQTHv6aYVrDMGV+eVx7aUtw==",
+  "_location": "/@0x/order-utils",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "range",
+    "registry": true,
+    "raw": "@0x/order-utils@^3.0.2",
+    "name": "@0x/order-utils",
+    "escapedName": "@0x%2forder-utils",
+    "scope": "@0x",
+    "rawSpec": "^3.0.2",
+    "saveSpec": null,
+    "fetchSpec": "^3.0.2"
+  },
+  "_requiredBy": [
+    "/0x.js",
+    "/@0x/contract-wrappers",
+    "/@0x/fill-scenarios",
+    "/@0x/order-watcher"
+  ],
+  "_resolved": "https://registry.npmjs.org/@0x/order-utils/-/order-utils-3.0.2.tgz",
+  "_shasum": "c5a88383a6e0e0a50c5d5c68c53173de2e1c3525",
+  "_spec": "@0x/order-utils@^3.0.2",
+  "_where": "C:\\Users\\ohabo\\Repos\\kazini\\srv\\kaziniNode\\node_modules\\0x.js",
+  "bugs": {
+    "url": "https://github.com/0xProject/0x-monorepo/issues"
+  },
+  "bundleDependencies": false,
+  "config": {
+    "postpublish": {
+      "assets": []
+    }
+  },
+  "dependencies": {
+    "@0x/abi-gen-wrappers": "^1.0.5",
+    "@0x/assert": "^1.0.17",
+    "@0x/base-contract": "^3.0.6",
+    "@0x/contract-artifacts": "^1.1.0",
+    "@0x/json-schemas": "^2.1.1",
+    "@0x/types": "^1.2.1",
+    "@0x/typescript-typings": "^3.0.4",
+    "@0x/utils": "^2.0.5",
+    "@0x/web3-wrapper": "^3.1.4",
+    "@types/node": "*",
+    "bn.js": "^4.11.8",
+    "ethereum-types": "^1.1.2",
+    "ethereumjs-abi": "0.6.5",
+    "ethereumjs-util": "^5.1.1",
+    "ethers": "~4.0.4",
+    "lodash": "^4.17.5"
+  },
+  "deprecated": false,
+  "description": "0x order utils",
+  "devDependencies": {
+    "@0x/dev-utils": "^1.0.17",
+    "@0x/tslint-config": "^1.0.10",
+    "@types/bn.js": "^4.11.0",
+    "@types/lodash": "4.14.104",
+    "chai": "^4.0.1",
+    "chai-as-promised": "^7.1.0",
+    "chai-bignumber": "^2.0.1",
+    "dirty-chai": "^2.0.1",
+    "make-promises-safe": "^1.1.0",
+    "mocha": "^4.1.0",
+    "npm-run-all": "^4.1.2",
+    "shx": "^0.2.2",
+    "sinon": "^4.0.0",
+    "tslint": "5.11.0",
+    "typedoc": "0.13.0",
+    "typescript": "3.0.1"
+  },
+  "engines": {
+    "node": ">=6.12"
+  },
+  "gitHead": "fe1b7f15e8531615a54e46581cb734e635d3c755",
+  "homepage": "https://github.com/0xProject/0x-monorepo/packages/order-utils/README.md",
+  "license": "Apache-2.0",
+  "main": "lib/src/index.js",
+  "name": "@0x/order-utils",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/0xProject/0x-monorepo.git"
+  },
+  "scripts": {
+    "build": "yarn tsc -b",
+    "build:ci": "yarn build",
+    "clean": "shx rm -rf lib generated_docs",
+    "coverage:report:lcov": "nyc report --reporter=text-lcov > coverage/lcov.info",
+    "docs:json": "typedoc --excludePrivate --excludeExternals --target ES5 --tsconfig typedoc-tsconfig.json --json $JSON_FILE_PATH $PROJECT_FILES",
+    "lint": "tslint --format stylish --project .",
+    "rebuild_and_test": "run-s build test",
+    "run_mocha": "mocha --require source-map-support/register --require make-promises-safe lib/test/**/*_test.js --bail --exit",
+    "test": "yarn run_mocha",
+    "test:circleci": "yarn test:coverage",
+    "test:coverage": "nyc npm run test --all && yarn coverage:report:lcov"
+  },
+  "types": "lib/src/index.d.ts",
+  "version": "3.0.2"
+}

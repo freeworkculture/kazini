@@ -1,0 +1,74 @@
+{
+  "_from": "@0x/fill-scenarios@^1.0.12",
+  "_id": "@0x/fill-scenarios@1.0.12",
+  "_inBundle": false,
+  "_integrity": "sha512-MT2qWp0HqfinJK0WwumPE6fAdqLAnfNOnTXj3cA33q/ZroePFGThCepDeA3emr7lVdWDnlJL1bxDik1aRy9sDw==",
+  "_location": "/@0x/fill-scenarios",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "range",
+    "registry": true,
+    "raw": "@0x/fill-scenarios@^1.0.12",
+    "name": "@0x/fill-scenarios",
+    "escapedName": "@0x%2ffill-scenarios",
+    "scope": "@0x",
+    "rawSpec": "^1.0.12",
+    "saveSpec": null,
+    "fetchSpec": "^1.0.12"
+  },
+  "_requiredBy": [
+    "/@0x/contract-wrappers",
+    "/@0x/order-watcher"
+  ],
+  "_resolved": "https://registry.npmjs.org/@0x/fill-scenarios/-/fill-scenarios-1.0.12.tgz",
+  "_shasum": "9a122a0a46bc723393fbc9fe5818f4a0f5b667c1",
+  "_spec": "@0x/fill-scenarios@^1.0.12",
+  "_where": "C:\\Users\\ohabo\\Repos\\kazini\\srv\\kaziniNode\\node_modules\\@0x\\contract-wrappers",
+  "bugs": {
+    "url": "https://github.com/0xProject/0x-monorepo/issues"
+  },
+  "bundleDependencies": false,
+  "dependencies": {
+    "@0x/abi-gen-wrappers": "^1.0.5",
+    "@0x/base-contract": "^3.0.6",
+    "@0x/contract-artifacts": "^1.1.0",
+    "@0x/order-utils": "^3.0.2",
+    "@0x/types": "^1.2.1",
+    "@0x/typescript-typings": "^3.0.4",
+    "@0x/utils": "^2.0.5",
+    "@0x/web3-wrapper": "^3.1.4",
+    "ethereum-types": "^1.1.2",
+    "ethers": "~4.0.4",
+    "lodash": "^4.17.5"
+  },
+  "deprecated": false,
+  "description": "0x order fill scenario generator",
+  "devDependencies": {
+    "@0x/tslint-config": "^1.0.10",
+    "@types/lodash": "4.14.104",
+    "make-promises-safe": "^1.1.0",
+    "shx": "^0.2.2",
+    "tslint": "5.11.0",
+    "typescript": "3.0.1"
+  },
+  "gitHead": "fe1b7f15e8531615a54e46581cb734e635d3c755",
+  "homepage": "https://github.com/0xProject/0x-monorepo/packages/fill-scenarios/README.md",
+  "license": "Apache-2.0",
+  "main": "lib/index.js",
+  "name": "@0x/fill-scenarios",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/0xProject/0x-monorepo.git"
+  },
+  "scripts": {
+    "build": "yarn tsc -b",
+    "build:ci": "yarn build",
+    "clean": "shx rm -rf lib src/generated_contract_wrappers",
+    "lint": "tslint --format stylish --project ."
+  },
+  "types": "lib/index.d.ts",
+  "version": "1.0.12"
+}

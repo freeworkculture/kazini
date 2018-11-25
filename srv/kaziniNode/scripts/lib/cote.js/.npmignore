@@ -1,0 +1,11 @@
+.idea
+.vscode
+.history
+benchmark
+examples
+jsconfig.json
+test
+src
+coverage
+.nyc_output
+.travis.yml

@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min.js"></script>
+<script src="//api.bitrix24.com/api/v1/"></script>
+</head>
+<body>
+</body>
+</html>
+<script type="text/javascript">
+BX24.init(function(){
+    console.log('Init done!', BX24.isAdmin());
+});
+
+
+    var id = prompt("Enter Invoice ID");
+    var label = prompt("Enter field data");
+
+    BX24.callMethod(
+        'crm.invoice.update', 
+        {
+            'ID': id,
+            fields: {
+            'UF_CRM_1540467689': label
+            },
+        },
+        function(result)
+        {
+            if(result.error())
+                console.error(result.error());
+            else
+            {
+                console.info("Invoice ID=" + result.data() + "has been updated.");
+            }
+        }
+    );
+
+
+//     BX24.callMethod(
+//     "crm.invoice.userfield.add",
+//     {
+//         fields: {
+//             'ENTITY_ID': "CRM_INVOICE",
+//             'USER_TYPE_ID': "string",
+//             'FIELD_NAME': "UF_CRM_RELAY_MESSAGE"
+//             }
+//     }, 
+//     function(result) 
+//     {
+//         if(result.error())
+//             console.error(result.error());
+//         else
+//             console.dir(result.data());
+//     }
+// );
+
+    BX24.callMethod(
+        "crm.invoice.fields",
+        {},
+        function(result)
+        {
+            if(result.error())
+                console.error(result.error());
+            else
+                console.dir(result.data());
+        }
+        );
+
+    BX24.callMethod (
+        "crm.userfield.fields" ,
+        {},
+        function (result)  
+        { 
+            if (result.error ())
+                console.error (result.error ());
+            else
+                console.dir (result.data ());
+        }
+        );
+
+    var id = prompt("Enter User Field ID");
+    BX24.callMethod(
+            "crm.invoice.userfield.get",
+            {
+                'id': id
+                },
+            function (result)
+            {
+                if (result.error())
+                    console.error(result.error());
+                else
+                    console.dir(result.data());
+            }
+    );
+
+    // var id = prompt("Enter Userfield ID");
+    // var label = prompt("Enter new name");
+    // BX24.callMethod(
+    //     "crm.invoice.userfield.update",
+    //     {
+    //         'id' : id,
+    //         'fields' : {
+    //             "EDIT_FORM_LABEL": label,
+    //             "LIST_COLUMN_LABEL": label
+    //         }
+    //     },
+    //     function (result)
+    //     {
+    //         if (result.error())
+    //             console.error(result.error());
+    //         else
+    //         {
+    //             console.dir(result.data());
+    //             if (result.more())
+    //                 result.next();
+    //         }
+    //     }
+    // );
+
+    BX24.callMethod(
+        "crm.invoice.userfield.list",
+        {
+            order: {"SORT": "ASC"},
+            filter: {"MANDATORY": "N"}
+        },
+        function (result)
+        {
+            if (result.error())
+                console.error(result.error());
+            else
+            {
+                console.dir(result.data());
+                if (result.more())
+                    result.next();
+            }
+        }
+    );
+
+//     var id = prompt("Enter ID");
+//     BX24.callMethod(
+//             "crm.invoice.userfield.get",
+//             {id: id},
+//             function (result)
+//             {
+//                 if (result.error())
+//                     console.error(result.error());
+//                 else
+//                     console.dir(result.data());
+//             }
+//     );
+
+//     var id = prompt("Enter user field ID");
+//     BX24.callMethod(
+//         "crm.invoice.userfield.update",
+//         {
+//             'id': id,
+//             fields: {
+//                 'MPSR_STATE' : "IDLE",
+//                 'RELAYER_STATE' : "IDLE"
+//             }
+//         },
+//         function (result)
+//         {
+//             if (result.error())
+//                 console.error(result.error());
+//             else
+//             {
+//                 console.dir(result.data());
+//                 if (result.more())
+//                     result.next();
+//             }
+//         }
+//     );
+
+
+    var id = prompt("Enter Invoice ID");
+    BX24.callMethod(
+        "crm.invoice.get",
+        { "ID": id },
+        function(result)
+        {
+            if(result.error())
+                console.error(result.error());
+            else
+                console.dir(result.data());
+        }
+        );
+
+// BX24.callMethod(
+//     "sale.paysystem.handler.list",
+//     {},
+//     function(result)
+//     {
+//         if(result.error())
+//             console.error(result.error());
+//         else
+//             console.dir(result.data());
+//     }
+// );
+
+// BX24.callMethod(
+//     "sale.paysystem.list",
+//     {},
+//     function(result)
+//     {
+//         if(result.error())
+//             console.error(result.error());
+//         else
+//             console.dir(result.data());
+//     }
+// );
+
+// var rest_handler = prompt("Enter Payment System REST-handler code");
+
+// BX24.callMethod(
+//     "sale.paysystem.add",
+//     {
+//         'NAME' : 'Payment system with REST', 					// Name of the payment system 
+//         'PERSON_TYPE_ID' : 1, 									// Payer type ID 
+//         'ACTIVE' : 'Y',											// Payment system activity flag
+//         'BX_REST_HANDLER' : rest_handler, 					// Handler code in the system
+//         'SETTINGS' : { 											// Handler settings for this payment system
+//             'FORM_DATA' : { 									// Form settings
+//                 'ACTION_URI' : 'https://www.corezoid.com/api/1/nvp/public/470034/2a2a64cfb28ad2422725de8c4aa5afc47768b643', 	// URL, where the form will be sent
+//                 'METHOD' : 'POST', 								// Method for sending form
+//                 'PARAMS' : { 									// Chart with links between form fields and handler parameters: array of "array" type (code_field => code_handler_parameter)
+//                     'Sum' : 'REST_SHOP_ID',
+//                     'customer' : 'REST_SCID',
+//                 }
+//             },
+//             'CODES' : {	
+//                 "REST_SHOP_ID" : {									// Parameter code
+//                     'TYPE' : 'VALUE',								// Value type
+//                     'VALUE' : '111111111'							// Value
+//                 },
+//                 "REST_SCID" : {
+//                     'TYPE' : 'VALUE',
+//                     'VALUE' : '2222222'
+//                 },
+//             }
+//         }
+//     },
+//     function(result)
+//     {
+//         if(result.error())
+//             console.error(result.error());
+//         else
+//             console.info("Payment system is added with ID" + result.data());
+//     }
+// );
+
+// var id = prompt("Enter invoice ID");
+// var handler_code = prompt("Enter REST-handler code");
+
+// BX24.callMethod('sale.paysystem.settings.invoice.get', {"invoice_id": id, "bx_rest_handler": handler_code},
+//     function(result)
+//     {
+//         if(result.error())
+//             console.error(result.error());
+//         else
+//         {
+//             console.dir(result.data());
+//         }
+//     }
+// );
+
+// var id = prompt("Enter ID");
+// var name = prompt("Enter name");
+
+// BX24.callMethod('sale.paysystem.handler.update', {"id": id, "fields": {CODE : name}},
+//     function(result)
+//     {
+//         if(result.error())
+//             console.error(result.error());
+//         else
+//         {
+//             console.info("Payment system is updated");
+//         }
+//     }
+// );
+
+</script>

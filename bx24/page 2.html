@@ -1,0 +1,161 @@
+<html>
+  <body>
+    <script src="./lib/lightwallet.min.js"></script>
+    <script type="text/javascript" src="./lib/web3.min.js"></script>
+    <script type="text/javascript" src="./lib/hooked-web3-provider.min.js"></script>
+    <script type="text/javascript" src="./lib/async.min.js"></script>
+
+    <script>
+      var web3 = new Web3();
+
+      /* STORE THIS VALUE IN BX24.callMethod("crm.requisite.bankdetail.add", fields{}) */
+      var global_keystore; 
+
+    BX24.init(function() {
+
+        console.log('Init done!', BX24.isAdmin());
+        
+        });
+    
+
+    var userId = 1;
+    BX24.callMethod('user.current', {}, function(result) {
+        userId = result.data().ID;
+        console.info(result.data());
+
+    });
+
+    BX24.callMethod(
+            "crm.requisite.fields", 
+            {}, 
+            function(result) 
+            {
+                if(result.error())
+                    console.error(result.error());
+                else
+                    console.dir(result.data());
+            }
+        );
+
+    BX24.callMethod(
+        "crm.requisite.bankdetail.fields", 
+        {}, 
+        function(result) 
+        {
+            if(result.error())
+                console.error(result.error());
+            else
+                console.dir(result.data());
+        }
+    );
+
+    //Search bank details by the Entity ID
+    var ID = userId;
+    BX24.callMethod(
+            "crm.requisite.bankdetail.list", 
+            { 
+                order: { "DATE_CREATE": "ASC" },
+                filter: { "ENTITY_ID": userId},
+                select: [ "ID", "NAME"]				
+            }, 
+            function(result) 
+            {
+                if(result.error())
+                    console.error(result.error());
+                else
+                {
+                    console.dir(result.data());			
+                    if(result.more())
+                        result.next();						
+                }
+            }
+        );
+
+    var bankId = ID;
+    BX24.callMethod(
+        "crm.requisite.bankdetail.get", 
+        { id: bankId }, 
+        function(result) 
+        {
+            if(result.error())
+                console.error(result.error());
+            else
+                console.info(userId);
+                console.dir(result.data());
+        }
+    );
+
+    var id = prompt("Enter ID of Bank Details to Update");
+    var entityId = prompt("Enter Y/N to Update Active Status");
+    BX24.callMethod(
+        "crm.requisite.bankdetail.update", 
+        { 
+            id: id,
+            fields:
+            { 
+                "ENTITY_ID": 8,
+                "ACTIVE" : entityId
+            }		
+        }, 
+        function(result) 
+        {
+            if(result.error())
+                console.error(result.error());
+            else
+            {
+                console.info(result.data());						
+            }
+        }
+    );
+
+    BX24.callMethod(
+        "crm.requisite.bankdetail.add", 
+        {
+            fields:
+            { 
+                "ENTITY_ID": 1,
+                "COUNTRY_ID":1,
+                "NAME":"Bank details",
+                "XML_ID":"1e4641fd-2dd9-31e6-b2f2-105056c00008",
+                "ACTIVE":"Y",
+                "SORT":100			
+            }
+        }, 
+        function(result) 
+        {
+            if(result.error())
+                console.error(result.error());
+            else
+                console.info("Bank details with ID is created" + result.data());
+        }
+    );
+
+
+      
+      function setWeb3Provider(keystore) {
+        var web3Provider = new HookedWeb3Provider({
+          host: "https://ropstein.infura.io/",
+          transaction_signer: keystore
+        });
+        web3.setProvider(web3Provider);
+      }
+
+
+
+
+      // USE THIS IN PAGE THREE TO GET TRANSFER HISTORY
+      // GET ADDRESS FROM VALUE IN BX24.callMethod("crm.requisite.bankdetail.add", fields{ "XML_ID": }) */
+      // REFER TO PAGE-3 CODE ON var addresses = global_keystore.getAddresses(); calls
+      // LIST BALANCE FOR EACH ACCOUNT IN A DROP DOWN LIST.
+      let etherscanProvider = new ethers.providers.EtherscanProvider();
+      etherscanProvider.getHistory(address).then((history) => {
+          history.forEach((tx) => {
+              console.log(tx);
+          })
+      });
+      //
+
+
+    </script>
+  </body>
+</html>

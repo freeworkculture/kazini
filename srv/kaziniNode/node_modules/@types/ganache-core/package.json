@@ -1,0 +1,53 @@
+{
+  "_from": "@types/ganache-core@^2.1.0",
+  "_id": "@types/ganache-core@2.1.1",
+  "_inBundle": false,
+  "_integrity": "sha512-MPINflPfmNCRp/GL3eeJuS6Fq2rpmp6F482DBuda+j7NSXkqyxkWZHrHgNU3Pw02t3F4xGhTeTA4Nbo3x3ga5g==",
+  "_location": "/@types/ganache-core",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "range",
+    "registry": true,
+    "raw": "@types/ganache-core@^2.1.0",
+    "name": "@types/ganache-core",
+    "escapedName": "@types%2fganache-core",
+    "scope": "@types",
+    "rawSpec": "^2.1.0",
+    "saveSpec": null,
+    "fetchSpec": "^2.1.0"
+  },
+  "_requiredBy": [
+    "/@0x/subproviders"
+  ],
+  "_resolved": "https://registry.npmjs.org/@types/ganache-core/-/ganache-core-2.1.1.tgz",
+  "_shasum": "a7b9040bfe4427aca732e0b342fd7447510c70b0",
+  "_spec": "@types/ganache-core@^2.1.0",
+  "_where": "C:\\Users\\ohabo\\Repos\\kazini\\srv\\kaziniNode\\node_modules\\@0x\\subproviders",
+  "bugs": {
+    "url": "https://github.com/DefinitelyTyped/DefinitelyTyped/issues"
+  },
+  "bundleDependencies": false,
+  "contributors": [
+    {
+      "name": "Leonid Logvinov",
+      "url": "https://github.com/LogvinovLeon"
+    }
+  ],
+  "dependencies": {
+    "@types/ethereum-protocol": "*"
+  },
+  "deprecated": false,
+  "description": "TypeScript definitions for ganache-core",
+  "homepage": "https://github.com/DefinitelyTyped/DefinitelyTyped#readme",
+  "license": "MIT",
+  "main": "",
+  "name": "@types/ganache-core",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DefinitelyTyped/DefinitelyTyped.git"
+  },
+  "scripts": {},
+  "typeScriptVersion": "2.4",
+  "typesPublisherContentHash": "18fdcc504045fcb6ca872ee44c9ade9b11fc2e275844b47f53ed132ba0f13dcc",
+  "version": "2.1.1"
+}

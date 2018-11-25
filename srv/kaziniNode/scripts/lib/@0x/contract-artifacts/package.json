@@ -1,0 +1,63 @@
+{
+  "_from": "@0x/contract-artifacts@^1.1.0",
+  "_id": "@0x/contract-artifacts@1.1.0",
+  "_inBundle": false,
+  "_integrity": "sha512-BK9PF2YyJgIheQzfwsS7QQ+VdkgL9xfEcr6siycZSKDRjVLn9BPlUS9JqnYiOeCMVJtZBLlNZRXwHGe5RE8kdw==",
+  "_location": "/@0x/contract-artifacts",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "range",
+    "registry": true,
+    "raw": "@0x/contract-artifacts@^1.1.0",
+    "name": "@0x/contract-artifacts",
+    "escapedName": "@0x%2fcontract-artifacts",
+    "scope": "@0x",
+    "rawSpec": "^1.1.0",
+    "saveSpec": null,
+    "fetchSpec": "^1.1.0"
+  },
+  "_requiredBy": [
+    "/@0x/contract-wrappers",
+    "/@0x/fill-scenarios",
+    "/@0x/order-utils",
+    "/@0x/order-watcher"
+  ],
+  "_resolved": "https://registry.npmjs.org/@0x/contract-artifacts/-/contract-artifacts-1.1.0.tgz",
+  "_shasum": "b6facdc1b331f87b07e60f3c47e8ece90c8db6e3",
+  "_spec": "@0x/contract-artifacts@^1.1.0",
+  "_where": "C:\\Users\\ohabo\\Repos\\kazini\\srv\\kaziniNode\\node_modules\\@0x\\contract-wrappers",
+  "bugs": {
+    "url": "https://github.com/0xProject/0x-monorepo/issues"
+  },
+  "bundleDependencies": false,
+  "deprecated": false,
+  "description": "0x smart contract compilation artifacts",
+  "devDependencies": {
+    "shx": "^0.2.2",
+    "typescript": "3.0.1"
+  },
+  "directories": {
+    "test": "test"
+  },
+  "engines": {
+    "node": ">=6.12"
+  },
+  "gitHead": "b4a11de097258d37fa9271e64fc28a1d012a8d26",
+  "homepage": "https://github.com/0xProject/0x-monorepo/packages/contract-artifacts/README.md",
+  "license": "Apache-2.0",
+  "main": "lib/src/index.js",
+  "name": "@0x/contract-artifacts",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/0xProject/0x-monorepo.git"
+  },
+  "scripts": {
+    "build": "yarn tsc -b",
+    "build:ci": "yarn build",
+    "clean": "shx rm -rf lib"
+  },
+  "version": "1.1.0"
+}

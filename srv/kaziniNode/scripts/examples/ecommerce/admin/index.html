@@ -1,0 +1,148 @@
+<html ng-app="admin">
+<head>
+    <title>Admin</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.8/angular.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        var userService = io.connect('/user');
+        var purchaseService = io.connect('/purchase');
+
+        angular.module('admin', []).controller('ProductController', ProductController);
+        function ProductController($scope, $http) {
+            listProducts();
+            listUsers();
+            listPurchases();
+
+            function listProducts() {
+                $http.get('/product').success(function(data) {
+                    $scope.products = data;
+                });
+            }
+
+            function listUsers() {
+                $http.get('/user').success(function(data) {
+                    $scope.users = data;
+
+                    $scope.users.forEach(function(user) {
+                        user.productIds = user.purchases.map(function(p) {
+                            return p.product_id;
+                        }).join(', ');
+                    })
+                });
+            }
+
+            function listPurchases() {
+                $http.get('/purchase').success(function(data) {
+                    $scope.purchases = data;
+                });
+                listUsers();
+                listProducts();
+            }
+
+            $scope.create = function() {
+                $http.post('/product', {product: $scope.product}).success(function() {
+                    listProducts();
+                    $scope.product = {};
+                });
+            };
+
+            $scope.delete = function(id) {
+                $http.delete('/product/' + id).success(listProducts);
+            };
+
+            userService.on('update', listUsers);
+            purchaseService.on('update', listPurchases);
+        }
+    </script>
+</head>
+<body class="container" ng-controller="ProductController">
+<h1>Products</h1>
+
+<h2>Add new product</h2>
+
+<form ng-submit="create()">
+    <table class="table table-striped">
+        <thead>
+        <tr>
+            <th>Name</th>
+            <th>Price</th>
+            <th>Stock</th>
+            <th>Action</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td><input type="text" ng-model="product.name"/></td>
+            <td><input type="text" ng-model="product.price"/></td>
+            <td><input type="text" ng-model="product.stock"/></td>
+            <td>
+                <button type="submit" class="btn btn-sm btn-success">Add</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+
+<h2>List all products</h2>
+<table class="table table-striped">
+    <thead>
+    <tr>
+        <th>#</th>
+        <th>Name</th>
+        <th>Price</th>
+        <th>Stock</th>
+        <th>Action</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr ng-repeat="product in products | orderBy:'-id' track by product.id">
+        <td>{{product.id}}</td>
+        <td>{{product.name}}</td>
+        <td>{{product.price}}</td>
+        <td>{{product.stock}}</td>
+        <td>
+            <button type="button" class="btn btn-sm btn-danger" ng-click="delete(product.id)">Delete</button>
+        </td>
+    </tr>
+    </tbody>
+</table>
+
+<h1>Users</h1>
+<table class="table table-striped">
+    <thead>
+    <tr>
+        <th>#</th>
+        <th>Balance</th>
+        <th>Purchases</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr ng-repeat="user in users | orderBy:'-id' track by user.id">
+        <td>{{user.id}}</td>
+        <td>{{user.balance}}</td>
+        <td>{{user.productIds}}</td>
+    </tr>
+    </tbody>
+</table>
+
+<h1>Purchases</h1>
+<table class="table table-striped">
+    <thead>
+    <tr>
+        <th>#</th>
+        <th>User</th>
+        <th>Product</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr ng-repeat="purchase in purchases | orderBy:'-id' track by purchase.id">
+        <td>{{purchase.id}}</td>
+        <td>{{purchase.owner.id}}</td>
+        <td>{{purchase.product.name}}</td>
+    </tr>
+    </tbody>
+</table>
+</body>
+</html>

@@ -1,0 +1,95 @@
+{
+  "_from": "@0x/utils@^2.0.5",
+  "_id": "@0x/utils@2.0.5",
+  "_inBundle": false,
+  "_integrity": "sha512-wVh4FBrr1tLj8DdGmLfq/xGHwPqIuzheX1xgZMVCfnApuyY8oVxX8bPjzum/+Vtdmti3iT8svCG1zXXMhceImw==",
+  "_location": "/@0x/utils",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "range",
+    "registry": true,
+    "raw": "@0x/utils@^2.0.5",
+    "name": "@0x/utils",
+    "escapedName": "@0x%2futils",
+    "scope": "@0x",
+    "rawSpec": "^2.0.5",
+    "saveSpec": null,
+    "fetchSpec": "^2.0.5"
+  },
+  "_requiredBy": [
+    "/0x.js",
+    "/@0x/assert",
+    "/@0x/base-contract",
+    "/@0x/contract-wrappers",
+    "/@0x/fill-scenarios",
+    "/@0x/order-utils",
+    "/@0x/order-watcher",
+    "/@0x/subproviders",
+    "/@0x/web3-wrapper"
+  ],
+  "_resolved": "https://registry.npmjs.org/@0x/utils/-/utils-2.0.5.tgz",
+  "_shasum": "80fe04d5194157e84a2178977b11ecc12163de0f",
+  "_spec": "@0x/utils@^2.0.5",
+  "_where": "C:\\Users\\ohabo\\Repos\\kazini\\srv\\kaziniNode\\node_modules\\0x.js",
+  "bugs": {
+    "url": "https://github.com/0xProject/0x-monorepo/issues"
+  },
+  "bundleDependencies": false,
+  "dependencies": {
+    "@0x/types": "^1.2.1",
+    "@0x/typescript-typings": "^3.0.4",
+    "@types/node": "*",
+    "abortcontroller-polyfill": "^1.1.9",
+    "bignumber.js": "~4.1.0",
+    "detect-node": "2.0.3",
+    "ethereum-types": "^1.1.2",
+    "ethereumjs-util": "^5.1.1",
+    "ethers": "~4.0.4",
+    "isomorphic-fetch": "^2.2.1",
+    "js-sha3": "^0.7.0",
+    "lodash": "^4.17.5"
+  },
+  "deprecated": false,
+  "description": "0x TS utils",
+  "devDependencies": {
+    "@0x/tslint-config": "^1.0.10",
+    "@types/detect-node": "2.0.0",
+    "@types/lodash": "4.14.104",
+    "@types/mocha": "^2.2.42",
+    "chai": "^4.0.1",
+    "make-promises-safe": "^1.1.0",
+    "mocha": "^4.1.0",
+    "npm-run-all": "^4.1.2",
+    "shx": "^0.2.2",
+    "tslint": "5.11.0",
+    "typescript": "3.0.1"
+  },
+  "engines": {
+    "node": ">=6.12"
+  },
+  "gitHead": "fe1b7f15e8531615a54e46581cb734e635d3c755",
+  "homepage": "https://github.com/0xProject/0x-monorepo/packages/utils/README.md",
+  "license": "Apache-2.0",
+  "main": "lib/src/index.js",
+  "name": "@0x/utils",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/0xProject/0x-monorepo.git"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "build:ci": "yarn build",
+    "clean": "shx rm -rf lib",
+    "coverage:report:lcov": "nyc report --reporter=text-lcov > coverage/lcov.info",
+    "lint": "tslint --format stylish --project .",
+    "run_mocha": "mocha --require source-map-support/register --require make-promises-safe lib/test/**/*_test.js --bail --exit",
+    "test": "yarn run_mocha",
+    "test:circleci": "yarn test:coverage",
+    "test:coverage": "nyc npm run test --all && yarn coverage:report:lcov"
+  },
+  "types": "lib/src/index.d.ts",
+  "version": "2.0.5"
+}

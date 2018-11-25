@@ -1,0 +1,19 @@
+{
+  "name": "kazininode",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "server": "node server.js",
+    "transaction-service": "node transaction-service.js",
+    "mint-service": "node mint-service.js",
+    "wallet-service": "node wallet-service.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {},
+  "devDependencies": {
+    "0x.js": "^2.0.4"
+  }
+}

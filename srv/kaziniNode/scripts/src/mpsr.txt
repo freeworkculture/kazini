@@ -1,0 +1,164 @@
+0xea1ba0234abaa9162a0efc3cf8ab53cc60eda9f4 (Bal: NaN ETH, Nonce: undefined)
+0xb9936d1c0a7f27aed62f39116e8e7b89b1fa6d68 (Bal: NaN ETH, Nonce: undefined)
+0x0bc7d29916884987aa81aba35118ac50a2c012b4 (Bal: NaN ETH, Nonce: undefined)
+
+{
+"url":"https://accounts.ecitizen.go.ke/login"
+}
+
+{
+    "sessionId": "ec821edef3607af12ebe8e6a9328c9f3",
+    "status": 0,
+    "value": null
+}
+
+localhost:9515/session/ec821edef3607af12ebe8e6a9328c9f3/element
+
+{"using":"name","value":"auth[username]"}
+
+{
+    "sessionId": "ec821edef3607af12ebe8e6a9328c9f3",
+    "status": 0,
+    "value": {
+        "ELEMENT": "0.0011672604591832503-1"
+    }
+}
+
+{"using":"name","value":"auth[pwd]"}
+
+{
+    "sessionId": "ec821edef3607af12ebe8e6a9328c9f3",
+    "status": 0,
+    "value": {
+        "ELEMENT": "0.0011672604591832503-2"
+    }
+}
+
+localhost:9515/session/ec821edef3607af12ebe8e6a9328c9f3/element/0.0011672604591832503-1/value
+{"value":["cohabo@gmail.com"]}
+
+localhost:9515/session/ec821edef3607af12ebe8e6a9328c9f3/element/0.0011672604591832503-2/value
+
+{"value":["Nakhumicha:1891"]}
+
+localhost:9515/session/ec821edef3607af12ebe8e6a9328c9f3/element
+
+{"using":"css selector","value":"#main > div > form > div.form-submit-section > input"}
+
+{
+    "sessionId": "ec821edef3607af12ebe8e6a9328c9f3",
+    "status": 0,
+    "value": {
+        "ELEMENT": "0.0011672604591832503-3"
+    }
+}
+
+localhost:9515/session/ec821edef3607af12ebe8e6a9328c9f3/element/0.0011672604591832503-2/value
+
+{"value":["Nakhumicha:1891"]}
+
+localhost:9515/session/ec821edef3607af12ebe8e6a9328c9f3/element/0.0011672604591832503-3/submit
+
+localhost:9515/session/ec821edef3607af12ebe8e6a9328c9f3/element
+
+{"using":"css selector","value":"#bloglist > div:nth-child(2) > div > div.panel-heading > div.pull-right.text-left > a"}
+
+{
+    "sessionId": "ec821edef3607af12ebe8e6a9328c9f3",
+    "status": 0,
+    "value": {
+        "ELEMENT": "0.2795743065411238-1"
+    }
+}
+
+localhost:9515/session/ec821edef3607af12ebe8e6a9328c9f3/element/0.2795743065411238-1/click
+
+{
+    "sessionId": "ec821edef3607af12ebe8e6a9328c9f3",
+    "status": 0,
+    "value": null
+}
+
+localhost:9515/session/ec821edef3607af12ebe8e6a9328c9f3/element
+
+{"using":"css selector","value":"body > div.container > div > div.col-sm-10.col-md-10.col-lg-10 > div:nth-child(4) > div.panel-heading.clearfix > div > a.btn.btn-sm.btn-primary"}
+
+{
+    "sessionId": "ec821edef3607af12ebe8e6a9328c9f3",
+    "status": 0,
+    "value": {
+        "ELEMENT": "0.47320899311141496-1"
+    }
+}
+
+localhost:9515/session/ec821edef3607af12ebe8e6a9328c9f3/element/0.47320899311141496-1/click
+
+{
+    "sessionId": "ec821edef3607af12ebe8e6a9328c9f3",
+    "status": 0,
+    "value": null
+}
+
+localhost:9515/session/ec821edef3607af12ebe8e6a9328c9f3/element
+
+{"using":"css selector","value":"#vue-root > div > div:nth-child(3) > div > table > tbody > tr:nth-child(8) > td:nth-child(3) > a"}
+
+{
+    "sessionId": "ec821edef3607af12ebe8e6a9328c9f3",
+    "status": 0,
+    "value": {
+        "ELEMENT": "0.719133889958923-1"
+    }
+}
+
+localhost:9515/session/ec821edef3607af12ebe8e6a9328c9f3/element/0.719133889958923-1/click
+
+{
+    "sessionId": "ec821edef3607af12ebe8e6a9328c9f3",
+    "status": 0,
+    "value": null
+}
+
+localhost:9515/session/ec821edef3607af12ebe8e6a9328c9f3/element
+
+{"using":"css selector","value":"#vue-root > div > div.modal-mask > div > div > div:nth-child(2) > div.modal-footer > a"}
+
+{
+    "sessionId": "ec821edef3607af12ebe8e6a9328c9f3",
+    "status": 0,
+    "value": {
+        "ELEMENT": "0.719133889958923-2"
+    }
+}
+
+localhost:9515/session/ec821edef3607af12ebe8e6a9328c9f3/element/0.719133889958923-2/click
+
+{
+    "sessionId": "ec821edef3607af12ebe8e6a9328c9f3",
+    "status": 0,
+    "value": null
+}
+
+localhost:9515/session/ec821edef3607af12ebe8e6a9328c9f3/element
+
+{"using":"css selector","value":"#vue-root > div.panel-body > div > div > div.panel-body > div:nth-child(2) > button"}
+
+{
+    "sessionId": "ec821edef3607af12ebe8e6a9328c9f3",
+    "status": 0,
+    "value": {
+        "ELEMENT": "0.8939723936714821-1"
+    }
+}
+
+localhost:9515/session/ec821edef3607af12ebe8e6a9328c9f3/element/0.8939723936714821-1/click
+
+{
+    "sessionId": "ec821edef3607af12ebe8e6a9328c9f3",
+    "status": 0,
+    "value": null
+}
+
+
+
+

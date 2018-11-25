@@ -369,7 +369,7 @@ contract ERC721 is BaseController, IERC721, IERC721Metadata, IERC721Enumerable {
         uint256 _tokenId,
         string _tokenURI
         )
-        public returns (bool)
+        public /* MODIFIER ONLY DOER */ returns (bool)
         {
             return erc721metadata.mintWithTokenURI(erc721data, _to, _tokenId, _tokenURI);
             }

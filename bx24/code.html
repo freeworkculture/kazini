@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+<head>
+    BX24 Rest Calls
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min.js"></script>
+<script src="//api.bitrix24.com/api/v1/"></script>
+</head>
+<body>
+</body>
+</html>
+<script type="text/javascript">
+
+    BX24.init(function() {
+
+        console.log('Init done!', BX24.isAdmin());
+        
+        });
+    
+    async function f() {
+
+        let promise = new Promise(() => {
+        BX24.callMethod(() => 'user.current', {})
+        });
+
+        let result = await promise; // wait till the promise resolves (*)
+
+        alert(result); // "done!"
+        }
+
+        f();
+
+    var userId = 1;
+    BX24.callMethod('user.current', {}, function(result) {
+        userId = result.data().ID;
+        console.info(result.data());
+
+    });
+
+    BX24.callMethod(
+            "crm.requisite.fields", 
+            {}, 
+            function(result) 
+            {
+                if(result.error())
+                    console.error(result.error());
+                else
+                    console.dir(result.data());
+            }
+        );
+
+    BX24.callMethod(
+        "crm.requisite.bankdetail.fields", 
+        {}, 
+        function(result) 
+        {
+            if(result.error())
+                console.error(result.error());
+            else
+                console.dir(result.data());
+        }
+    );
+
+    BX24.callMethod(
+        "crm.invoice.fields",
+        {},
+        function(result)
+        {
+            if(result.error())
+                console.error(result.error());
+            else
+                console.dir(result.data());
+        }
+        );
+
+    var invoiceId = prompt("Enter Invoice ID to Retrieve");
+    BX24.callMethod(
+        "crm.invoice.get",
+        { "ID": invoiceId },
+        function(result)
+        {
+            if(result.error())
+                console.error(result.error());
+            else
+                console.dir(result.data());
+        }
+        );
+
+    //Search entity details by the template ID
+    BX24.callMethod(
+            "crm.requisite.list", 
+            { 
+                order: { "DATE_CREATE": "ASC" },
+                filter: { "PRESET_ID": "1"},
+                select: [ "ID", "ENTITY_TYPE_ID", "ENTITY_ID", "NAME"]				
+            }, 
+            function(result) 
+            {
+                if(result.error())
+                    console.error(result.error());
+                else
+                {
+                    console.dir(result.data());			
+                    if(result.more())
+                        result.next();						
+                }
+            }
+        );
+
+    //Search bank details by the Entity ID
+    var ID = userId;
+    BX24.callMethod(
+            "crm.requisite.bankdetail.list", 
+            { 
+                order: { "DATE_CREATE": "ASC" },
+                filter: { "ENTITY_ID": userId},
+                select: [ "ID", "NAME"]				
+            }, 
+            function(result) 
+            {
+                if(result.error())
+                    console.error(result.error());
+                else
+                {
+                    console.dir(result.data());			
+                    if(result.more())
+                        result.next();						
+                }
+            }
+        );
+
+    var bankId = ID;
+    BX24.callMethod(
+        "crm.requisite.bankdetail.get", 
+        { id: bankId }, 
+        function(result) 
+        {
+            if(result.error())
+                console.error(result.error());
+            else
+                console.info(userId);
+                console.dir(result.data());
+        }
+    );
+
+    // var id = prompt("Enter ID of Bank Details to Update");
+    // var entityId = prompt("Enter Y/N to Update Active Status");
+    // BX24.callMethod(
+    //     "crm.requisite.bankdetail.update", 
+    //     { 
+    //         id: id,
+    //         fields:
+    //         { 
+    //             "ENTITY_ID": 8,
+    //             "ACTIVE" : entityId
+    //         }		
+    //     }, 
+    //     function(result) 
+    //     {
+    //         if(result.error())
+    //             console.error(result.error());
+    //         else
+    //         {
+    //             console.info(result.data());						
+    //         }
+    //     }
+    // );
+
+    // // BX24.callMethod(
+    // //     "crm.requisite.bankdetail.add", 
+    // //     {
+    // //         fields:
+    // //         { 
+    // //             "ENTITY_ID": 1,
+    // //             "COUNTRY_ID":1,
+    // //             "NAME":"Bank details",
+    // //             "XML_ID":"1e4641fd-2dd9-31e6-b2f2-105056c00008",
+    // //             "ACTIVE":"Y",
+    // //             "SORT":100			
+    // //         }
+    // //     }, 
+    // //     function(result) 
+    // //     {
+    // //         if(result.error())
+    // //             console.error(result.error());
+    // //         else
+    // //             console.info("Bank details with ID is created" + result.data());
+    // //     }
+    // // );
+
+    //     var id = prompt("Enter Bank Detail ID");
+    //     BX24.callMethod(
+    //         "crm.requisite.bankdetail.get", 
+    //         { id: id }, 
+    //         function(result) 
+    //         {
+    //             if(result.error())
+    //                 console.error(result.error());
+    //             else
+    //                 console.dir(result.data());
+    //         }
+    //     );
+
+
+
+</script>

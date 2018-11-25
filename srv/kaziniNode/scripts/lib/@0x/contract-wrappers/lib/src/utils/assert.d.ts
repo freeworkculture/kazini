@@ -1,0 +1,33 @@
+import { Schema } from '@0x/json-schemas';
+import { Order } from '@0x/types';
+import { BigNumber } from '@0x/utils';
+import { Web3Wrapper } from '@0x/web3-wrapper';
+import { Provider } from 'ethereum-types';
+export declare const assert: {
+    isValidSignatureAsync(provider: Provider, orderHash: string, signature: string, signerAddress: string): Promise<void>;
+    isValidSubscriptionToken(variableName: string, subscriptionToken: string): void;
+    isSenderAddressAsync(variableName: string, senderAddressHex: string, web3Wrapper: Web3Wrapper): Promise<void>;
+    ordersCanBeUsedForForwarderContract(orders: Order[], etherTokenAddress: string): void;
+    feeOrdersCanBeUsedForForwarderContract(orders: Order[], zrxTokenAddress: string, etherTokenAddress: string): void;
+    allTakerAddressesAreNull(orders: Order[]): void;
+    allMakerAssetDatasAreErc20Token(orders: Order[], tokenAddress: string): void;
+    allTakerAssetDatasAreErc20Token(orders: Order[], tokenAddress: string): void;
+    ordersHaveAtMostOneUniqueValueForProperty(orders: Order[], propertyName: string, value?: any): void;
+    isBigNumber(variableName: string, value: BigNumber): void;
+    isValidBaseUnitAmount(variableName: string, value: BigNumber): void;
+    isString(variableName: string, value: string): void;
+    isFunction(variableName: string, value: any): void;
+    isHexString(variableName: string, value: string): void;
+    isETHAddressHex(variableName: string, value: string): void;
+    doesBelongToStringEnum(variableName: string, value: string, stringEnum: any): void;
+    hasAtMostOneUniqueValue(value: any[], errMsg: string): void;
+    isNumber(variableName: string, value: number): void;
+    isBoolean(variableName: string, value: boolean): void;
+    isWeb3Provider(variableName: string, value: any): void;
+    doesConformToSchema(variableName: string, value: any, schema: Schema, subSchemas?: Schema[] | undefined): void;
+    isWebUri(variableName: string, value: any): void;
+    isUri(variableName: string, value: any): void;
+    assert(condition: boolean, message: string): void;
+    typeAssertionMessage(variableName: string, type: string, value: any): string;
+};
+//# sourceMappingURL=assert.d.ts.map

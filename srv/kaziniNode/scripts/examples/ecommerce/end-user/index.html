@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html ng-app="end-user">
+<head>
+    <title>End User</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.1/angular.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        angular.module('end-user', []).controller('ProductController', ProductController);
+
+        var productService = io.connect('/product');
+        var purchaseService = io.connect('/purchase');
+        var userService = io.connect('/user');
+
+        function ProductController($scope) {
+            userService.emit('create', {}, function(err, data) {
+                $scope.user = data;
+                $scope.$digest();
+            });
+
+            list();
+
+            function list() {
+                productService.emit('list', function(err, data) {
+                    $scope.products = data;
+                    $scope.$digest();
+                });
+            }
+
+            $scope.purchase = function(id) {
+                purchaseService.emit('buy', { userId: $scope.user.id, productId: id }, function(err, data) {
+                    if (err) return;
+
+                    list();
+                    $scope.user = data.user;
+                });
+            };
+
+            productService.on('update', function(data) {
+                $scope.products = data;
+                $scope.$digest();
+            });
+        }
+    </script>
+</head>
+<body class="container" ng-controller="ProductController">
+<h2>
+    <span class="label label-default">User #{{user.id}}</span>
+    <span class="label label-success">Balance ${{user.balance}}</span>
+</h2>
+
+<h1>Products</h1>
+<div ng-repeat="product in products | orderBy:'-id' track by product.id" class="col-xs-2">
+    <p><strong>{{product.name || 'a' }}</strong></p>
+    <img class="img-thumbnail" ng-src="http://lorempixel.com/100/100/food/{{product.id % 10}}/" alt=""/>
+    <p>{{product.stock}} in stock</p>
+    <button type="button" class="btn btn-sm" ng-class="{'btn-success': user.balance >= product.price}" ng-disabled="user.balance < product.price" ng-click="purchase(product.id)" ng-style="{'visibility': product.stock > 0 ? 'visible' : 'hidden' }">
+        Buy &mdash; ${{product.price}}
+    </button>
+</div>
+</body>
+</html>

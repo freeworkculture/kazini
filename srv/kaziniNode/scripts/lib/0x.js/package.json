@@ -1,0 +1,126 @@
+{
+  "_from": "0x.js@^2.0.4",
+  "_id": "0x.js@2.0.4",
+  "_inBundle": false,
+  "_integrity": "sha512-1QmTzs3l3Ic77xv9OD79K0BapYWM7YCfD74opTULGRqgdSeoJQLaTChMbrjEdRLPj68AyjvBN4aix1WOrBuFrQ==",
+  "_location": "/0x.js",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "range",
+    "registry": true,
+    "raw": "0x.js@^2.0.4",
+    "name": "0x.js",
+    "escapedName": "0x.js",
+    "rawSpec": "^2.0.4",
+    "saveSpec": null,
+    "fetchSpec": "^2.0.4"
+  },
+  "_requiredBy": [
+    "#DEV:/",
+    "#USER"
+  ],
+  "_resolved": "https://registry.npmjs.org/0x.js/-/0x.js-2.0.4.tgz",
+  "_shasum": "6246f4289e27e70b4943a12e00355747e3f1f4e8",
+  "_spec": "0x.js@^2.0.4",
+  "_where": "C:\\Users\\ohabo\\Repos\\kazini\\srv\\kaziniNode\\scripts\\lib",
+  "bugs": {
+    "url": "https://github.com/0xProject/0x-monorepo/issues"
+  },
+  "bundleDependencies": false,
+  "config": {
+    "postpublish": {
+      "assets": [
+        "packages/0x.js/_bundles/index.js",
+        "packages/0x.js/_bundles/index.min.js"
+      ]
+    }
+  },
+  "dependencies": {
+    "@0x/assert": "^1.0.17",
+    "@0x/base-contract": "^3.0.6",
+    "@0x/contract-wrappers": "^4.0.2",
+    "@0x/order-utils": "^3.0.2",
+    "@0x/order-watcher": "^2.2.4",
+    "@0x/subproviders": "^2.1.4",
+    "@0x/types": "^1.2.1",
+    "@0x/typescript-typings": "^3.0.4",
+    "@0x/utils": "^2.0.5",
+    "@0x/web3-wrapper": "^3.1.4",
+    "@types/web3-provider-engine": "^14.0.0",
+    "ethereum-types": "^1.1.2",
+    "ethers": "~4.0.4",
+    "lodash": "^4.17.5",
+    "web3-provider-engine": "14.0.6"
+  },
+  "deprecated": false,
+  "description": "A javascript library for interacting with the 0x protocol",
+  "devDependencies": {
+    "@0x/abi-gen": "^1.0.16",
+    "@0x/abi-gen-wrappers": "^1.0.5",
+    "@0x/contract-addresses": "^1.1.0",
+    "@0x/dev-utils": "^1.0.17",
+    "@0x/migrations": "^2.0.4",
+    "@0x/tslint-config": "^1.0.10",
+    "@types/lodash": "4.14.104",
+    "@types/mocha": "^2.2.42",
+    "@types/node": "*",
+    "@types/sinon": "^2.2.2",
+    "awesome-typescript-loader": "^5.2.1",
+    "chai": "^4.0.1",
+    "chai-as-promised": "^7.1.0",
+    "chai-bignumber": "^2.0.1",
+    "copyfiles": "^2.0.0",
+    "dirty-chai": "^2.0.1",
+    "make-promises-safe": "^1.1.0",
+    "mocha": "^4.1.0",
+    "npm-run-all": "^4.1.2",
+    "nyc": "^11.0.1",
+    "opn-cli": "^3.1.0",
+    "shx": "^0.2.2",
+    "sinon": "^4.0.0",
+    "source-map-support": "^0.5.0",
+    "tslint": "5.11.0",
+    "typedoc": "0.13.0",
+    "typescript": "3.0.1",
+    "uglifyjs-webpack-plugin": "^2.0.1",
+    "webpack": "^4.20.2"
+  },
+  "engines": {
+    "node": ">=6.12"
+  },
+  "gitHead": "fe1b7f15e8531615a54e46581cb734e635d3c755",
+  "homepage": "https://github.com/0xProject/0x-monorepo#readme",
+  "keywords": [
+    "0x.js",
+    "0xproject",
+    "ethereum",
+    "tokens",
+    "exchange"
+  ],
+  "license": "Apache-2.0",
+  "main": "lib/index.js",
+  "name": "0x.js",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/0xProject/0x-monorepo.git"
+  },
+  "scripts": {
+    "build": "yarn build:all",
+    "build:all": "run-p build:umd:prod build:commonjs",
+    "build:ci": "yarn build:commonjs",
+    "build:commonjs": "tsc -b",
+    "build:umd:prod": "NODE_ENV=production webpack",
+    "clean": "shx rm -rf _bundles lib test_temp src/generated_contract_wrappers generated_docs",
+    "coverage:report:lcov": "nyc report --reporter=text-lcov > coverage/lcov.info",
+    "docs:json": "typedoc --excludePrivate --excludeExternals --target ES5 --tsconfig typedoc-tsconfig.json --json $JSON_FILE_PATH $PROJECT_FILES",
+    "lint": "tslint --format stylish --project .",
+    "rebuild_and_test": "run-s build test",
+    "test:circleci": "run-s test:coverage",
+    "test:coverage": "nyc npm run test --all && yarn coverage:report:lcov"
+  },
+  "types": "lib/index.d.ts",
+  "version": "2.0.4"
+}

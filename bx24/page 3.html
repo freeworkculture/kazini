@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    BX24 Rest Calls
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min.js"></script>
+    <script src="//api.bitrix24.com/api/v1/"></script>
+</head>
+
+<body>
+</body>
+
+</html>
+<script type="text/javascript">
+
+    BX24.init(function () {
+
+        console.log('Init done!', BX24.isAdmin());
+
+    });
+
+
+    var userId = 1;
+    BX24.callMethod('user.current', {}, function (result) {
+        userId = result.data().ID;
+        console.info(result.data());
+
+    });
+
+    BX24.callMethod(
+        "crm.requisite.fields",
+        {},
+        function (result) {
+            if (result.error())
+                console.error(result.error());
+            else
+                console.dir(result.data());
+        }
+    );
+
+    BX24.callMethod(
+        "crm.requisite.bankdetail.fields",
+        {},
+        function (result) {
+            if (result.error())
+                console.error(result.error());
+            else
+                console.dir(result.data());
+        }
+    );
+
+    //Search bank details by the Entity ID
+    var ID = userId;
+    BX24.callMethod(
+        "crm.requisite.bankdetail.list",
+        {
+            order: { "DATE_CREATE": "ASC" },
+            filter: { "ENTITY_ID": userId },
+            select: ["ID", "NAME"]
+        },
+        function (result) {
+            if (result.error())
+                console.error(result.error());
+            else {
+                console.dir(result.data());
+                if (result.more())
+                    result.next();
+            }
+        }
+    );
+
+    var bankId = ID;
+    BX24.callMethod(
+        "crm.requisite.bankdetail.get",
+        { id: bankId },
+        function (result) {
+            if (result.error())
+                console.error(result.error());
+            else
+                console.info(userId);
+            console.dir(result.data());
+        }
+    );
+
+    var id = prompt("Enter ID of Bank Details to Update");
+    var entityId = prompt("Enter Y/N to Update Active Status");
+    BX24.callMethod(
+        "crm.requisite.bankdetail.update",
+        {
+            id: id,
+            fields:
+            {
+                "ENTITY_ID": 8,
+                "ACTIVE": entityId
+            }
+        },
+        function (result) {
+            if (result.error())
+                console.error(result.error());
+            else {
+                console.info(result.data());
+            }
+        }
+    );
+
+    BX24.callMethod(
+        "crm.requisite.bankdetail.add",
+        {
+            fields:
+            {
+                "ENTITY_ID": 1,
+                "COUNTRY_ID": 1,
+                "NAME": "Bank details",
+                "XML_ID": "1e4641fd-2dd9-31e6-b2f2-105056c00008",
+                "ACTIVE": "Y",
+                "SORT": 100
+            }
+        },
+        function (result) {
+            if (result.error())
+                console.error(result.error());
+            else
+                console.info("Bank details with ID is created" + result.data());
+        }
+    );
+
+    // The ERC-20 ABI
+    var abi = [
+        "function totalSupply() external view returns (uint256)",
+        "function balanceOf(address owner) external view returns (uint)",
+        "function transfer(address to, uint amount) returns (bool)",
+        "function allowance(address owner, address spender) external view returns (uint256)",
+        "function approve(address spender, uint256 value) external returns (bool)",
+        "function approveAndCall(address from, uint256 tokens, address token, bytes data) public returns (bool success)",
+        "function transferFrom(address from, address to, uint256 value) external returns (bool)",
+        "function totalSupplyAt(uint _blockNumber) external view returns(uint)",
+        "function balanceOfAt(address _owner, uint _blockNumber) external view returns (uint)",
+        "event Transfer(address indexed from, address indexed to, uint amount)",
+        "event Approval(address indexed owner, address indexed spender, uint256 value)"
+    ];
+
+    // Connect to the Ethereum mainnet
+    var provider = ethers.providers.getDefaultProvider('homestead');
+
+    // Load our wallet and connect to the provider
+    var wallet = new ethers.Wallet(privateKey, provider);
+
+    // Connect to "Pi Day N00b token" Contract (ERC-20 compliant)
+    var address = "0x334eec1482109bd802d9e72a447848de3bcc1063";
+    var contract = new ethers.Contract(address, abi, wallet);
+
+    // Listen for Transfer events (triggered after the transaction)
+    contract.ontransfer = function (from, to, amount) {
+        var text = ethers.utils.formatEther(amount);
+        console.log("Transfer");
+        console.log("  From:   ", from);
+        console.log("  To:     ", to);
+        console.log("  Amount: ", text);
+        // Transfer
+        //  From:   0x59DEa134510ebce4a0c7146595dc8A61Eb9D0D79
+        //  To:     0x851b9167B7cbf772D38eFaf89705b35022880A07
+        //  Amount: 1.0
+    }
+
+    // Get the symbol of the wallet before the transfer
+    contract.symbol(wallet.address).then(function (symbol) {
+        // var text = ethers.utils.formatEther(symbol);
+        console.log("SYMBOL:", symbol);
+        // Balance Before: 3.141592653589793238
+    })
+
+    // Get the name of the wallet before the transfer
+    contract.name(wallet.address).then(function (name) {
+        // var text = ethers.utils.formatEther(name);
+        console.log("NAME:", symbol);
+        // Balance Before: 3.141592653589793238
+    })
+
+    // Get the balance of the wallet before the transfer
+    contract.decimals(wallet.address).then(function (decimals) {
+        var text = ethers.utils.formatEther(decimals);
+        console.log("DECIMALS:", text);
+        // Balance Before: 3.141592653589793238
+    })
+
+
+    // Get the balance of the wallet before the transfer
+    contract.balanceOf(wallet.address).then(function (balance) {
+        var text = ethers.utils.formatEther(balance);
+        console.log("Balance Before:", text);
+        // Balance Before: 3.141592653589793238
+    })
+
+    // Transfer 1.0 token to another address (we have 18 decimals) // WILL COLLECT TARGET ADDRESS THROUGH WEBFORM
+    var targetAddress = "0x851b9167B7cbf772D38eFaf89705b35022880A07";
+    var amount = ethers.utils.parseUnits('1.0', 18);
+    contract.transfer(targetAddress, amount).then(function (tx) {
+        // Show the pending transaction
+        console.log(tx);
+        // {
+        //     hash: 0x820cc57bc7...0dbe181ba1,
+        //     gasPrice: BigNumber("0x2540be400"),
+        //     gasLimit: BigNumber("0x16e360"),
+        //     value: BigNumber("0x0"),
+        //     data: "0xa9059cbb" + 
+        //           "000000000000000000000000851b9167" +
+        //           "b7cbf772d38efaf89705b35022880a07" +
+        //           "00000000000000000000000000000000" +
+        //           "00000000000000000de0b6b3a7640000",
+        //     to: "0x334eec1482109Bd802D9e72A447848de3bCc1063",
+        //     v: 37,
+        //     r: "0x3fce72962a...a19b611de2",
+        //     s: "0x16f9b70010...0b67a5d396",
+        //     chainId: 1
+        //     from: "0x59DEa134510ebce4a0c7146595dc8A61Eb9D0D79"
+        // }
+        // Wait until the transaction is mined...
+        return tx.wait();
+    }).then(function (tx) {
+        console.log('Mined Transaction in block: ', tx.blockNumber);
+        // Get the balance of the wallet after the transfer
+        contract.balanceOf(wallet.address).then(function (balance) {
+            var text = ethers.utils.formatUnits(balance, 18);
+            console.log("Balance After:", text);
+            // Balance After: 2.141592653589793238
+        })
+    });
+
+    // THIS VIEWS AND CALLS ARE FOR PAGE SETTINGS
+    // APPROVE A SPENDER// WILL COLLECT TARGET ADDRESS AND AMOUNT THROUGH WEBFORM
+    // 0 == NO AMOUNT APPROVED, 0> == LIMITED AMOUNT APPROVED, 2**256 - 1 == UNLIMITED AMOUNT APPROVED
+    var targetAddress = "0x851b9167B7cbf772D38eFaf89705b35022880A07";
+    var amount = ethers.utils.parseUnits('1.0', 18);
+    contract.approve(targetAddress, amount).then(function (tx, targetAddress) {
+        // Show the pending transaction
+        console.log(tx);
+        // {
+        //     hash: 0x820cc57bc7...0dbe181ba1,
+        //     gasPrice: BigNumber("0x2540be400"),
+        //     gasLimit: BigNumber("0x16e360"),
+        //     value: BigNumber("0x0"),
+        //     data: "0xa9059cbb" + 
+        //           "000000000000000000000000851b9167" +
+        //           "b7cbf772d38efaf89705b35022880a07" +
+        //           "00000000000000000000000000000000" +
+        //           "00000000000000000de0b6b3a7640000",
+        //     to: "0x334eec1482109Bd802D9e72A447848de3bCc1063",
+        //     v: 37,
+        //     r: "0x3fce72962a...a19b611de2",
+        //     s: "0x16f9b70010...0b67a5d396",
+        //     chainId: 1
+        //     from: "0x59DEa134510ebce4a0c7146595dc8A61Eb9D0D79"
+        // }
+        // Wait until the transaction is mined...
+        return tx.wait();
+    }).then(function (tx, targetAddress) {
+        contract.allowance(wallet.address, targetAddress).then(function (tx) {
+            // Show the pending transaction
+            console.log(tx);
+            // {
+            //     hash: 0x820cc57bc7...0dbe181ba1,
+            //     gasPrice: BigNumber("0x2540be400"),
+            //     gasLimit: BigNumber("0x16e360"),
+            //     value: BigNumber("0x0"),
+            //     data: "0xa9059cbb" + 
+            //           "000000000000000000000000851b9167" +
+            //           "b7cbf772d38efaf89705b35022880a07" +
+            //           "00000000000000000000000000000000" +
+            //           "00000000000000000de0b6b3a7640000",
+            //     to: "0x334eec1482109Bd802D9e72A447848de3bCc1063",
+            //     v: 37,
+            //     r: "0x3fce72962a...a19b611de2",
+            //     s: "0x16f9b70010...0b67a5d396",
+            //     chainId: 1
+            //     from: "0x59DEa134510ebce4a0c7146595dc8A61Eb9D0D79"
+            // }
+            // Wait until the transaction is mined...
+            return tx.wait();
+        })
+    });
+
+
+</script>

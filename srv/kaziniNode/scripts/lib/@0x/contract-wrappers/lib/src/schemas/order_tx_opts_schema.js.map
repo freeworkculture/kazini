@@ -1,0 +1,1 @@
+{"version":3,"file":"order_tx_opts_schema.js","sourceRoot":"","sources":["../../../src/schemas/order_tx_opts_schema.ts"],"names":[],"mappings":";;AAAa,QAAA,iBAAiB,GAAG;IAC7B,EAAE,EAAE,cAAc;IAClB,KAAK,EAAE,CAAC,EAAE,IAAI,EAAE,SAAS,EAAE,CAAC;IAC5B,UAAU,EAAE;QACR,cAAc,EAAE,EAAE,IAAI,EAAE,SAAS,EAAE;KACtC;IACD,IAAI,EAAE,QAAQ;CACjB,CAAC"}

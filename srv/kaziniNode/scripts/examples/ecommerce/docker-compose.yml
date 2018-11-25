@@ -1,0 +1,85 @@
+version: '2'
+services:
+  base:
+    build: .
+    image: dashersw/cote-workshop
+    restart: on-failure
+    environment:
+      - PG=true
+
+  lb:
+    image: dockercloud/haproxy
+    links:
+      - admin
+      - end-user
+      - monitoring
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - 80:80
+      - 443:443
+    restart: on-failure
+
+  admin:
+    extends: base
+    command: node admin/server.js
+    environment:
+      - VIRTUAL_HOST=local-admin.cotejs.org, ws://local-admin.cotejs.org
+      - BALANCE=source
+    ports:
+      - 5000:5000
+
+  end-user:
+    extends: base
+    command: node end-user/server.js
+    environment:
+      - VIRTUAL_HOST=local-end-user.cotejs.org, ws://local-end-user.cotejs.org
+      - BALANCE=source
+    ports:
+      - 5001:5001
+
+  monitoring:
+    extends: base
+    command: node monitor.js
+    environment:
+      - PORT=80
+      - VIRTUAL_HOST=local-monitoring.cotejs.org
+    ports:
+      - 5555:5555
+
+  payment-service:
+    extends: base
+    command: node services/payment-service.js
+    depends_on:
+      - db
+
+  product-service:
+    extends: base
+    command: node services/product-service.js
+    depends_on:
+      - db
+
+  purchase-service:
+    extends: base
+    command: node services/purchase-service.js
+    depends_on:
+      - db
+
+  user-service:
+    extends: base
+    command: node services/user-service.js
+    depends_on:
+      - db
+
+  db:
+    extends: base
+    command: node init-db.js
+    depends_on:
+      - postgres
+
+  postgres:
+    image: sameersbn/postgresql:9.6-1
+    environment:
+      - DB_USER=cote
+      - DB_PASS=ohgath2ig8eoP8
+      - DB_NAME=cote

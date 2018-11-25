@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <script type="text/javascript" src="../lib/0x.min.js"></script>
+    <script src='../lib/bignumber.min.js'></script>
+</head>
+<body>
+</body>
+</html>
+<script type="text/javascript">
+
+function testETH(){
+    console.log('starting...');
+    var Web3 = require('web3');
+    var web3 = new Web3();
+    web3.setProvider(new web3.providers.HttpProvider("https://ropsten.infura.io/d0342720ca304468ab0e1075e581eea9d0342720ca304468ab0e1075e581eea9"));
+
+    RPCSubprovider = new ZeroEx(new ZeroEx.RPCSubprovider);
+
+    Web3ProviderEngine = new ZeroEx(new ZeroEx.Web3ProviderEngine);
+
+    MnemonicWalletSubprovider = new ZeroEx(new ZeroEx.MnemonicWalletSubprovider);
+
+export const mnemonicWallet = new MnemonicWalletSubprovider({
+    mnemonic: MNEMONIC,
+    baseDerivationPath: BASE_DERIVATION_PATH,
+});
+
+export const pe = new Web3ProviderEngine();
+pe.addProvider(mnemonicWallet);
+pe.addProvider(new RPCSubprovider(NETWORK_CONFIGS.rpcUrl));
+pe.start();
+
+export const providerEngine = pe;
+
+</script>

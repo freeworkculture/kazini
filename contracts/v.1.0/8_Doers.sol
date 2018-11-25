@@ -472,8 +472,9 @@ contract DoersHeader is UserDefined {
     event LogSigned(address indexed _this, address indexed _sender, address indexed _origin, bytes _data, bytes32 _result);
     event LogTrusted(address indexed _this, address indexed _sender, address indexed _origin, bytes _data, bytes32 _result);
     event LogRevoking(address indexed _this, address indexed _sender, address indexed _origin, bytes _data, bytes32 _result);
+    event LogOnSetbdIntention(address indexed _this, address indexed _sender, address indexed _origin, UserDefined.Intention _service);
+    event LogFlipIntention(address indexed _this, address indexed _sender, address indexed _origin, UserDefined.Intention _service);
     event LogSetbdi(address indexed _this, address indexed _sender, address indexed _origin, bytes32 _keyid, bytes32 _uuid, bytes32 _callid);
-
 
 /* Modifiers */
 
@@ -1007,10 +1008,11 @@ contract Doers is TimedUpdatableProxyImplementation, DoersData {
     
     function flipIntention()
     public returns  (bool) {
+        bdi.intentions[true] = bdi.intentions[false];
         bdi.intentions[true].state = UserDefined.IS.RESERVED;
-        bdi.intentions[true].service = bdi.intentions[false].service;
         ERC721(mpsr).mintWithTokenURI(this, bdi.intentions[true].payout, bdi.intentions[true].uri);
         delete bdi.intentions[false];
+        emit LogFlipIntention(this, msg.sender, tx.origin, bdi.intentions[true]);
         return true;
     }
     
@@ -1185,11 +1187,15 @@ contract Doers is TimedUpdatableProxyImplementation, DoersData {
     }
 
     function setbdi(UserDefined.Intention _service) public {
+        require (
+            _service.service != 0x0 &&
+            _service.payout != 0 &&
+            // HASH OF EMPTY STRING IS 0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470
+            keccak256(abi.encodePacked(_service.uri)) != keccak256(abi.encodePacked())
+        );
         bdi.intentions[false] = _service;
         bdi.intentions[false].state = UserDefined.IS.INACTIVE;
-        // Collector(creator.peana()).updateLog(
-        //     keccak256("setbdi(bytes1,Desire)"),
-        //     true);
+        emit LogOnSetbdIntention(this,msg.sender,tx.origin,_service);
     }
 
 /* End of Doers Contract */

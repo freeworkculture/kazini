@@ -1,0 +1,101 @@
+{
+  "_from": "@0x/web3-wrapper@^3.1.4",
+  "_id": "@0x/web3-wrapper@3.1.4",
+  "_inBundle": false,
+  "_integrity": "sha512-15hEeXFRZxcCSHTMOBx2sZRwtzwo+/33xx03+Yxspg6+3CSQuE7J4s57H84EuEerrm2smM7f2dMrWsrz3G5V6Q==",
+  "_location": "/@0x/web3-wrapper",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "range",
+    "registry": true,
+    "raw": "@0x/web3-wrapper@^3.1.4",
+    "name": "@0x/web3-wrapper",
+    "escapedName": "@0x%2fweb3-wrapper",
+    "scope": "@0x",
+    "rawSpec": "^3.1.4",
+    "saveSpec": null,
+    "fetchSpec": "^3.1.4"
+  },
+  "_requiredBy": [
+    "/0x.js",
+    "/@0x/base-contract",
+    "/@0x/contract-wrappers",
+    "/@0x/fill-scenarios",
+    "/@0x/order-utils",
+    "/@0x/order-watcher",
+    "/@0x/subproviders"
+  ],
+  "_resolved": "https://registry.npmjs.org/@0x/web3-wrapper/-/web3-wrapper-3.1.4.tgz",
+  "_shasum": "3a5aeb874e4d19dce8fd1abb6e9f58da72ef9a6c",
+  "_spec": "@0x/web3-wrapper@^3.1.4",
+  "_where": "C:\\Users\\ohabo\\Repos\\kazini\\srv\\kaziniNode\\node_modules\\0x.js",
+  "bugs": {
+    "url": "https://github.com/0xProject/0x-monorepo/issues"
+  },
+  "bundleDependencies": false,
+  "config": {
+    "postpublish": {
+      "assets": []
+    }
+  },
+  "dependencies": {
+    "@0x/assert": "^1.0.17",
+    "@0x/json-schemas": "^2.1.1",
+    "@0x/typescript-typings": "^3.0.4",
+    "@0x/utils": "^2.0.5",
+    "ethereum-types": "^1.1.2",
+    "ethereumjs-util": "^5.1.1",
+    "ethers": "~4.0.4",
+    "lodash": "^4.17.5"
+  },
+  "deprecated": false,
+  "description": "Wraps around web3 and gives a nicer interface",
+  "devDependencies": {
+    "@0x/tslint-config": "^1.0.10",
+    "@types/ganache-core": "^2.1.0",
+    "@types/lodash": "4.14.104",
+    "chai": "^4.0.1",
+    "chai-as-promised": "^7.1.0",
+    "chai-bignumber": "^2.0.1",
+    "dirty-chai": "^2.0.1",
+    "ganache-core": "github:0xProject/ganache-core#monorepo-dep",
+    "make-promises-safe": "^1.1.0",
+    "mocha": "^4.1.0",
+    "npm-run-all": "^4.1.2",
+    "nyc": "^11.0.1",
+    "shx": "^0.2.2",
+    "tslint": "5.11.0",
+    "typedoc": "0.13.0",
+    "typescript": "3.0.1"
+  },
+  "engines": {
+    "node": ">=6.12"
+  },
+  "gitHead": "fe1b7f15e8531615a54e46581cb734e635d3c755",
+  "homepage": "https://github.com/0xProject/0x-monorepo/packages/web3-wrapper/README.md",
+  "license": "Apache-2.0",
+  "main": "lib/src/index.js",
+  "name": "@0x/web3-wrapper",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/0xProject/0x-monorepo.git"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "build:ci": "yarn build",
+    "clean": "shx rm -rf lib generated_docs",
+    "coverage:report:lcov": "nyc report --reporter=text-lcov > coverage/lcov.info",
+    "docs:json": "typedoc --excludePrivate --excludeExternals --target ES5 --tsconfig typedoc-tsconfig.json --json $JSON_FILE_PATH $PROJECT_FILES",
+    "lint": "tslint --format stylish --project .",
+    "rebuild_and_test": "run-s clean build test",
+    "run_mocha": "mocha --require source-map-support/register --require make-promises-safe lib/test/**/*_test.js --bail --exit",
+    "test": "yarn run_mocha",
+    "test:circleci": "yarn test:coverage",
+    "test:coverage": "nyc npm run test --all && yarn coverage:report:lcov"
+  },
+  "types": "lib/src/index.d.ts",
+  "version": "3.1.4"
+}

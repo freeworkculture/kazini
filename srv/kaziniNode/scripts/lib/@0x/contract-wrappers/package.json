@@ -1,0 +1,122 @@
+{
+  "_from": "@0x/contract-wrappers@^4.0.2",
+  "_id": "@0x/contract-wrappers@4.0.2",
+  "_inBundle": false,
+  "_integrity": "sha512-PrkdZxSm3fS4Q8xBzybPToPpFkHoqmSoJMbxC89ZVFz/qqBtQe9voVIuNs9XrNz4SqaIhUQt/tt63RZc5o6few==",
+  "_location": "/@0x/contract-wrappers",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "range",
+    "registry": true,
+    "raw": "@0x/contract-wrappers@^4.0.2",
+    "name": "@0x/contract-wrappers",
+    "escapedName": "@0x%2fcontract-wrappers",
+    "scope": "@0x",
+    "rawSpec": "^4.0.2",
+    "saveSpec": null,
+    "fetchSpec": "^4.0.2"
+  },
+  "_requiredBy": [
+    "/0x.js",
+    "/@0x/order-watcher"
+  ],
+  "_resolved": "https://registry.npmjs.org/@0x/contract-wrappers/-/contract-wrappers-4.0.2.tgz",
+  "_shasum": "04e3b3e8b873896669da03a0a2c65552eb7dd23a",
+  "_spec": "@0x/contract-wrappers@^4.0.2",
+  "_where": "C:\\Users\\ohabo\\Repos\\kazini\\srv\\kaziniNode\\node_modules\\0x.js",
+  "bugs": {
+    "url": "https://github.com/0xProject/0x-monorepo/issues"
+  },
+  "bundleDependencies": false,
+  "config": {
+    "postpublish": {
+      "assets": []
+    }
+  },
+  "dependencies": {
+    "@0x/abi-gen-wrappers": "^1.0.5",
+    "@0x/assert": "^1.0.17",
+    "@0x/contract-addresses": "^1.1.0",
+    "@0x/contract-artifacts": "^1.1.0",
+    "@0x/fill-scenarios": "^1.0.12",
+    "@0x/json-schemas": "^2.1.1",
+    "@0x/order-utils": "^3.0.2",
+    "@0x/types": "^1.2.1",
+    "@0x/typescript-typings": "^3.0.4",
+    "@0x/utils": "^2.0.5",
+    "@0x/web3-wrapper": "^3.1.4",
+    "ethereum-types": "^1.1.2",
+    "ethereumjs-blockstream": "6.0.0",
+    "ethereumjs-util": "^5.1.1",
+    "ethers": "~4.0.4",
+    "js-sha3": "^0.7.0",
+    "lodash": "^4.17.5",
+    "uuid": "^3.1.0"
+  },
+  "deprecated": false,
+  "description": "Smart TS wrappers for 0x smart contracts",
+  "devDependencies": {
+    "@0x/dev-utils": "^1.0.17",
+    "@0x/migrations": "^2.0.4",
+    "@0x/subproviders": "^2.1.4",
+    "@0x/tslint-config": "^1.0.10",
+    "@types/lodash": "4.14.104",
+    "@types/mocha": "^2.2.42",
+    "@types/node": "*",
+    "@types/sinon": "^2.2.2",
+    "@types/uuid": "^3.4.2",
+    "@types/web3-provider-engine": "^14.0.0",
+    "chai": "^4.0.1",
+    "chai-as-promised": "^7.1.0",
+    "chai-bignumber": "^2.0.1",
+    "dirty-chai": "^2.0.1",
+    "make-promises-safe": "^1.1.0",
+    "mocha": "^4.1.0",
+    "npm-run-all": "^4.1.2",
+    "nyc": "^11.0.1",
+    "opn-cli": "^3.1.0",
+    "shx": "^0.2.2",
+    "sinon": "^4.0.0",
+    "source-map-support": "^0.5.0",
+    "tslint": "5.11.0",
+    "typedoc": "0.13.0",
+    "typescript": "3.0.1",
+    "web3-provider-engine": "14.0.6"
+  },
+  "engines": {
+    "node": ">=6.0.0"
+  },
+  "gitHead": "fe1b7f15e8531615a54e46581cb734e635d3c755",
+  "homepage": "https://github.com/0xProject/0x-monorepo#readme",
+  "keywords": [
+    "0xproject",
+    "ethereum",
+    "tokens",
+    "exchange"
+  ],
+  "license": "Apache-2.0",
+  "main": "lib/src/index.js",
+  "name": "@0x/contract-wrappers",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/0xProject/0x-monorepo.git"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "build:ci": "yarn build",
+    "clean": "shx rm -rf _bundles lib test_temp generated_docs",
+    "coverage:report:lcov": "nyc report --reporter=text-lcov > coverage/lcov.info",
+    "docs:json": "typedoc --excludePrivate --excludeExternals --target ES5 --tsconfig typedoc-tsconfig.json --json $JSON_FILE_PATH $PROJECT_FILES",
+    "lint": "tslint --format stylish --project . --exclude **/lib/**/*",
+    "rebuild_and_test": "run-s build test",
+    "run_mocha": "mocha --require source-map-support/register --require make-promises-safe lib/test/**/*_test.js lib/test/global_hooks.js --timeout 10000 --bail --exit",
+    "test": "yarn run_mocha",
+    "test:circleci": "run-s test:coverage",
+    "test:coverage": "nyc npm run test --all && yarn coverage:report:lcov"
+  },
+  "types": "lib/src/index.d.ts",
+  "version": "4.0.2"
+}

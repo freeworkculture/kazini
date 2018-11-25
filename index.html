@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    BX24 Rest Calls
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min.js"></script>
+<script src="//api.bitrix24.com/api/v1/"></script>
+</head>
+<body>
+</body>
+</html>
+<script type="text/javascript">
+
+    BX24.init(function(){
+    console.log('Init done!', BX24.isAdmin());
+});
+
+    BX24.callMethod(
+        "crm.requisite.bankdetail.fields", 
+        {}, 
+        function(result) 
+        {
+            if(result.error())
+                console.error(result.error());
+            else
+                console.dir(result.data());
+        }
+    );

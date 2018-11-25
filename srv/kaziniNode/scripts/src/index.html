@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+	<!-- Required meta tags -->
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+	<!-- Bootstrap CSS -->
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO"
+	 crossorigin="anonymous">
+
+	<title>Hello, world!</title>
+</head>
+
+<body onload="testETH()">
+	<h1>It's me!</h1>
+	<h2>My first Ethereum Webpage</h2>
+	Account:<div id="account"></div>
+	Balance:<div id="balance"></div>
+	Allowance:<div id="balance"></div>
+
+
+	<!-- Optional JavaScript -->
+	<!-- jQuery first, then Popper.js, then Bootstrap JS -->
+	<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+	 crossorigin="anonymous"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49"
+	 crossorigin="anonymous"></script>
+	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy"
+	 crossorigin="anonymous"></script>
+	<script src="//api.bitrix24.com/api/v1/"></script>
+	<script src="./lib/iso.js/iso8601.min.js"></script>
+	<!--<script src="./scripts/k.js"></script>-->
+	<script charset="utf-8" src="./lib/ethers.js/dist/ethers.min.js" type="text/javascript"></script>
+	<script charset="utf-8" src="./lib/web3.js/dist/web3.min.js" type="text/javascript"></script>
+	<script charset="utf-8" src="./lib/index.min.js" type="text/javascript"></script>
+	<script charset="utf-8" src="./lib/index.js" type="text/javascript"></script>
+	<script charset="utf-8" src="./lib/bignumber.js/bignumber.min.js" type="text/javascript"></script>
+	<script src="./execute_transaction.ts"></script>
+	
+</body>
+
+</html>
+<script type="text/javascript">
+	BX24.init(function () {
+
+		// INIT Bitrix API
+		console.log('Init done!', BX24.isAdmin());
+		window.kaziniApp = new window.kaziniApp();
+
+		console.log('initialised...');
+
+	});
+
+	function testETH() {
+		console.log('starting...');
+
+		// import {
+		// 	assetDataUtils,
+		// 	BigNumber,
+		// 	ContractWrappers,
+		// 	generatePseudoRandomSalt,
+		// 	Order,
+		// 	orderHashUtils,
+		// 	signatureUtils,
+		// 	SignedOrder,
+		// } from '0x.js';
+
+		// INIT WEB3 PROVIDER
+
+		if (typeof web3 !== 'undefined') {
+			console.log('Web3 Detected! ' + web3.currentProvider.constructor.name)
+			web3 = new Web3(web3.currentProvider);
+		} else {
+			// set the provider you want from Web3.providers
+			console.log('No Web3 Detected... using HTTP Provider')
+			web3 = new Web3(new Web3.providers.HttpProvider("https://ropsten.infura.io/d0342720ca304468ab0e1075e581eea9d0342720ca304468ab0e1075e581eea9"));
+		}
+
+		console.log(web3.currentProvider);
+
+		// INIT ZEROEX INSTANCE
+		// var ZeX = new Web3Wrapper(web3.currentProvider);
+
+		let zrxTokenAddress = '0xff67881f8d12f372d91baae9752eb3631ff0ed00'
+		let etherTokenAddress = '0xc778417e063141139fce010982780140aa0cd5ab'
+
+		const makerAssetData = ZeroEx.assetDataUtils.encodeERC20AssetData(zrxTokenAddress);
+		const takerAssetData = ZeroEx.assetDataUtils.encodeERC20AssetData(etherTokenAddress);
+
+		const salt = ZeroEx.generatePseudoRandomSalt();
+		const makerCancelOrderTransactionSalt = ZeroEx.generatePseudoRandomSalt();
+
+
+		console.log('current provider' + web3.currentProvider);
+
+		console.log('makerAssetData ' + makerAssetData);
+
+		console.log('taketAssetData ' + takerAssetData);
+
+		console.log('salt ' + salt);
+
+		console.log('makerOrderTransactionSalt ' + makerCancelOrderTransactionSalt);
+
+		// CHECK IT ALL
+		web3.eth.getBlock("latest", (error, result) => {
+			console.log('error:', error);
+			console.log('results', result);
+		});
+
+		web3.eth.getBlock("latest", (error, result) => {
+			if (!error)
+				console.log(JSON.stringify(result));
+			else
+				console.error(error);
+		})
+
+		//    var account = web3.eth.accounts[ 1 ];
+		var account = "0x5947795096F0a6468eF3a6d725203a32F55e87B3";
+
+		var balance = web3.eth.getBalance(account, (error, result) => {
+			if (!error)
+				console.log(JSON.stringify(result));
+			else
+				console.error(error);
+		});
+
+		var balance = web3.eth.getBalance(account, (error, result) => {
+			if (!error)
+				console.log(JSON.stringify(result));
+			else
+				console.error(error);
+		});
+
+		console.log('account: ' + account);
+		console.log('balance: ' + balance);
+		document.getElementById('account').innerText = account;
+		document.getElementById('balance').innerText = balance;
+	}
+
+
+
+
+
+</script>

@@ -1,0 +1,51 @@
+localhost:9515/session/ec821edef3607af12ebe8e6a9328c9f3/element/0.33346877517220697-1/elements
+
+{"using":"tag name","value":"option"}
+
+{
+    "sessionId": "ec821edef3607af12ebe8e6a9328c9f3",
+    "status": 0,
+    "value": [
+        {
+            "ELEMENT": "0.33346877517220697-2"
+        },
+        {
+            "ELEMENT": "0.33346877517220697-3"
+        },
+        {
+            "ELEMENT": "0.33346877517220697-4"
+        },
+        {
+            "ELEMENT": "0.33346877517220697-5"
+        },
+        {
+            "ELEMENT": "0.33346877517220697-6"
+        },
+        {
+            "ELEMENT": "0.33346877517220697-7"
+        },
+        {
+            "ELEMENT": "0.33346877517220697-8"
+        },
+        {
+            "ELEMENT": "0.33346877517220697-9"
+        }
+    ]
+}
+
+localhost:9515/session/ec821edef3607af12ebe8e6a9328c9f3/element/0.33346877517220697-3/click
+
+{
+    "sessionId": "ec821edef3607af12ebe8e6a9328c9f3",
+    "status": 0,
+    "value": null
+}
+
+localhost:9515/session/ec821edef3607af12ebe8e6a9328c9f3/element
+
+{"using":"css selector","value":"#data\5b grantors\5d _identifier"}
+
+
+
+
+<select id="data[grantors]_type" name="data[grantors][0][type]" class="form-control input-sm"><option value="citizen">Kenyan Citizen</option><option value="alien">Foreign Resident</option><option value="foreigner">Foreigner</option><option value="local_company">Kenyan Corporation</option><option value="">--Select One --</option><option value="local_unincorporated">Kenyan Unincorporated Body</option><option value="foreign_company">Foreign Corporation</option><option value="foreign_unincorporated">Foreign Unincorporated Body</option></select>

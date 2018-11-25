@@ -1,0 +1,9 @@
+user-service:
+  build: .
+  command: node services/user-service.js
+
+sut:
+  build: .
+  command: npm test
+  links:
+    - user-service

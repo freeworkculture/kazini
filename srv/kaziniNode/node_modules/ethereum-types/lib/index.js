@@ -1,0 +1,36 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var OpCode;
+(function (OpCode) {
+    OpCode["DelegateCall"] = "DELEGATECALL";
+    OpCode["Revert"] = "REVERT";
+    OpCode["Create"] = "CREATE";
+    OpCode["Stop"] = "STOP";
+    OpCode["Invalid"] = "INVALID";
+    OpCode["CallCode"] = "CALLCODE";
+    OpCode["StaticCall"] = "STATICCALL";
+    OpCode["Return"] = "RETURN";
+    OpCode["Call"] = "CALL";
+    OpCode["SelfDestruct"] = "SELFDESTRUCT";
+})(OpCode = exports.OpCode || (exports.OpCode = {}));
+var AbiType;
+(function (AbiType) {
+    AbiType["Function"] = "function";
+    AbiType["Constructor"] = "constructor";
+    AbiType["Event"] = "event";
+    AbiType["Fallback"] = "fallback";
+})(AbiType = exports.AbiType || (exports.AbiType = {}));
+var BlockParamLiteral;
+(function (BlockParamLiteral) {
+    BlockParamLiteral["Earliest"] = "earliest";
+    BlockParamLiteral["Latest"] = "latest";
+    BlockParamLiteral["Pending"] = "pending";
+})(BlockParamLiteral = exports.BlockParamLiteral || (exports.BlockParamLiteral = {}));
+var SolidityTypes;
+(function (SolidityTypes) {
+    SolidityTypes["Address"] = "address";
+    SolidityTypes["Uint256"] = "uint256";
+    SolidityTypes["Uint8"] = "uint8";
+    SolidityTypes["Uint"] = "uint";
+})(SolidityTypes = exports.SolidityTypes || (exports.SolidityTypes = {}));
+//# sourceMappingURL=index.js.map

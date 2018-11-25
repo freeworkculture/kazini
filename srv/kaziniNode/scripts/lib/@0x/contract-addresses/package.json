@@ -1,0 +1,65 @@
+{
+  "_from": "@0x/contract-addresses@^1.1.0",
+  "_id": "@0x/contract-addresses@1.1.0",
+  "_inBundle": false,
+  "_integrity": "sha512-os6a8X+3W9knY/IOKyNu+WYCKkdZoCWBrNxaBnkI19e3sUfL/sAU3lHUi58YHTiXhxn1iQRcTCxBDHTlNQCG5w==",
+  "_location": "/@0x/contract-addresses",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "range",
+    "registry": true,
+    "raw": "@0x/contract-addresses@^1.1.0",
+    "name": "@0x/contract-addresses",
+    "escapedName": "@0x%2fcontract-addresses",
+    "scope": "@0x",
+    "rawSpec": "^1.1.0",
+    "saveSpec": null,
+    "fetchSpec": "^1.1.0"
+  },
+  "_requiredBy": [
+    "/@0x/contract-wrappers",
+    "/@0x/order-watcher"
+  ],
+  "_resolved": "https://registry.npmjs.org/@0x/contract-addresses/-/contract-addresses-1.1.0.tgz",
+  "_shasum": "d3be5e008e6dd37d9b3740ab875a83f125b6a3b7",
+  "_spec": "@0x/contract-addresses@^1.1.0",
+  "_where": "C:\\Users\\ohabo\\Repos\\kazini\\srv\\kaziniNode\\node_modules\\@0x\\contract-wrappers",
+  "bugs": {
+    "url": "https://github.com/0xProject/0x-monorepo/issues"
+  },
+  "bundleDependencies": false,
+  "dependencies": {
+    "lodash": "^4.17.5"
+  },
+  "deprecated": false,
+  "description": "Used to get known addresses of deployed 0x contracts",
+  "devDependencies": {
+    "@types/lodash": "4.14.104",
+    "shx": "^0.2.2",
+    "typescript": "3.0.1"
+  },
+  "directories": {
+    "test": "test"
+  },
+  "engines": {
+    "node": ">=6.12"
+  },
+  "gitHead": "b4a11de097258d37fa9271e64fc28a1d012a8d26",
+  "homepage": "https://github.com/0xProject/0x-monorepo/packages/contract-addresses/README.md",
+  "license": "Apache-2.0",
+  "main": "lib/src/index.js",
+  "name": "@0x/contract-addresses",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/0xProject/0x-monorepo.git"
+  },
+  "scripts": {
+    "build": "yarn tsc -b",
+    "build:ci": "yarn build",
+    "clean": "shx rm -rf lib"
+  },
+  "version": "1.1.0"
+}

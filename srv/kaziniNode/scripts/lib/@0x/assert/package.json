@@ -1,0 +1,88 @@
+{
+  "_from": "@0x/assert@^1.0.17",
+  "_id": "@0x/assert@1.0.17",
+  "_inBundle": false,
+  "_integrity": "sha512-TT4Gv++znXvgvlOUW8aRtWRvevzjefLMLoVVrUZvbUZZeXin/5ewZdp4ocs6g/WWhIts0h9hOBa6yf2GwDWQMw==",
+  "_location": "/@0x/assert",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "range",
+    "registry": true,
+    "raw": "@0x/assert@^1.0.17",
+    "name": "@0x/assert",
+    "escapedName": "@0x%2fassert",
+    "scope": "@0x",
+    "rawSpec": "^1.0.17",
+    "saveSpec": null,
+    "fetchSpec": "^1.0.17"
+  },
+  "_requiredBy": [
+    "/0x.js",
+    "/@0x/contract-wrappers",
+    "/@0x/order-utils",
+    "/@0x/order-watcher",
+    "/@0x/subproviders",
+    "/@0x/web3-wrapper"
+  ],
+  "_resolved": "https://registry.npmjs.org/@0x/assert/-/assert-1.0.17.tgz",
+  "_shasum": "02816dfd4ca14d1c7a0f79b18d5ec794d939c0b7",
+  "_spec": "@0x/assert@^1.0.17",
+  "_where": "C:\\Users\\ohabo\\Repos\\kazini\\srv\\kaziniNode\\node_modules\\0x.js",
+  "bugs": {
+    "url": "https://github.com/0xProject/0x-monorepo/issues"
+  },
+  "bundleDependencies": false,
+  "dependencies": {
+    "@0x/json-schemas": "^2.1.1",
+    "@0x/typescript-typings": "^3.0.4",
+    "@0x/utils": "^2.0.5",
+    "lodash": "^4.17.5",
+    "valid-url": "^1.0.9"
+  },
+  "deprecated": false,
+  "description": "Provides a standard way of performing type and schema validation across 0x projects",
+  "devDependencies": {
+    "@0x/tslint-config": "^1.0.10",
+    "@types/lodash": "4.14.104",
+    "@types/mocha": "^2.2.42",
+    "@types/valid-url": "^1.0.2",
+    "chai": "^4.0.1",
+    "dirty-chai": "^2.0.1",
+    "make-promises-safe": "^1.1.0",
+    "mocha": "^4.1.0",
+    "npm-run-all": "^4.1.2",
+    "nyc": "^11.0.1",
+    "shx": "^0.2.2",
+    "tslint": "5.11.0",
+    "typescript": "3.0.1"
+  },
+  "engines": {
+    "node": ">=6.12"
+  },
+  "gitHead": "fe1b7f15e8531615a54e46581cb734e635d3c755",
+  "homepage": "https://github.com/0xProject/0x-monorepo/packages/assert/README.md",
+  "license": "Apache-2.0",
+  "main": "lib/src/index.js",
+  "name": "@0x/assert",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/0xProject/0x-monorepo.git"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "build:ci": "yarn build",
+    "clean": "shx rm -rf lib test_temp",
+    "coverage:report:lcov": "nyc report --reporter=text-lcov > coverage/lcov.info",
+    "lint": "tslint --format stylish --project .",
+    "rebuild_and_test": "run-s clean build test",
+    "run_mocha": "mocha --require source-map-support/register --require make-promises-safe lib/test/**/*_test.js --exit",
+    "test": "yarn run_mocha",
+    "test:circleci": "yarn test:coverage",
+    "test:coverage": "nyc npm run test --all && yarn coverage:report:lcov"
+  },
+  "types": "lib/src/index.d.ts",
+  "version": "1.0.17"
+}
