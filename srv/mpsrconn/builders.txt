@@ -1,0 +1,75 @@
+SSD Hard Drive Based Private Cloud Server with BGP Enabled Redundant Internet.
+99.9% Uptime Guaranteed with N+1 Redundant Power in our Digital Realty Powered World Class Data Center.
+Customer Self Care Cloud Control Panel For Private Cloud server. You can create upto 4 Cloud Server instances. And you can control each Cloud Server Instance separately. You can Reboot, Reinstall, Usage Graphs, Backup and use Direct Console Access for each Cloud Instance.
+Free Internet Port Upgrade from 100 mbps to 1000 mbps (a $30/month value free upgrade).
+24/7 Technical Support, 24/7 Onsite Staff and 24/7 Online Chat Service.
+Data Center Locations: St. Louis, MO, USA and Miami, FL, USA.
+
+	Virtualization Type
+
+An exchange is an online platform that acts as a middleman between buyers and sellers of crypto while combining liquidity. Cryptocurrency exchanges are widely the main means of getting and selling crypto in general. Building a cryptocurrency exchange may be a rare opportunity at this time.
+
+COMDEX is a software platform for running a trading venue. 
+
+COMDEX listens to Make and Fill order events in real time initiated by market participants and constructs them on a local order book instance and publishes market data and market reports.
+
+All order entries are accepted through a standard FIX compliant gateway and constructed into a first in first order books where automatic order get automatically matched in price-time priority.
+
+COMDEX contains the following applications:
+
+Trading System is a server application for running a financial exchange.
+
+FIX Gateway is a server application that adds Financial Information Exchange (FIX) support to the trading system.
+
+Terminal Client is a simple console application for entering orders into the trading system.
+
+Stock Ticker is a simple console application that displays the best prices and latest trades in the trading system.
+
+Trade Reporter is a simple console application that displays all occurred trades in the trading system.
+
+Order Book implements high-performance order book reconstruction on the JVM.
+
+Network Protocols specifies and implements network protocols used by the trading system.
+
+File Formats specifies and implements file formats used by the trading system.
+
+Matching Algorithm implements the matching algorithm used by the trading system.
+
+Utilities contains support functions used by the trading system.
+
+
+
+parity-system.service: a Parity Trading System process accepting inbound order entry connections and publishing market data and market reports using the native protocols.
+
+parity-fix.service: a Parity FIX Gateway process accepting inbound order entry connections using the FIX protocol.
+
+nassau-market-data-gateway.service: a Nassau SoupBinTCP Gateway process accepting inbound market data connections using SoupBinTCP as the underlying transport protocol.
+
+nassau-market-reporting-gateway.service: a Nassau SoupBinTCP Gateway process accepting inbound market reporting connections using SoupBinTCP as the underlying transport protocol.
+
+genesis-replicator-btc-usd.service: a Genesis Replicator process replicating the GDAX order book BTC-USD as the Genesis order book BTC-USD. One service of this type exists for each replicated order book.
+
+nginx.service: a Web server hosting the bundled Parity applications.
+
+
+
+
+
+40 Core 48 GB 100GB SSD CT Private Cloud with 8 Cloud Instances and 1000 mbps Internet Port NEW	$1,066.56
+» CPU Core : Sixteen extra CPU Cores	$126.72
+» Memory : Sixteen GB RAM Extra	$126.72
+» First Hard Drive (SSD): 2000 GB SATA Hard Drive	$528.00
+» IP Address : Four Extra IP	$211.20
+» Internet Connection Speed : 1000 mbps Port (Free Upgrade, $30/month value)	$0.00
+» Internet Bandwidth usage: 300 mbps Dedicated Bandwidth	$950.40
+» Operating System : (KVM) Install your own ISO x 8 Servers	$337.92
+» Automatic Daily BackUp Options : Full Server Daily Backup (400GB max, keeps last 20 backups)	$517.44
+» Number of Backup/Snapshots : 20 Backup/Snapshot with Backup Space of 100 GB	$316.80
+» Server BackUp Options : MySQL Database Every 6 Hour Backup	$802.56
+» Firewall: External Cloud Based Firewall	$1,044.00
+» BlackLotus DDOS Protection : DDOS Protection 50 mbps Clear 2000 mbps DDOS Attack Traffic	$1,647.36
+» Support Package: 24/7 Premium Support
+
+P5HvT91KYCQYnSGop6MX8M24A9o4xfJfr1qBDVwEqynDN
+
+P5HvT91KYCQYnSGop6MX8M24A9o4xfJfr1qBDVwEqynDN
